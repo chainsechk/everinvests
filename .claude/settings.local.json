@@ -7,7 +7,24 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd validated EverInvests design document\n\nComprehensive design for market signal broadcast site covering:\n- 3 asset categories (Crypto, Forex, Stocks)\n- Cloudflare stack (Pages, Workers, D1, Workers AI)\n- 2-3 daily updates with rule-based signals + LLM summaries\n- Telegram integration for notifications and premium funnel\n- Free tier constraints and upgrade paths documented\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
       "Skill(superpowers:using-git-worktrees)",
-      "Skill(superpowers:writing-plans)"
+      "Skill(superpowers:writing-plans)",
+      "Bash(npm test)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(source ~/.bashrc)",
+      "Bash(node --version)",
+      "Bash(npm --version:*)",
+      "Bash(/usr/bin/npm --version)",
+      "Bash(echo:*)",
+      "Bash(npm install:*)",
+      "Bash(git -C /home/louis/everinvests status)",
+      "Bash(git -C /home/louis/everinvests log --oneline -3)",
+      "Bash(git -C /home/louis/everinvests add package.json package-lock.json astro.config.mjs tsconfig.json vitest.config.ts src/pages/index.astro tests/smoke.test.ts)",
+      "Bash(git -C /home/louis/everinvests commit -m \"$\\(cat <<''EOF''\nchore: scaffold astro app and tests\n\n- Add Astro 4 with Cloudflare adapter for SSR\n- Add Vitest for unit testing\n- Add minimal index page placeholder\n- Add smoke test to verify test harness\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(wrangler whoami:*)",
+      "Bash(wrangler d1 list:*)",
+      "Bash(wrangler d1 create:*)",
+      "Bash(wrangler d1 migrations apply:*)",
+      "Bash(wrangler d1 execute:*)"
     ]
   }
 }
