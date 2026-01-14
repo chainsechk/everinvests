@@ -72,14 +72,21 @@
 - Created `wrangler.toml` with D1 binding
 - Commit: `3fe1144 chore: add D1 schema migrations and wrangler config`
 
+#### Task 6: Create environment type definitions
+- **Status:** complete
+- Created `src/env.d.ts` with D1Database type and App.Locals extension
+- TypeScript check passes (`npx tsc --noEmit`)
+- Tests pass (1 test)
+- Commit: `a8d6328 chore: add Cloudflare runtime type definitions`
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Tasks 4-5 complete, ready for Task 6 |
-| Where am I going? | Task 6: Create environment type definitions |
+| Where am I? | Task 6 complete, ready for Task 7 |
+| Where am I going? | Task 7: Add D1 type definitions (src/lib/db/types.ts) |
 | What's the goal? | Build API endpoints for signals from D1 |
 | What have I learned? | See findings.md (includes database_id) |
-| What have I done? | Tasks 1-5 complete, D1 schema deployed |
+| What have I done? | Tasks 1-6 complete, env types defined |
 
 ---
 *Update after completing each phase or encountering errors*

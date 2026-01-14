@@ -4,7 +4,7 @@
 Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
 
 ## Current Phase
-Phase 4 (Task 6 next)
+Phase 4 (Task 7 next)
 
 ## Phases
 
@@ -34,11 +34,12 @@ Phase 4 (Task 6 next)
 - **Status:** complete
 
 ### Phase 4: D1 Query Layer (Tasks 6-9)
-- [ ] Task 6: Create src/env.d.ts (type definitions)
+- [x] Task 6: Create src/env.d.ts (type definitions)
 - [ ] Task 7: Create src/lib/db/types.ts + tests
 - [ ] Task 8: Create src/lib/db/queries.ts + tests
 - [ ] Task 9: Create src/lib/db/client.ts + tests
-- **Status:** pending
+- [x] Commit: `a8d6328 chore: add Cloudflare runtime type definitions`
+- **Status:** in_progress
 
 ### Phase 4: API Routes (Tasks 6-8)
 - [ ] Add normalizeCategory helper
