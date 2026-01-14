@@ -4,7 +4,7 @@
 Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
 
 ## Current Phase
-Phase 4 (Task 7 next)
+Phase 5 (Task 10 next)
 
 ## Phases
 
@@ -35,22 +35,20 @@ Phase 4 (Task 7 next)
 
 ### Phase 4: D1 Query Layer (Tasks 6-9)
 - [x] Task 6: Create src/env.d.ts (type definitions)
-- [ ] Task 7: Create src/lib/db/types.ts + tests
-- [ ] Task 8: Create src/lib/db/queries.ts + tests
-- [ ] Task 9: Create src/lib/db/client.ts + tests
-- [x] Commit: `a8d6328 chore: add Cloudflare runtime type definitions`
-- **Status:** in_progress
+- [x] Task 7: Create src/lib/db/types.ts + tests
+- [x] Task 8: Create src/lib/db/queries.ts + tests
+- [x] Task 9: Create src/lib/db/client.ts + index.ts + tests
+- Commits:
+  - `a8d6328 chore: add Cloudflare runtime type definitions`
+  - `7c667c4 feat: add D1 type definitions and category normalization`
+  - `724f75d feat: add SQL query builders for signals`
+  - `18de880 feat: add typed D1 client functions`
+- **Status:** complete
 
-### Phase 4: API Routes (Tasks 6-8)
-- [ ] Add normalizeCategory helper
-- [ ] Create /api/today/[category].ts
-- [ ] Create /api/history/[category].ts
-- [ ] Test all routes
-- **Status:** pending
-
-### Phase 5: Documentation (Task 9)
-- [ ] Create docs/api.md
-- [ ] Update README.md
+### Phase 5: API Routes (Tasks 10-12)
+- [ ] Task 10: Create /api/today/[category].ts + tests
+- [ ] Task 11: Create /api/history/[category].ts + tests
+- [ ] Task 12: Create /api/macro.ts + tests
 - **Status:** pending
 
 ## Key Questions

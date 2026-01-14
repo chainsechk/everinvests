@@ -75,18 +75,44 @@
 #### Task 6: Create environment type definitions
 - **Status:** complete
 - Created `src/env.d.ts` with D1Database type and App.Locals extension
-- TypeScript check passes (`npx tsc --noEmit`)
-- Tests pass (1 test)
 - Commit: `a8d6328 chore: add Cloudflare runtime type definitions`
+
+#### Task 7: Add D1 type definitions
+- **Status:** complete
+- Created `src/lib/db/types.ts` with row types + normalizeCategory
+- Created `tests/db/types.test.ts` (TDD)
+- Commit: `7c667c4 feat: add D1 type definitions and category normalization`
+
+#### Task 8: Add SQL query builders
+- **Status:** complete
+- Created `src/lib/db/queries.ts` with 4 SQL builders
+- Created `tests/db/queries.test.ts` (TDD)
+- Commit: `724f75d feat: add SQL query builders for signals`
+
+#### Task 9: Add typed database client
+- **Status:** complete
+- Created `src/lib/db/client.ts` with typed D1 functions
+- Created `src/lib/db/index.ts` for module exports
+- Created `tests/db/client.test.ts` (TDD)
+- Commit: `18de880 feat: add typed D1 client functions`
+
+## Test Results
+| Test File | Tests | Status |
+|-----------|-------|--------|
+| smoke.test.ts | 1 | PASS |
+| db/types.test.ts | 2 | PASS |
+| db/queries.test.ts | 3 | PASS |
+| db/client.test.ts | 2 | PASS |
+| **Total** | **8** | **PASS** |
 
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Task 6 complete, ready for Task 7 |
-| Where am I going? | Task 7: Add D1 type definitions (src/lib/db/types.ts) |
+| Where am I? | Phase 4 complete, ready for Phase 5 |
+| Where am I going? | Task 10: Create /api/today/[category] |
 | What's the goal? | Build API endpoints for signals from D1 |
 | What have I learned? | See findings.md (includes database_id) |
-| What have I done? | Tasks 1-6 complete, env types defined |
+| What have I done? | Tasks 1-9 complete, D1 query layer done |
 
 ---
 *Update after completing each phase or encountering errors*
