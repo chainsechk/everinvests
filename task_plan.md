@@ -4,7 +4,7 @@
 Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
 
 ## Current Phase
-Phase 5 (Task 10 next)
+Phase 6 (Task 13 next)
 
 ## Phases
 
@@ -46,9 +46,21 @@ Phase 5 (Task 10 next)
 - **Status:** complete
 
 ### Phase 5: API Routes (Tasks 10-12)
-- [ ] Task 10: Create /api/today/[category].ts + tests
-- [ ] Task 11: Create /api/history/[category].ts + tests
-- [ ] Task 12: Create /api/macro.ts + tests
+- [x] Task 10: Create /api/today/[category].ts + tests
+- [x] Task 11: Create /api/history/[category].ts + tests
+- [x] Task 12: Create /api/macro.ts + tests
+- Commits:
+  - `7a7207a feat: add /api/today/[category] endpoint`
+  - `dc9899b feat: add /api/history/[category] endpoint`
+  - `97c239e feat: add /api/macro endpoint`
+- **Status:** complete
+
+### Phase 6: Signal Generation Worker (Tasks 13+)
+- [ ] Task 13: Scaffold Worker project
+- [ ] Task 14: Create worker environment file
+- [ ] Task 15: Add development scripts
+- [ ] Task 16: Create seed data script
+- [ ] Task 17: Document local development workflow
 - **Status:** pending
 
 ## Key Questions

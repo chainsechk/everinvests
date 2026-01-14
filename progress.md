@@ -96,6 +96,29 @@
 - Created `tests/db/client.test.ts` (TDD)
 - Commit: `18de880 feat: add typed D1 client functions`
 
+### Phase 5: API Routes
+- **Status:** complete
+- **Started:** 2026-01-14
+- **Completed:** 2026-01-14
+
+#### Task 10: Create /api/today/[category]
+- **Status:** complete
+- Created `src/pages/api/today/[category].ts`
+- Created `tests/api/today.test.ts` (TDD)
+- Commit: `7a7207a feat: add /api/today/[category] endpoint`
+
+#### Task 11: Create /api/history/[category]
+- **Status:** complete
+- Created `src/pages/api/history/[category].ts`
+- Created `tests/api/history.test.ts` (TDD)
+- Commit: `dc9899b feat: add /api/history/[category] endpoint`
+
+#### Task 12: Create /api/macro
+- **Status:** complete
+- Created `src/pages/api/macro.ts`
+- Created `tests/api/macro.test.ts` (TDD)
+- Commit: `97c239e feat: add /api/macro endpoint`
+
 ## Test Results
 | Test File | Tests | Status |
 |-----------|-------|--------|
@@ -103,16 +126,19 @@
 | db/types.test.ts | 2 | PASS |
 | db/queries.test.ts | 3 | PASS |
 | db/client.test.ts | 2 | PASS |
-| **Total** | **8** | **PASS** |
+| api/today.test.ts | 2 | PASS |
+| api/history.test.ts | 3 | PASS |
+| api/macro.test.ts | 2 | PASS |
+| **Total** | **15** | **PASS** |
 
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 4 complete, ready for Phase 5 |
-| Where am I going? | Task 10: Create /api/today/[category] |
-| What's the goal? | Build API endpoints for signals from D1 |
+| Where am I? | Phase 5 complete, ready for Phase 6 |
+| Where am I going? | Task 13: Scaffold Worker project |
+| What's the goal? | Build signal generation worker |
 | What have I learned? | See findings.md (includes database_id) |
-| What have I done? | Tasks 1-9 complete, D1 query layer done |
+| What have I done? | Tasks 1-12 complete, API endpoints done |
 
 ---
 *Update after completing each phase or encountering errors*
