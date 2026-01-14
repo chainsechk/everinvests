@@ -1,7 +1,5 @@
 # Signal API Foundation Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use @superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Build the complete Cloudflare infrastructure (D1 + Workers + Pages) and API endpoints that return the latest and historical signals for crypto/forex/stocks.
 
 **Architecture:**
@@ -11,18 +9,35 @@
 
 **Tech Stack:** Astro (SSR), TypeScript, Cloudflare D1 (SQLite), Cloudflare Workers, Workers AI, Vitest (unit tests), Wrangler.
 
+**Cross-Platform Notes:**
+- All shell commands assume Git Bash on Windows or native Bash on Linux/macOS
+- Use forward slashes in paths
+- Node.js scripts used for complex file operations when needed
+
 ---
 
-## Phase 1: Infrastructure Setup
+## Progress Tracker
 
-### Task 1: Verify existing scaffolding and dependencies
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| Phase 1: Infrastructure Setup | Tasks 1-5 | ✅ COMPLETE |
+| Phase 2: Database Query Layer | Tasks 6-10 | ⏳ NOT STARTED |
+| Phase 3: API Routes | Tasks 11-14 | ⏳ NOT STARTED |
+| Phase 4: Signal Generation Worker | Tasks 15-18 | ⏳ NOT STARTED |
+| Phase 5: Local Development Workflow | Tasks 19-21 | ⏳ NOT STARTED |
+
+---
+
+## Phase 1: Infrastructure Setup ✅ COMPLETE
+
+### Task 1: Verify existing scaffolding and dependencies ✅
 
 **Files:**
 - Read: `package.json`, `astro.config.mjs`, `tsconfig.json`
 
 **Step 1: Confirm Astro + Cloudflare adapter installed**
 
-Run: `ls -la && cat package.json`
+Run: `cat package.json`
 Expected: `@astrojs/cloudflare` and `wrangler` in dependencies.
 
 **Step 2: Verify wrangler is logged in**
@@ -36,7 +51,7 @@ Observation-only step.
 
 ---
 
-### Task 2: Create D1 database
+### Task 2: Create D1 database ✅
 
 **Files:**
 - None (Cloudflare platform)
@@ -57,7 +72,7 @@ Platform configuration only.
 
 ---
 
-### Task 3: Create D1 migrations
+### Task 3: Create D1 migrations ✅
 
 **Files:**
 - Create: `migrations/0001_init.sql`
@@ -143,7 +158,7 @@ Run:
 
 ---
 
-### Task 4: Configure wrangler.toml for Pages with D1 binding
+### Task 4: Configure wrangler.toml for Pages with D1 binding ✅
 
 **Files:**
 - Create: `wrangler.toml`
@@ -159,15 +174,15 @@ compatibility_date = "2026-01-14"
 binding = "DB"
 database_name = "everinvests-db"
 database_id = "<YOUR_DATABASE_ID_FROM_TASK_2>"
-preview_database_id = "DB"
+migrations_dir = "migrations"
 ```
 
 Replace `<YOUR_DATABASE_ID_FROM_TASK_2>` with the actual database_id from Task 2.
 
 **Step 2: Verify local D1 binding works**
 
-Run: `wrangler pages dev dist --d1=DB=everinvests-db`
-Expected: Dev server starts with D1 binding available.
+Run: `wrangler d1 execute everinvests-db --local --command "SELECT 1"`
+Expected: Returns result showing D1 is accessible.
 
 **Step 3: Commit**
 
@@ -177,7 +192,7 @@ Run:
 
 ---
 
-### Task 5: Create environment type definitions
+### Task 5: Create environment type definitions ✅
 
 **Files:**
 - Create: `src/env.d.ts`
@@ -214,9 +229,56 @@ Run:
 
 ---
 
+### ✅ Phase 1 Checkpoint
+
+Run these commands to verify Phase 1 completion:
+
+```bash
+# Verify all files exist
+ls -la wrangler.toml migrations/0001_init.sql src/env.d.ts
+
+# Verify D1 database accessible
+wrangler d1 list | grep everinvests-db
+
+# Verify TypeScript compiles
+npx tsc --noEmit
+
+# Verify tests pass
+npm test
+```
+
+Expected: All commands succeed with no errors.
+
+---
+
 ## Phase 2: Database Query Layer
 
-### Task 6: Add D1 type definitions
+### Task 6: Create directory structure for Phase 2-3
+
+**Files:**
+- Create directories: `src/lib/db`, `tests/db`, `tests/api`
+
+**Step 1: Create all required directories**
+
+```bash
+mkdir -p src/lib/db tests/db tests/api
+```
+
+**Step 2: Verify directories exist**
+
+```bash
+ls -la src/lib/db tests/db tests/api
+```
+
+Expected: Empty directories created.
+
+**Step 3: No commit**
+
+Infrastructure step only.
+
+---
+
+### Task 7: Add D1 type definitions
 
 **Files:**
 - Create: `src/lib/db/types.ts`
@@ -245,7 +307,7 @@ describe("normalizeCategory", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/db/types.test.ts`
+Run: `npm test -- tests/db/types.test.ts`
 Expected: FAIL with "Cannot find module".
 
 **Step 3: Write minimal implementation**
@@ -307,7 +369,7 @@ export interface RunLogRow {
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/db/types.test.ts`
+Run: `npm test -- tests/db/types.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -318,7 +380,7 @@ Run:
 
 ---
 
-### Task 7: Add SQL query builders
+### Task 8: Add SQL query builders
 
 **Files:**
 - Create: `src/lib/db/queries.ts`
@@ -334,14 +396,14 @@ import { latestSignalSql, historySignalSql, assetSignalsSql } from "../../src/li
 describe("SQL query builders", () => {
   it("latestSignalSql selects latest by category", () => {
     const sql = latestSignalSql();
-    expect(sql).toContain("WHERE category = ?");
-    expect(sql).toContain("ORDER BY date DESC, time_slot DESC");
+    expect(sql).toContain("WHERE s.category = ?");
+    expect(sql).toContain("ORDER BY s.date DESC, s.time_slot DESC");
     expect(sql).toContain("LIMIT 1");
   });
 
   it("historySignalSql selects with limit", () => {
     const sql = historySignalSql();
-    expect(sql).toContain("WHERE category = ?");
+    expect(sql).toContain("WHERE s.category = ?");
     expect(sql).toContain("LIMIT ?");
   });
 
@@ -354,7 +416,7 @@ describe("SQL query builders", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/db/queries.test.ts`
+Run: `npm test -- tests/db/queries.test.ts`
 Expected: FAIL with "Cannot find module".
 
 **Step 3: Write minimal implementation**
@@ -404,7 +466,7 @@ export function latestMacroSql(): string {
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/db/queries.test.ts`
+Run: `npm test -- tests/db/queries.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -415,7 +477,7 @@ Run:
 
 ---
 
-### Task 8: Add typed database client functions
+### Task 9: Add typed database client functions
 
 **Files:**
 - Create: `src/lib/db/client.ts`
@@ -462,7 +524,7 @@ describe("getSignalHistory", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/db/client.test.ts`
+Run: `npm test -- tests/db/client.test.ts`
 Expected: FAIL with "Cannot find module".
 
 **Step 3: Write minimal implementation**
@@ -522,7 +584,7 @@ export async function getLatestMacro(
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/db/client.test.ts`
+Run: `npm test -- tests/db/client.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -533,7 +595,7 @@ Run:
 
 ---
 
-### Task 9: Create db index file
+### Task 10: Create db index file
 
 **Files:**
 - Create: `src/lib/db/index.ts`
@@ -560,9 +622,125 @@ Run:
 
 ---
 
+### ✅ Phase 2 Checkpoint
+
+Run these commands to verify Phase 2 completion:
+
+```bash
+# Verify all db module files exist
+ls -la src/lib/db/
+
+# Verify all tests exist
+ls -la tests/db/
+
+# Run all db tests
+npm test -- tests/db/
+
+# Verify TypeScript compiles
+npx tsc --noEmit
+```
+
+Expected: All db tests pass, TypeScript compiles without errors.
+
+---
+
 ## Phase 3: API Routes
 
-### Task 10: Create `/api/today/[category]` route
+### Task 11: Add API response type definitions
+
+**Files:**
+- Create: `src/lib/api/types.ts`
+
+**Step 1: Create API types directory**
+
+```bash
+mkdir -p src/lib/api
+```
+
+**Step 2: Write API response types**
+
+```ts
+// src/lib/api/types.ts
+import type { Category } from "../db/types";
+
+export interface AssetResponse {
+  id: number;
+  signal_id: number;
+  ticker: string;
+  bias: string | null;
+  price: number | null;
+  vs_20d_ma: string | null;
+  secondary_ind: string | null;
+  data: unknown | null;
+}
+
+export interface SignalResponse {
+  signal: {
+    id: number;
+    category: Category;
+    date: string;
+    time_slot: string;
+    generated_at: string;
+    bias: string;
+    macro_id: number | null;
+    macro_overall: string | null;
+    data: unknown | null;
+    output: unknown | null;
+  };
+  assets: AssetResponse[];
+  macro: string | null;
+}
+
+export interface HistoryResponse {
+  category: Category;
+  count: number;
+  items: Array<{
+    id: number;
+    category: Category;
+    date: string;
+    time_slot: string;
+    generated_at: string;
+    bias: string;
+    macro_overall: string | null;
+    data: unknown | null;
+    output: unknown | null;
+  }>;
+}
+
+export interface MacroResponse {
+  id: number;
+  date: string;
+  time_slot: string;
+  generated_at: string;
+  dxy_bias: string | null;
+  vix_level: string | null;
+  yields_bias: string | null;
+  overall: string | null;
+  data: unknown | null;
+}
+
+export interface ErrorResponse {
+  error: string;
+  [key: string]: unknown;
+}
+```
+
+**Step 3: Create API index file**
+
+```ts
+// src/lib/api/index.ts
+export * from "./types";
+```
+
+**Step 4: Commit**
+
+Run:
+- `git add src/lib/api/`
+- `git commit -m "feat: add API response type definitions"`
+
+---
+
+### Task 12: Create `/api/today/[category]` route
 
 **Files:**
 - Create: `src/pages/api/today/[category].ts`
@@ -615,10 +793,14 @@ describe("GET /api/today/[category]", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/api/today.test.ts`
+Run: `npm test -- tests/api/today.test.ts`
 Expected: FAIL with "Cannot find module".
 
-**Step 3: Write minimal implementation**
+**Step 3: Create API directory and write implementation**
+
+```bash
+mkdir -p src/pages/api/today
+```
 
 ```ts
 // src/pages/api/today/[category].ts
@@ -672,7 +854,7 @@ export async function GET(context: APIContext) {
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/api/today.test.ts`
+Run: `npm test -- tests/api/today.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -683,7 +865,7 @@ Run:
 
 ---
 
-### Task 11: Create `/api/history/[category]` route
+### Task 13: Create `/api/history/[category]` route
 
 **Files:**
 - Create: `src/pages/api/history/[category].ts`
@@ -745,10 +927,14 @@ describe("GET /api/history/[category]", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/api/history.test.ts`
+Run: `npm test -- tests/api/history.test.ts`
 Expected: FAIL with "Cannot find module".
 
-**Step 3: Write minimal implementation**
+**Step 3: Create directory and write implementation**
+
+```bash
+mkdir -p src/pages/api/history
+```
 
 ```ts
 // src/pages/api/history/[category].ts
@@ -805,7 +991,7 @@ export async function GET(context: APIContext) {
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/api/history.test.ts`
+Run: `npm test -- tests/api/history.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -816,7 +1002,7 @@ Run:
 
 ---
 
-### Task 12: Create `/api/macro` route
+### Task 14: Create `/api/macro` route
 
 **Files:**
 - Create: `src/pages/api/macro.ts`
@@ -857,10 +1043,10 @@ describe("GET /api/macro", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- tests/api/macro.test.ts`
+Run: `npm test -- tests/api/macro.test.ts`
 Expected: FAIL with "Cannot find module".
 
-**Step 3: Write minimal implementation**
+**Step 3: Write implementation**
 
 ```ts
 // src/pages/api/macro.ts
@@ -893,7 +1079,7 @@ export async function GET(context: APIContext) {
 
 **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- tests/api/macro.test.ts`
+Run: `npm test -- tests/api/macro.test.ts`
 Expected: PASS.
 
 **Step 5: Commit**
@@ -904,9 +1090,36 @@ Run:
 
 ---
 
+### ✅ Phase 3 Checkpoint
+
+Run these commands to verify Phase 3 completion:
+
+```bash
+# Verify all API files exist
+ls -la src/pages/api/
+ls -la src/pages/api/today/
+ls -la src/pages/api/history/
+
+# Verify all API tests exist
+ls -la tests/api/
+
+# Run all API tests
+npm test -- tests/api/
+
+# Verify TypeScript compiles
+npx tsc --noEmit
+
+# Run full test suite
+npm test
+```
+
+Expected: All tests pass, TypeScript compiles without errors.
+
+---
+
 ## Phase 4: Signal Generation Worker
 
-### Task 13: Scaffold Worker project
+### Task 15: Scaffold Worker project
 
 **Files:**
 - Create: `worker/package.json`
@@ -916,7 +1129,9 @@ Run:
 
 **Step 1: Create worker directory structure**
 
-Run: `mkdir -p worker/src`
+```bash
+mkdir -p worker/src
+```
 
 **Step 2: Write package.json**
 
@@ -955,6 +1170,8 @@ database_id = "<YOUR_DATABASE_ID_FROM_TASK_2>"
 [ai]
 binding = "AI"
 ```
+
+Replace `<YOUR_DATABASE_ID_FROM_TASK_2>` with the actual database_id.
 
 **Step 4: Write tsconfig.json**
 
@@ -1034,7 +1251,9 @@ async function runScheduledJob(env: Env, cron: string): Promise<void> {
 
 **Step 6: Install dependencies**
 
-Run: `cd worker && pnpm install && cd ..`
+```bash
+cd worker && npm install && cd ..
+```
 
 **Step 7: Commit**
 
@@ -1044,7 +1263,7 @@ Run:
 
 ---
 
-### Task 14: Create worker environment file
+### Task 16: Create worker environment file
 
 **Files:**
 - Create: `worker/.dev.vars.example`
@@ -1085,30 +1304,286 @@ Run:
 
 ---
 
+### Task 17: Add schedule router utility
+
+**Files:**
+- Create: `worker/src/schedule.ts`
+- Test: `worker/src/schedule.test.ts` (manual verification for now)
+
+**Step 1: Write schedule router**
+
+```ts
+// worker/src/schedule.ts
+export type Category = "crypto" | "forex" | "stocks";
+
+export interface ScheduleResult {
+  categories: Category[];
+  timeSlot: string;
+}
+
+/**
+ * Determines which categories should run based on UTC hour and day of week.
+ *
+ * Schedule (UTC):
+ * - Crypto: 00:00, 08:00, 16:00 (daily)
+ * - Forex: 00:00, 08:00, 14:00 (weekdays only)
+ * - Stocks: 17:00, 21:00 (weekdays only)
+ */
+export function getCategoriesToRun(utcHour: number, dayOfWeek: number): ScheduleResult {
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+  const categories: Category[] = [];
+
+  // Format time slot as HH:00
+  const timeSlot = `${utcHour.toString().padStart(2, "0")}:00`;
+
+  // Crypto runs at 00, 08, 16 UTC daily
+  if ([0, 8, 16].includes(utcHour)) {
+    categories.push("crypto");
+  }
+
+  // Forex runs at 00, 08, 14 UTC on weekdays
+  if (isWeekday && [0, 8, 14].includes(utcHour)) {
+    categories.push("forex");
+  }
+
+  // Stocks run at 17, 21 UTC on weekdays
+  if (isWeekday && [17, 21].includes(utcHour)) {
+    categories.push("stocks");
+  }
+
+  return { categories, timeSlot };
+}
+
+/**
+ * Returns today's date in YYYY-MM-DD format (UTC)
+ */
+export function getTodayDate(): string {
+  return new Date().toISOString().split("T")[0];
+}
+```
+
+**Step 2: Verify by inspection**
+
+Review the schedule against CLAUDE.md requirements:
+- Crypto: BTC, ETH at 00:00, 08:00, 16:00 ✓
+- Forex: USD/JPY, EUR/USD, USD/CAD, USD/AUD at 00:00, 08:00, 14:00 weekdays ✓
+- Stocks: 25 tickers at 17:00, 21:00 weekdays ✓
+
+**Step 3: Commit**
+
+Run:
+- `git add worker/src/schedule.ts`
+- `git commit -m "feat: add schedule router for cron triggers"`
+
+---
+
+### Task 18: Add database write utilities for Worker
+
+**Files:**
+- Create: `worker/src/db.ts`
+
+**Step 1: Write database utilities**
+
+```ts
+// worker/src/db.ts
+import type { Category } from "./schedule";
+
+export interface MacroData {
+  dxy_bias: string | null;
+  vix_level: string | null;
+  yields_bias: string | null;
+  overall: string;
+  data_json?: string;
+}
+
+export interface SignalData {
+  category: Category;
+  bias: string;
+  macro_id: number | null;
+  data_json?: string;
+  output_json?: string;
+}
+
+export interface AssetData {
+  ticker: string;
+  bias: string | null;
+  price: number | null;
+  vs_20d_ma: string | null;
+  secondary_ind: string | null;
+  data_json?: string;
+}
+
+export async function insertMacroSignal(
+  db: D1Database,
+  date: string,
+  timeSlot: string,
+  data: MacroData
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `INSERT INTO macro_signals (date, time_slot, generated_at, dxy_bias, vix_level, yields_bias, overall, data_json)
+       VALUES (?, ?, datetime('now'), ?, ?, ?, ?, ?)
+       ON CONFLICT(date, time_slot) DO UPDATE SET
+         generated_at = datetime('now'),
+         dxy_bias = excluded.dxy_bias,
+         vix_level = excluded.vix_level,
+         yields_bias = excluded.yields_bias,
+         overall = excluded.overall,
+         data_json = excluded.data_json
+       RETURNING id`
+    )
+    .bind(
+      date,
+      timeSlot,
+      data.dxy_bias,
+      data.vix_level,
+      data.yields_bias,
+      data.overall,
+      data.data_json ?? null
+    )
+    .first<{ id: number }>();
+
+  return result?.id ?? 0;
+}
+
+export async function insertSignal(
+  db: D1Database,
+  date: string,
+  timeSlot: string,
+  data: SignalData
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `INSERT INTO signals (category, date, time_slot, generated_at, bias, macro_id, data_json, output_json)
+       VALUES (?, ?, ?, datetime('now'), ?, ?, ?, ?)
+       ON CONFLICT(category, date, time_slot) DO UPDATE SET
+         generated_at = datetime('now'),
+         bias = excluded.bias,
+         macro_id = excluded.macro_id,
+         data_json = excluded.data_json,
+         output_json = excluded.output_json
+       RETURNING id`
+    )
+    .bind(
+      data.category,
+      date,
+      timeSlot,
+      data.bias,
+      data.macro_id,
+      data.data_json ?? null,
+      data.output_json ?? null
+    )
+    .first<{ id: number }>();
+
+  return result?.id ?? 0;
+}
+
+export async function insertAssetSignals(
+  db: D1Database,
+  signalId: number,
+  assets: AssetData[]
+): Promise<void> {
+  // Delete existing assets for this signal
+  await db
+    .prepare("DELETE FROM asset_signals WHERE signal_id = ?")
+    .bind(signalId)
+    .run();
+
+  // Insert new assets
+  for (const asset of assets) {
+    await db
+      .prepare(
+        `INSERT INTO asset_signals (signal_id, ticker, bias, price, vs_20d_ma, secondary_ind, data_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        signalId,
+        asset.ticker,
+        asset.bias,
+        asset.price,
+        asset.vs_20d_ma,
+        asset.secondary_ind,
+        asset.data_json ?? null
+      )
+      .run();
+  }
+}
+
+export async function insertRunLog(
+  db: D1Database,
+  category: Category | null,
+  timeSlot: string,
+  status: "success" | "error",
+  durationMs: number,
+  errorMsg?: string
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO run_logs (category, time_slot, run_at, status, duration_ms, error_msg)
+       VALUES (?, ?, datetime('now'), ?, ?, ?)`
+    )
+    .bind(category, timeSlot, status, durationMs, errorMsg ?? null)
+    .run();
+}
+```
+
+**Step 2: Commit**
+
+Run:
+- `git add worker/src/db.ts`
+- `git commit -m "feat: add database write utilities for worker"`
+
+---
+
+### ✅ Phase 4 Checkpoint
+
+Run these commands to verify Phase 4 completion:
+
+```bash
+# Verify worker files exist
+ls -la worker/
+ls -la worker/src/
+
+# Verify worker compiles
+cd worker && npx tsc --noEmit && cd ..
+
+# Test worker locally (optional)
+cd worker && npm run dev &
+curl http://localhost:8787/health
+# Should return: ok
+```
+
+Expected: Worker compiles, health check returns "ok".
+
+---
+
 ## Phase 5: Local Development Workflow
 
-### Task 15: Add development scripts to root package.json
+### Task 19: Add development scripts to root package.json
 
 **Files:**
 - Modify: `package.json`
 
-**Step 1: Add convenience scripts**
+**Step 1: Update package.json with convenience scripts**
+
+Replace the scripts section in `package.json` with:
 
 ```json
 {
   "scripts": {
     "dev": "astro dev",
-    "dev:wrangler": "wrangler pages dev dist --d1=DB=everinvests-db",
+    "dev:wrangler": "astro build && wrangler pages dev dist --d1=DB=everinvests-db",
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "db:migrate:local": "wrangler d1 migrations apply everinvests-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply everinvests-db --remote",
     "db:seed": "wrangler d1 execute everinvests-db --local --file=./scripts/seed.sql",
-    "worker:dev": "cd worker && pnpm dev",
-    "worker:deploy": "cd worker && pnpm deploy",
-    "deploy": "pnpm build && wrangler pages deploy dist"
+    "worker:dev": "cd worker && npm run dev",
+    "worker:deploy": "cd worker && npm run deploy",
+    "deploy": "npm run build && wrangler pages deploy dist"
   }
 }
 ```
@@ -1121,12 +1596,18 @@ Run:
 
 ---
 
-### Task 16: Create seed data script
+### Task 20: Create seed data script
 
 **Files:**
 - Create: `scripts/seed.sql`
 
-**Step 1: Write seed data**
+**Step 1: Create scripts directory**
+
+```bash
+mkdir -p scripts
+```
+
+**Step 2: Write seed data**
 
 ```sql
 -- scripts/seed.sql
@@ -1172,12 +1653,12 @@ VALUES
   ('forex', '08:00', '2026-01-14T08:00:10Z', 'success', 3200);
 ```
 
-**Step 2: Apply seed data**
+**Step 3: Apply seed data (verify locally)**
 
-Run: `pnpm db:seed`
+Run: `npm run db:seed`
 Expected: Data inserted successfully.
 
-**Step 3: Commit**
+**Step 4: Commit**
 
 Run:
 - `git add scripts/seed.sql`
@@ -1185,7 +1666,7 @@ Run:
 
 ---
 
-### Task 17: Document local development workflow
+### Task 21: Document local development workflow
 
 **Files:**
 - Create: `docs/development.md`
@@ -1198,8 +1679,8 @@ Run:
 ## Prerequisites
 
 - Node.js 20+ (use nvm: `nvm install --lts`)
-- pnpm (`corepack enable`)
-- Wrangler (`pnpm add -g wrangler`)
+- npm (comes with Node.js)
+- Wrangler (`npm install -g wrangler`)
 - Logged into Cloudflare (`wrangler login`)
 
 ## First-Time Setup
@@ -1208,8 +1689,8 @@ Run:
    ```bash
    git clone <repo>
    cd everinvests
-   pnpm install
-   cd worker && pnpm install && cd ..
+   npm install
+   cd worker && npm install && cd ..
    ```
 
 2. **Create D1 database (if not exists):**
@@ -1220,13 +1701,13 @@ Run:
 
 3. **Apply migrations:**
    ```bash
-   pnpm db:migrate:local   # Local D1
-   pnpm db:migrate:remote  # Production D1
+   npm run db:migrate:local   # Local D1
+   npm run db:migrate:remote  # Production D1
    ```
 
 4. **Seed local data:**
    ```bash
-   pnpm db:seed
+   npm run db:seed
    ```
 
 5. **Set up worker secrets (for production):**
@@ -1245,16 +1726,16 @@ Run:
 
 ```bash
 # Option 1: Astro dev (fast, no D1)
-pnpm dev
+npm run dev
 
 # Option 2: Wrangler pages dev (with local D1)
-pnpm build && pnpm dev:wrangler
+npm run dev:wrangler
 ```
 
 ### Running the Worker locally
 
 ```bash
-pnpm worker:dev
+npm run worker:dev
 # Trigger scheduled job manually:
 curl "http://127.0.0.1:8787/__scheduled?cron=0+*+*+*+*"
 ```
@@ -1262,8 +1743,9 @@ curl "http://127.0.0.1:8787/__scheduled?cron=0+*+*+*+*"
 ### Testing
 
 ```bash
-pnpm test           # Run once
-pnpm test:watch     # Watch mode
+npm test           # Run once
+npm run test:watch # Watch mode
+npm run typecheck  # TypeScript check
 ```
 
 ## Deployment
@@ -1271,14 +1753,14 @@ pnpm test:watch     # Watch mode
 ### Deploy Astro site (Pages)
 
 ```bash
-pnpm deploy
+npm run deploy
 # Or use Git integration (push to main)
 ```
 
 ### Deploy Worker
 
 ```bash
-pnpm worker:deploy
+npm run worker:deploy
 ```
 
 ### Bind D1 in Dashboard
@@ -1292,6 +1774,28 @@ For Pages: Workers & Pages → everinvests-site → Settings → Functions → D
 2. **Cron changes take up to 15 minutes to propagate** after deployment.
 
 3. **Workers AI binding** for Pages must be configured in the Cloudflare dashboard, not wrangler.toml.
+
+## Troubleshooting
+
+### TypeScript errors after pulling changes
+```bash
+npm run typecheck
+```
+
+### D1 migration issues
+```bash
+# Check current migration state
+wrangler d1 migrations list everinvests-db --local
+
+# Reset local D1 (destructive!)
+rm -rf .wrangler/state
+npm run db:migrate:local
+npm run db:seed
+```
+
+### Worker not triggering cron
+- Verify deployment: `cd worker && wrangler deployments list`
+- Check logs: `cd worker && wrangler tail`
 ```
 
 **Step 2: Commit**
@@ -1302,30 +1806,48 @@ Run:
 
 ---
 
-## Remember
+### ✅ Phase 5 Checkpoint (Final)
 
-- Replace `<YOUR_DATABASE_ID_FROM_TASK_2>` with actual D1 database_id in all wrangler.toml files
-- Use `pnpm` consistently throughout
-- Exact file paths always
-- Complete code in plan (not "add validation")
-- Exact commands with expected output
-- DRY, YAGNI, TDD, frequent commits
+Run these commands to verify Phase 5 and full project completion:
 
-## Execution Handoff
+```bash
+# Verify all scripts work
+npm run typecheck
+npm test
 
-**Plan complete and saved to `docs/plans/2026-01-14-signal-api-foundation.md`. Two execution options:**
+# Verify documentation exists
+cat docs/development.md
 
-**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
+# Verify seed data exists
+cat scripts/seed.sql
 
-**2. Parallel Session (separate)** - Open new session with @superpowers:executing-plans, batch execution with checkpoints
+# Full integration test (requires local D1)
+npm run db:migrate:local
+npm run db:seed
+npm run dev:wrangler &
+curl http://localhost:8788/api/today/crypto
+curl http://localhost:8788/api/history/crypto?limit=5
+curl http://localhost:8788/api/macro
+```
 
-**Which approach?**
+Expected: All endpoints return valid JSON responses with seeded data.
 
-**If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use @superpowers:subagent-driven-development
-- Stay in this session
-- Fresh subagent per task + code review
+---
 
-**If Parallel Session chosen:**
-- Guide them to open new session in worktree
-- **REQUIRED SUB-SKILL:** New session uses @superpowers:executing-plans
+## Summary
+
+| Phase | Tasks | Description |
+|-------|-------|-------------|
+| Phase 1 | 1-5 | Infrastructure: D1 database, migrations, wrangler config, types |
+| Phase 2 | 6-10 | Database layer: types, queries, client functions |
+| Phase 3 | 11-14 | API routes: /api/today, /api/history, /api/macro |
+| Phase 4 | 15-18 | Worker: scaffold, env, schedule router, DB utilities |
+| Phase 5 | 19-21 | DevEx: scripts, seed data, documentation |
+
+**Total: 21 tasks**
+
+---
+
+## Next Steps
+
+Resume execution from **Task 6** (create directory structure). All Phase 1 infrastructure is complete.
