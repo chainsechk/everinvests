@@ -165,14 +165,35 @@
 - Created `docs/development.md` with full workflow guide
 - Commit: `ae08ab5 docs: add local development guide`
 
+### Phase 7: Signal Generation Pipeline
+- **Status:** complete
+- **Started:** 2026-01-14
+- **Completed:** 2026-01-14
+
+#### Task 18-23: Full Pipeline Implementation
+- **Data Fetching:**
+  - `worker/src/data/binance.ts` - Crypto (price, funding, 20D MA)
+  - `worker/src/data/twelvedata.ts` - Forex/stocks (price, RSI, MA)
+  - `worker/src/data/alphavantage.ts` - Macro (DXY, VIX, yields)
+- **Signal Calculation:**
+  - `worker/src/signals/bias.ts` - Asset and category bias
+  - `worker/src/signals/macro.ts` - Macro context analysis
+- **LLM Summary:**
+  - `worker/src/llm/summary.ts` - Workers AI + OpenRouter
+- **Notifications:**
+  - `worker/src/notify/telegram.ts` - HTML formatted messages
+- **Pipeline:**
+  - `worker/src/index.ts` - Full end-to-end integration
+- Commit: `d33833c feat: implement signal generation pipeline`
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 6 complete - Signal API Foundation done! |
-| Where am I going? | Next: Implement signal generation pipeline in worker |
-| What's the goal? | Complete market signal broadcast site |
-| What have I learned? | See findings.md (includes database_id) |
-| What have I done? | Tasks 1-17 complete, full foundation ready |
+| Where am I? | Phase 7 complete - Full pipeline implemented! |
+| Where am I going? | Deploy and test in production |
+| What's the goal? | Market signal broadcast site - DONE |
+| What have I learned? | See findings.md |
+| What have I done? | Tasks 1-23 complete, full system ready |
 
 ---
 *Update after completing each phase or encountering errors*

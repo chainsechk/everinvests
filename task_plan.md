@@ -4,7 +4,17 @@
 Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
 
 ## Current Phase
-Phase 6 complete - Signal API Foundation done!
+Phase 7 complete - Full signal generation pipeline implemented!
+
+### Phase 7: Signal Generation Pipeline (Tasks 18-23)
+- [x] Task 18: Create data fetching modules (Binance, TwelveData, AlphaVantage)
+- [x] Task 19: Create bias calculation module
+- [x] Task 20: Create macro context calculation
+- [x] Task 21: Create LLM summary generation
+- [x] Task 22: Create Telegram notification module
+- [x] Task 23: Wire up pipeline in index.ts
+- Commit: `d33833c feat: implement signal generation pipeline`
+- **Status:** complete
 
 ## Phases
 
