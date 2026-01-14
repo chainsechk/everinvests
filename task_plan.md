@@ -4,7 +4,7 @@
 Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
 
 ## Current Phase
-Phase 6 (Task 13 next)
+Phase 6 complete - Signal API Foundation done!
 
 ## Phases
 
@@ -55,13 +55,19 @@ Phase 6 (Task 13 next)
   - `97c239e feat: add /api/macro endpoint`
 - **Status:** complete
 
-### Phase 6: Signal Generation Worker (Tasks 13+)
-- [ ] Task 13: Scaffold Worker project
-- [ ] Task 14: Create worker environment file
-- [ ] Task 15: Add development scripts
-- [ ] Task 16: Create seed data script
-- [ ] Task 17: Document local development workflow
-- **Status:** pending
+### Phase 6: Signal Generation Worker (Tasks 13-17)
+- [x] Task 13: Scaffold Worker project
+- [x] Task 14: Create worker environment file
+- [x] Task 15: Add development scripts
+- [x] Task 16: Create seed data script
+- [x] Task 17: Document local development workflow
+- Commits:
+  - `8bd5058 chore: scaffold signal generation worker`
+  - `35e79ad chore: add worker env template and gitignore`
+  - `97abe37 chore: add development convenience scripts`
+  - `7f71a9f chore: add local development seed data`
+  - `ae08ab5 docs: add local development guide`
+- **Status:** complete
 
 ## Key Questions
 1. Is there an existing Astro project or empty repo? → **Empty repo, need full scaffold**

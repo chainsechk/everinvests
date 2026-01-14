@@ -131,14 +131,48 @@
 | api/macro.test.ts | 2 | PASS |
 | **Total** | **15** | **PASS** |
 
+### Phase 6: Signal Generation Worker + Dev Workflow
+- **Status:** complete
+- **Started:** 2026-01-14
+- **Completed:** 2026-01-14
+
+#### Task 13: Scaffold Worker project
+- **Status:** complete
+- Created `worker/` directory with package.json, wrangler.toml, tsconfig.json
+- Implemented schedule logic for crypto/forex/stocks
+- Added run logging to D1
+- Commit: `8bd5058 chore: scaffold signal generation worker`
+
+#### Task 14: Create worker environment file
+- **Status:** complete
+- Created `.dev.vars.example` with API key placeholders
+- Created `.gitignore` for secrets
+- Commit: `35e79ad chore: add worker env template and gitignore`
+
+#### Task 15: Add development scripts
+- **Status:** complete
+- Added convenience scripts to root package.json
+- Commit: `97abe37 chore: add development convenience scripts`
+
+#### Task 16: Create seed data script
+- **Status:** complete
+- Created `scripts/seed.sql` with sample data for all categories
+- Verified working with `npm run db:seed`
+- Commit: `7f71a9f chore: add local development seed data`
+
+#### Task 17: Document local development
+- **Status:** complete
+- Created `docs/development.md` with full workflow guide
+- Commit: `ae08ab5 docs: add local development guide`
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 5 complete, ready for Phase 6 |
-| Where am I going? | Task 13: Scaffold Worker project |
-| What's the goal? | Build signal generation worker |
+| Where am I? | Phase 6 complete - Signal API Foundation done! |
+| Where am I going? | Next: Implement signal generation pipeline in worker |
+| What's the goal? | Complete market signal broadcast site |
 | What have I learned? | See findings.md (includes database_id) |
-| What have I done? | Tasks 1-12 complete, API endpoints done |
+| What have I done? | Tasks 1-17 complete, full foundation ready |
 
 ---
 *Update after completing each phase or encountering errors*
