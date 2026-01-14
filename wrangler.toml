@@ -1,0 +1,9 @@
+# wrangler.toml
+name = "everinvests-site"
+compatibility_date = "2026-01-14"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "everinvests-db"
+database_id = "92386766-33b5-4dc8-a594-abf6fc4e6600"
+migrations_dir = "migrations"
