@@ -55,10 +55,11 @@ Phase 7 complete - Full signal generation pipeline implemented!
   - `18de880 feat: add typed D1 client functions`
 - **Status:** complete
 
-### Phase 5: API Routes (Tasks 10-12)
+### Phase 5: API Routes (Tasks 10-13)
 - [x] Task 10: Create /api/today/[category].ts + tests
 - [x] Task 11: Create /api/history/[category].ts + tests
 - [x] Task 12: Create /api/macro.ts + tests
+- [x] Task 13: Create src/lib/api/types.ts (API response types)
 - Commits:
   - `7a7207a feat: add /api/today/[category] endpoint`
   - `dc9899b feat: add /api/history/[category] endpoint`

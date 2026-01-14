@@ -119,6 +119,11 @@
 - Created `tests/api/macro.test.ts` (TDD)
 - Commit: `97c239e feat: add /api/macro endpoint`
 
+#### Task 13: Create API response type definitions
+- **Status:** complete
+- Created `src/lib/api/types.ts` with SignalResponse, HistoryResponse, MacroResponse, ErrorResponse
+- Created `src/lib/api/index.ts` for module exports
+
 ## Test Results
 | Test File | Tests | Status |
 |-----------|-------|--------|
