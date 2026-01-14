@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd validated EverInvests design document\n\nComprehensive design for market signal broadcast site covering:\n- 3 asset categories (Crypto, Forex, Stocks)\n- Cloudflare stack (Pages, Workers, D1, Workers AI)\n- 2-3 daily updates with rule-based signals + LLM summaries\n- Telegram integration for notifications and premium funnel\n- Free tier constraints and upgrade paths documented\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Skill(superpowers:using-git-worktrees)",
+      "Skill(superpowers:writing-plans)"
+    ]
+  }
+}
