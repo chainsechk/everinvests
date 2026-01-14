@@ -1,0 +1,4 @@
+# worker/.gitignore
+.dev.vars
+.wrangler/
+node_modules/

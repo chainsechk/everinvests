@@ -1,0 +1,13 @@
+# worker/.dev.vars.example
+# Copy to .dev.vars and fill in values
+
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=@everinvests
+
+# Data APIs
+TWELVEDATA_API_KEY=your_twelvedata_key
+ALPHAVANTAGE_API_KEY=your_alphavantage_key
+
+# LLM Fallback (for stocks)
+OPENROUTER_API_KEY=your_openrouter_key
