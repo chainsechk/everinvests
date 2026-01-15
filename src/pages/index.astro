@@ -1,15 +1,106 @@
 ---
-// EverInvests - Market Signal Broadcast
+// src/pages/index.astro
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import MacroBar from "../components/MacroBar.astro";
+import SignalCard from "../components/SignalCard.astro";
+import TelegramCTA from "../components/TelegramCTA.astro";
+import { getLatestMacro, getLatestSignal, getAssetSignals } from "../lib/db";
+
+const db = Astro.locals.runtime?.env?.DB;
+
+let macro = null;
+let cryptoSignal = null;
+let forexSignal = null;
+let stocksSignal = null;
+
+if (db) {
+  [macro, cryptoSignal, forexSignal, stocksSignal] = await Promise.all([
+    getLatestMacro(db),
+    getLatestSignal(db, "crypto"),
+    getLatestSignal(db, "forex"),
+    getLatestSignal(db, "stocks"),
+  ]);
+}
+
+function extractSummary(signal: any): string | null {
+  if (!signal?.output_json) return null;
+  try {
+    const output = JSON.parse(signal.output_json);
+    return output.summary || null;
+  } catch {
+    return null;
+  }
+}
+
+async function getAssetCount(signal: any): Promise<number> {
+  if (!signal || !db) return 0;
+  const assets = await getAssetSignals(db, signal.id);
+  return assets.length;
+}
+
+const cryptoAssetCount = await getAssetCount(cryptoSignal);
+const forexAssetCount = await getAssetCount(forexSignal);
+const stocksAssetCount = await getAssetCount(stocksSignal);
+
+function formatNextUpdate(): string {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const schedules = [0, 8, 14, 16, 17, 21];
+  const nextHour = schedules.find((h) => h > utcHour) || schedules[0];
+  return `${nextHour.toString().padStart(2, "0")}:00 UTC`;
+}
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>EverInvests</title>
-  </head>
-  <body>
-    <h1>EverInvests</h1>
-    <p>Market signals coming soon.</p>
-  </body>
-</html>
+<BaseLayout title="EverInvests" description="Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.">
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Macro Context -->
+    <MacroBar
+      overall={macro?.overall}
+      dxyBias={macro?.dxy_bias}
+      vixLevel={macro?.vix_level}
+      yieldsBias={macro?.yields_bias}
+    />
+
+    <!-- Signal Cards Grid -->
+    <div class="grid gap-6 md:grid-cols-3">
+      <SignalCard
+        category="crypto"
+        bias={cryptoSignal?.bias}
+        summary={extractSummary(cryptoSignal)}
+        assetCount={cryptoAssetCount}
+        updatedAt={cryptoSignal?.generated_at}
+      />
+      <SignalCard
+        category="forex"
+        bias={forexSignal?.bias}
+        summary={extractSummary(forexSignal)}
+        assetCount={forexAssetCount}
+        updatedAt={forexSignal?.generated_at}
+      />
+      <SignalCard
+        category="stocks"
+        bias={stocksSignal?.bias}
+        summary={extractSummary(stocksSignal)}
+        assetCount={stocksAssetCount}
+        updatedAt={stocksSignal?.generated_at}
+      />
+    </div>
+
+    <!-- Telegram CTA -->
+    <TelegramCTA variant="full" />
+
+    <!-- Update Schedule -->
+    <div class="text-center text-sm text-gray-500">
+      <p>
+        Last updated: {cryptoSignal?.time_slot || "--:--"} UTC &bull;
+        Next update: {formatNextUpdate()}
+      </p>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
