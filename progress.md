@@ -267,14 +267,32 @@
 #### Task 18: Create About page
 - Created src/pages/about.astro with methodology and schedule
 
+### Phase 14: SEO & Polish
+- **Status:** complete
+- **Started:** 2026-01-15
+- **Completed:** 2026-01-15
+
+#### Task 22: Add Open Graph meta tags
+- Updated src/layouts/BaseLayout.astro with OG and Twitter meta tags
+- Added canonical URLs, theme color, preconnect hints
+
+#### Task 23: Create sitemap
+- Created src/pages/sitemap.xml.ts (dynamic sitemap)
+- Created src/pages/robots.txt.ts
+
+#### Task 24: Performance optimization
+- Created public/favicon.svg
+- Created public/og-image.svg
+- Added preconnect hints for t.me
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 12 complete - Frontend UI implemented! |
-| Where am I going? | Phase 13-14: Deploy + SEO polish |
+| Where am I? | Phase 14 complete - SEO & Polish done! |
+| Where am I going? | Phase 13: Deploy to production |
 | What's the goal? | Market signal broadcast site |
 | What have I learned? | See findings.md |
-| What have I done? | Phases 1-12 complete, 18 frontend tasks done |
+| What have I done? | Phases 1-12, 14 complete (24 tasks) |
 
 ---
 *Update after completing each phase or encountering errors*
