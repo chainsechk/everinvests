@@ -1,6 +1,7 @@
 # wrangler.toml
-name = "everinvests-site"
+name = "everinvests"
 compatibility_date = "2026-01-14"
+pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
