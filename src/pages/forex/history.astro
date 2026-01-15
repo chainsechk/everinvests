@@ -1,0 +1,44 @@
+---
+// src/pages/forex/history.astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import HistoryList from "../../components/HistoryList.astro";
+import { getSignalHistory } from "../../lib/db";
+
+const category = "forex" as const;
+const categoryTitle = "Forex";
+
+const db = Astro.locals.runtime?.env?.DB;
+let signals: any[] = [];
+
+if (db) {
+  signals = await getSignalHistory(db, category, 30);
+}
+---
+
+<BaseLayout title={`${categoryTitle} History`} description={`Historical ${categoryTitle.toLowerCase()} signals archive.`}>
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-400">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span class="mx-2">/</span>
+      <a href={`/${category}`} class="hover:text-white transition-colors">{categoryTitle}</a>
+      <span class="mx-2">/</span>
+      <span class="text-white">History</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">{categoryTitle} Signal History</h1>
+      <p class="text-gray-400">{signals.length} signals in archive</p>
+    </div>
+
+    <!-- Signal List -->
+    <HistoryList signals={signals} category={category} />
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
