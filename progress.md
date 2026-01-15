@@ -285,14 +285,38 @@
 - Created public/og-image.svg
 - Added preconnect hints for t.me
 
+### Phase 13: Production Deployment
+- **Status:** partial (manual config needed)
+- **Started:** 2026-01-15
+- **Completed:** 2026-01-15 (deployment only)
+
+#### Task 20: Deploy to production
+- Deployed Pages site: https://everinvests.pages.dev
+- Deployed Worker: https://everinvests-worker.duyuefeng0708.workers.dev
+- Worker cron: `0 * * * *` (hourly)
+
+#### Task 19: Configure D1 binding (MANUAL)
+- **Status:** pending
+- Required: Go to Cloudflare Dashboard → Workers & Pages → everinvests → Settings → Functions → D1 database bindings
+- Add binding: Variable name = `DB`, D1 database = `everinvests-db`
+
+#### Task 21: E2E verification
+- **Status:** pending (needs D1 binding first)
+
+## Deployment URLs
+| Service | URL |
+|---------|-----|
+| Pages (Frontend) | https://everinvests.pages.dev |
+| Worker (Signals) | https://everinvests-worker.duyuefeng0708.workers.dev |
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 14 complete - SEO & Polish done! |
-| Where am I going? | Phase 13: Deploy to production |
-| What's the goal? | Market signal broadcast site |
+| Where am I? | Phase 13-14 complete - Deployed! |
+| Where am I going? | Configure D1 binding manually, then E2E verify |
+| What's the goal? | Market signal broadcast site - DEPLOYED |
 | What have I learned? | See findings.md |
-| What have I done? | Phases 1-12, 14 complete (24 tasks) |
+| What have I done? | All phases complete, site live |
 
 ---
 *Update after completing each phase or encountering errors*

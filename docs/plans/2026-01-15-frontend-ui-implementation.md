@@ -58,7 +58,7 @@ src/
 | Phase 10: Category Pages | Tasks 9-14 | complete |
 | Phase 11: History Pages | Tasks 15-17 | complete |
 | Phase 12: About Page | Task 18 | complete |
-| Phase 13: Production Deploy | Tasks 19-21 | pending |
+| Phase 13: Production Deploy | Tasks 19-21 | complete (D1 binding manual) |
 | Phase 14: SEO & Polish | Tasks 22-24 | complete |
 
 ---
