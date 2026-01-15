@@ -53,11 +53,11 @@ src/
 
 | Phase | Tasks | Status |
 |-------|-------|--------|
-| Phase 8: Styling + Layout | Tasks 1-4 | pending |
-| Phase 9: Home Page | Tasks 5-8 | pending |
-| Phase 10: Category Pages | Tasks 9-14 | pending |
-| Phase 11: History Pages | Tasks 15-17 | pending |
-| Phase 12: About Page | Task 18 | pending |
+| Phase 8: Styling + Layout | Tasks 1-4 | complete |
+| Phase 9: Home Page | Tasks 5-8 | complete |
+| Phase 10: Category Pages | Tasks 9-14 | complete |
+| Phase 11: History Pages | Tasks 15-17 | complete |
+| Phase 12: About Page | Task 18 | complete |
 | Phase 13: Production Deploy | Tasks 19-21 | pending |
 | Phase 14: SEO & Polish | Tasks 22-24 | pending |
 
