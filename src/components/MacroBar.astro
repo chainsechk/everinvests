@@ -1,0 +1,52 @@
+---
+// src/components/MacroBar.astro
+interface Props {
+  overall: string | null;
+  dxyBias: string | null;
+  vixLevel: string | null;
+  yieldsBias: string | null;
+}
+
+const { overall, dxyBias, vixLevel, yieldsBias } = Astro.props;
+
+function getOverallColor(value: string | null): string {
+  if (!value) return "text-gray-400";
+  const lower = value.toLowerCase();
+  if (lower.includes("risk-on")) return "text-riskon";
+  if (lower.includes("risk-off")) return "text-riskoff";
+  return "text-mixed";
+}
+
+function formatDxy(bias: string | null): string {
+  if (!bias) return "DXY: --";
+  return `DXY ${bias}`;
+}
+
+function formatVix(level: string | null): string {
+  if (!level) return "VIX: --";
+  const lower = level.toLowerCase();
+  if (lower === "risk_on") return "VIX low";
+  if (lower === "risk_off") return "VIX high";
+  return "VIX neutral";
+}
+
+function formatYields(bias: string | null): string {
+  if (!bias) return "Yields: --";
+  if (bias === "falling") return "Yields falling";
+  if (bias === "rising") return "Yields rising";
+  return "Yields stable";
+}
+---
+
+<div class="card flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm">
+  <div class="flex items-center gap-2">
+    <span class="text-gray-400">MACRO:</span>
+    <span class:list={["font-semibold", getOverallColor(overall)]}>
+      {overall || "Loading..."}
+    </span>
+  </div>
+  <div class="hidden sm:block w-px h-4 bg-gray-600"></div>
+  <span class="text-gray-300">{formatDxy(dxyBias)}</span>
+  <span class="text-gray-300">{formatVix(vixLevel)}</span>
+  <span class="text-gray-300">{formatYields(yieldsBias)}</span>
+</div>
