@@ -1,10 +1,35 @@
-# Task Plan: Signal API Foundation Implementation
+# Task Plan: EverInvests Implementation
 
 ## Goal
-Build API endpoints (`/api/today/[category]` and `/api/history/[category]`) that return the latest and historical signals for crypto/forex/stocks from Cloudflare D1.
+Build a complete market signal broadcast site with automated daily signals for Crypto, Forex, and Stocks.
 
 ## Current Phase
-Phase 7 complete - Full signal generation pipeline implemented!
+Phase 7 complete - Backend infrastructure ready. **Next: Phase 8 - Frontend UI**
+
+See: `docs/plans/2026-01-15-frontend-ui-implementation.md` for detailed frontend plan.
+
+---
+
+## Backend Complete (Phases 1-7)
+- API endpoints: `/api/today/{cat}`, `/api/history/{cat}`, `/api/macro`
+- D1 database with 4 tables, 5 indexes
+- Signal generation worker with full pipeline
+- 15 passing tests
+
+## Frontend Pending (Phases 8-14)
+| Phase | Description | Tasks |
+|-------|-------------|-------|
+| 8 | Styling + Layout | Tailwind, BaseLayout, Header, Footer |
+| 9 | Home Page | MacroBar, SignalCard, TelegramCTA |
+| 10 | Category Pages | BiasIndicator, SignalDetail, AssetTable, HistoryMini |
+| 11 | History Pages | HistoryList component, 3 history pages |
+| 12 | About Page | Methodology + CTA |
+| 13 | Production Deploy | Secrets, deploy, E2E verification |
+| 14 | SEO & Polish | Meta tags, sitemap, performance |
+
+---
+
+## Completed Phases
 
 ### Phase 7: Signal Generation Pipeline (Tasks 18-23)
 - [x] Task 18: Create data fetching modules (Binance, TwelveData, AlphaVantage)
