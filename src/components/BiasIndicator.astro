@@ -1,0 +1,30 @@
+---
+// src/components/BiasIndicator.astro
+interface Props {
+  bias: string | null;
+  size?: "sm" | "md" | "lg";
+}
+
+const { bias, size = "md" } = Astro.props;
+
+function getBiasInfo(bias: string | null) {
+  if (!bias) return { color: "text-gray-400 bg-gray-700", label: "Unknown", arrow: "" };
+  const lower = bias.toLowerCase();
+  if (lower.includes("bullish")) return { color: "text-bullish bg-bullish/10", label: bias, arrow: "^" };
+  if (lower.includes("bearish")) return { color: "text-bearish bg-bearish/10", label: bias, arrow: "v" };
+  return { color: "text-neutral bg-neutral/10", label: bias, arrow: "-" };
+}
+
+const { color, label, arrow } = getBiasInfo(bias);
+
+const sizeClasses = {
+  sm: "text-sm px-2 py-1",
+  md: "text-base px-3 py-1.5",
+  lg: "text-lg px-4 py-2",
+};
+---
+
+<span class:list={["inline-flex items-center gap-1 rounded-full font-semibold", color, sizeClasses[size]]}>
+  {label}
+  {arrow && <span class="opacity-70">{arrow}</span>}
+</span>

@@ -1,0 +1,51 @@
+---
+// src/components/HistoryMini.astro
+import BiasIndicator from "./BiasIndicator.astro";
+
+interface Signal {
+  id: number;
+  date: string;
+  time_slot: string;
+  bias: string;
+}
+
+interface Props {
+  signals: Signal[];
+  category: "crypto" | "forex" | "stocks";
+}
+
+const { signals, category } = Astro.props;
+
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+---
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Recent Signals</h3>
+    <a href={`/${category}/history`} class="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+      View all &rarr;
+    </a>
+  </div>
+
+  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    {signals.slice(0, 7).map((signal) => (
+      <div class="bg-gray-700/30 rounded-lg px-3 py-2 flex items-center justify-between">
+        <div class="text-xs text-gray-400">
+          {formatDate(signal.date)} {signal.time_slot}
+        </div>
+        <BiasIndicator bias={signal.bias} size="sm" />
+      </div>
+    ))}
+  </div>
+
+  {signals.length === 0 && (
+    <p class="text-sm text-gray-500 italic">No historical signals available yet.</p>
+  )}
+</div>

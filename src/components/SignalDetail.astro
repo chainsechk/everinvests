@@ -1,0 +1,107 @@
+---
+// src/components/SignalDetail.astro
+import BiasIndicator from "./BiasIndicator.astro";
+
+interface Props {
+  signal: {
+    id: number;
+    bias: string;
+    date: string;
+    time_slot: string;
+    generated_at: string;
+    macro_overall: string | null;
+    output_json: string | null;
+  };
+}
+
+const { signal } = Astro.props;
+
+function parseOutput(outputJson: string | null) {
+  if (!outputJson) return null;
+  try {
+    return JSON.parse(outputJson);
+  } catch {
+    return null;
+  }
+}
+
+const output = parseOutput(signal.output_json);
+
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+---
+
+<div class="card space-y-6">
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <BiasIndicator bias={signal.bias} size="lg" />
+      {signal.macro_overall && (
+        <span class="text-sm text-gray-400">
+          Macro: {signal.macro_overall}
+        </span>
+      )}
+    </div>
+    <div class="text-sm text-gray-400">
+      {formatDate(signal.date)} at {signal.time_slot} UTC
+    </div>
+  </div>
+
+  <!-- Summary -->
+  {output?.summary && (
+    <div class="text-lg text-gray-200 leading-relaxed">
+      {output.summary}
+    </div>
+  )}
+
+  <!-- Key Levels -->
+  {output?.levels && Object.keys(output.levels).length > 0 && (
+    <div class="space-y-2">
+      <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Key Levels</h3>
+      <div class="flex flex-wrap gap-4 text-sm">
+        {Object.entries(output.levels).map(([key, value]) => (
+          <div class="bg-gray-700/50 rounded px-3 py-1.5">
+            <span class="text-gray-400">{key.replace(/_/g, " ")}:</span>
+            <span class="text-white ml-1 font-mono">{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Triggers -->
+  {output?.triggers && output.triggers.length > 0 && (
+    <div class="space-y-2">
+      <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Triggers</h3>
+      <ul class="space-y-1">
+        {output.triggers.map((trigger: string) => (
+          <li class="text-sm text-gray-300 flex items-start gap-2">
+            <span class="text-blue-400 mt-0.5">-</span>
+            {trigger}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  <!-- Risks -->
+  {output?.risks && output.risks.length > 0 && (
+    <div class="space-y-2">
+      <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Risks</h3>
+      <ul class="space-y-1">
+        {output.risks.map((risk: string) => (
+          <li class="text-sm text-gray-300 flex items-start gap-2">
+            <span class="text-amber-400 mt-0.5">!</span>
+            {risk}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</div>
