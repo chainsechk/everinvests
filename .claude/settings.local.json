@@ -24,7 +24,15 @@
       "Bash(wrangler d1 list:*)",
       "Bash(wrangler d1 create:*)",
       "Bash(wrangler d1 migrations apply:*)",
-      "Bash(wrangler d1 execute:*)"
+      "Bash(wrangler d1 execute:*)",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" log --oneline -10)",
+      "Bash(dir:*)",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" log --oneline -20)",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" add task_plan.md docs/plans/2026-01-15-frontend-ui-implementation.md)",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" status)",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" commit -m \"$(cat <<''EOF''\ndocs: add frontend UI implementation plan\n\nComprehensive plan for Phases 8-14 covering:\n- Tailwind CSS setup and layout components\n- Home page with macro bar and signal cards\n- Category pages with signal detail and asset tables\n- History pages with archive view\n- About page with methodology\n- Production deployment steps\n- SEO and performance polish\n\n24 tasks across 7 phases, component-first approach.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" commit -m \"docs: add frontend UI implementation plan\" -m \"Comprehensive plan for Phases 8-14 covering Tailwind CSS, layout components, home page, category pages, history pages, about page, deployment, and SEO. 24 tasks across 7 phases.\" -m \"Co-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git -C \"D:/yuefengdu2/Documents/Github/everinvests\" push origin master)"
     ]
   }
 }
