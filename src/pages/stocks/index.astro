@@ -1,0 +1,91 @@
+---
+// src/pages/stocks/index.astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import MacroBar from "../../components/MacroBar.astro";
+import SignalDetail from "../../components/SignalDetail.astro";
+import AssetTable from "../../components/AssetTable.astro";
+import HistoryMini from "../../components/HistoryMini.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } from "../../lib/db";
+
+const category = "stocks" as const;
+const categoryTitle = "Stocks";
+const categoryDescription = "Daily stock signals for semiconductors, AI infrastructure, and energy sectors.";
+
+const db = Astro.locals.runtime?.env?.DB;
+
+let macro = null;
+let signal = null;
+let assets: any[] = [];
+let history: any[] = [];
+
+if (db) {
+  [macro, signal] = await Promise.all([
+    getLatestMacro(db),
+    getLatestSignal(db, category),
+  ]);
+
+  if (signal) {
+    [assets, history] = await Promise.all([
+      getAssetSignals(db, signal.id),
+      getSignalHistory(db, category, 7),
+    ]);
+  }
+}
+---
+
+<BaseLayout title={categoryTitle} description={categoryDescription}>
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-400">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span class="mx-2">/</span>
+      <span class="text-white">{categoryTitle}</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">{categoryTitle} Signals</h1>
+      <p class="text-gray-400">25 tickers across 3 sectors</p>
+    </div>
+
+    <!-- Macro Context -->
+    <MacroBar
+      overall={macro?.overall}
+      dxyBias={macro?.dxy_bias}
+      vixLevel={macro?.vix_level}
+      yieldsBias={macro?.yields_bias}
+    />
+
+    <!-- Current Signal -->
+    {signal ? (
+      <SignalDetail signal={signal} />
+    ) : (
+      <div class="card text-center py-12">
+        <p class="text-gray-400">No signal available yet. Check back at the next update.</p>
+      </div>
+    )}
+
+    <!-- Asset Table -->
+    {assets.length > 0 && (
+      <div class="card">
+        <h2 class="text-lg font-semibold text-white mb-4">Asset Breakdown</h2>
+        <AssetTable assets={assets} category={category} />
+      </div>
+    )}
+
+    <!-- History Mini -->
+    <div class="card">
+      <HistoryMini signals={history} category={category} />
+    </div>
+
+    <!-- Telegram CTA -->
+    <TelegramCTA variant="compact" />
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
