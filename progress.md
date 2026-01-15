@@ -286,22 +286,38 @@
 - Added preconnect hints for t.me
 
 ### Phase 13: Production Deployment
-- **Status:** partial (manual config needed)
+- **Status:** complete
 - **Started:** 2026-01-15
-- **Completed:** 2026-01-15 (deployment only)
+- **Completed:** 2026-01-15
 
 #### Task 20: Deploy to production
+- Initial deployment went to Preview (wrong branch)
+- Fixed: Redeployed with `--branch main` for Production
 - Deployed Pages site: https://everinvests.pages.dev
 - Deployed Worker: https://everinvests-worker.duyuefeng0708.workers.dev
 - Worker cron: `0 * * * *` (hourly)
 
-#### Task 19: Configure D1 binding (MANUAL)
-- **Status:** pending
-- Required: Go to Cloudflare Dashboard → Workers & Pages → everinvests → Settings → Functions → D1 database bindings
-- Add binding: Variable name = `DB`, D1 database = `everinvests-db`
+#### Task 19: D1 binding
+- **Status:** complete (auto-configured via wrangler.toml)
+- D1 binding works via deployment, no manual config needed
 
 #### Task 21: E2E verification
-- **Status:** pending (needs D1 binding first)
+- **Status:** complete
+- All API endpoints return correct JSON responses
+- Homepage displays macro context + signal cards
+- Category pages show full signal detail + asset tables
+- History pages load correctly
+- Sitemap and robots.txt generated correctly
+
+## E2E Test Results
+| Endpoint | Status | Response |
+|----------|--------|----------|
+| `/api/macro` | PASS | Returns macro signal JSON |
+| `/api/today/crypto` | PASS | Returns signal + assets |
+| `/api/history/crypto` | PASS | Returns 2 historical signals |
+| `/crypto` | PASS | Renders Bullish signal |
+| `/` | PASS | Shows all 3 category cards |
+| `/sitemap.xml` | PASS | 8 URLs listed |
 
 ## Deployment URLs
 | Service | URL |
@@ -312,11 +328,11 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 13-14 complete - Deployed! |
-| Where am I going? | Configure D1 binding manually, then E2E verify |
-| What's the goal? | Market signal broadcast site - DEPLOYED |
+| Where am I? | ALL PHASES COMPLETE |
+| Where am I going? | Done - site fully operational |
+| What's the goal? | Market signal broadcast site - COMPLETE |
 | What have I learned? | See findings.md |
-| What have I done? | All phases complete, site live |
+| What have I done? | All 14 phases complete, E2E verified |
 
 ---
 *Update after completing each phase or encountering errors*
