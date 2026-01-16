@@ -34,10 +34,11 @@ src/pages/api/       # API endpoints
 worker/              # Cloudflare Worker (signal generation cron)
 ```
 
-## Deployment
+## Deployment (Manual - GitHub not synced to CF)
 - **Branches:** `main` (production) / `dev` (preview)
 - **Production:** everinvests.com
 - **Commands:** `npm run deploy:prod` / `npm run deploy:preview`
+- **Worker:** `npm run worker:deploy`
 
 ## DB Tables
 - `macro_signals` - shared macro context per time slot

@@ -47,6 +47,8 @@ npm run db:migrate:remote
 
 ## Deployment
 
+> **Note:** GitHub is NOT auto-synced to Cloudflare Pages. Deployments require manual Wrangler commands.
+
 ### Branch Structure
 
 | Branch | Environment | Domain |
@@ -54,10 +56,10 @@ npm run db:migrate:remote
 | `main` | Production | everinvests.com |
 | `dev` | Preview | `*.everinvests.pages.dev` |
 
-### Deploy Commands
+### Deploy Commands (Manual)
 
 ```bash
-# Deploy to preview (from dev branch)
+# Deploy to preview
 npm run deploy:preview
 
 # Deploy to production
@@ -70,9 +72,9 @@ npm run worker:deploy
 ### Workflow
 
 1. Develop on `dev` branch
-2. Push to trigger preview deployment
-3. Test via preview URL
-4. Merge to `main` for production deployment
+2. Run `npm run deploy:preview` to test
+3. Merge to `main` when ready
+4. Run `npm run deploy:prod` to publish
 
 ## Project Structure
 
