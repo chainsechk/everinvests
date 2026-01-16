@@ -15,5 +15,10 @@ ENVIRONMENT = "preview"
 
 # Production overrides (used when deploying to main branch)
 [env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "everinvests-db"
+database_id = "92386766-33b5-4dc8-a594-abf6fc4e6600"
+
 [env.production.vars]
 ENVIRONMENT = "production"
