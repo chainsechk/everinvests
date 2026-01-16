@@ -13,7 +13,9 @@
     "db:seed": "wrangler d1 execute everinvests-db --local --file=./scripts/seed.sql",
     "worker:dev": "cd worker && npm run dev",
     "worker:deploy": "cd worker && npm run deploy",
-    "deploy": "npm run build && wrangler pages deploy dist"
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "deploy:preview": "npm run build && wrangler pages deploy dist",
+    "deploy:prod": "npm run build && wrangler pages deploy dist --branch=main"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
