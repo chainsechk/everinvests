@@ -27,12 +27,17 @@ Market signal broadcast site. Daily automated signals for Crypto, Forex, Stocks 
 - **Forex/Stocks:** Twelve Data (800 req/day free)
 - **Macro:** Alpha Vantage (25 req/day free)
 
-## Key Files (planned)
+## Key Files
 ```
 src/pages/           # Astro pages (/, /crypto, /forex, /stocks, /about)
 src/pages/api/       # API endpoints
-functions/           # Cloudflare Workers (signal generation)
+worker/              # Cloudflare Worker (signal generation cron)
 ```
+
+## Deployment
+- **Branches:** `main` (production) / `dev` (preview)
+- **Production:** everinvests.com
+- **Commands:** `npm run deploy:prod` / `npm run deploy:preview`
 
 ## DB Tables
 - `macro_signals` - shared macro context per time slot

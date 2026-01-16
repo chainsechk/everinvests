@@ -45,6 +45,35 @@ npm run db:migrate:local
 npm run db:migrate:remote
 ```
 
+## Deployment
+
+### Branch Structure
+
+| Branch | Environment | Domain |
+|--------|-------------|--------|
+| `main` | Production | everinvests.com |
+| `dev` | Preview | `*.everinvests.pages.dev` |
+
+### Deploy Commands
+
+```bash
+# Deploy to preview (from dev branch)
+npm run deploy:preview
+
+# Deploy to production
+npm run deploy:prod
+
+# Deploy worker (cron jobs)
+npm run worker:deploy
+```
+
+### Workflow
+
+1. Develop on `dev` branch
+2. Push to trigger preview deployment
+3. Test via preview URL
+4. Merge to `main` for production deployment
+
 ## Project Structure
 
 ```
