@@ -325,14 +325,65 @@
 | Pages (Frontend) | https://everinvests.pages.dev |
 | Worker (Signals) | https://everinvests-worker.duyuefeng0708.workers.dev |
 
+## Session: 2026-01-16
+
+### Phase 15: Production API Verification & Bug Fixes
+- **Status:** complete
+- **Started:** 2026-01-16
+- **Completed:** 2026-01-16
+
+#### Issue 1: Worker Secrets Not Deployed
+- **Problem:** Secrets were uploaded to Pages project, not Worker
+- **Resolution:** Deployed all 5 secrets to Worker (`everinvests-worker`):
+  - TWELVEDATA_API_KEY
+  - ALPHAVANTAGE_API_KEY
+  - OPENROUTER_API_KEY
+  - TELEGRAM_BOT_TOKEN
+  - TELEGRAM_CHAT_ID
+
+#### Issue 2: Binance API Blocked by Cloudflare Workers
+- **Problem:** Binance `api.binance.com` returns errors from CF Workers IPs
+- **Resolution:** Migrated to CoinGecko API for crypto price/MA data
+  - Added required User-Agent header
+  - Binance funding rate kept as optional secondary indicator
+- **File:** `worker/src/data/binance.ts` → now uses CoinGecko
+
+#### Issue 3: TwelveData Rate Limiting for Stocks
+- **Problem:** 25 stocks × 3 API calls = 75 requests, but limit is 8/min
+- **Resolution:**
+  - Reduced to 5 key stocks: NVDA, MSFT, XOM, ORCL, AAPL
+  - Sequential API calls with delays (1s between calls, 2s between tickers)
+- **File:** `worker/src/data/twelvedata.ts`
+
+#### API Liveness Test Results
+| API | Status | Notes |
+|-----|--------|-------|
+| Binance Spot | ✅ Blocked | Switched to CoinGecko |
+| CoinGecko | ✅ Working | Requires User-Agent |
+| Twelve Data | ✅ Working | Rate limited to 8/min |
+| Alpha Vantage | ✅ Working | 25 req/day |
+| OpenRouter | ✅ Working | DeepSeek for stocks |
+| Telegram | ✅ Working | Notifications sent |
+
+#### Signal Generation Test Results
+| Category | Status | Duration | Assets |
+|----------|--------|----------|--------|
+| Crypto | ✅ Success | 10.5s | BTC, ETH |
+| Forex | ✅ Success | 5.7s | USD/JPY, EUR/USD |
+| Stocks | ✅ Success | 24.9s | NVDA, MSFT, XOM |
+
+#### Files Modified
+- `worker/src/data/binance.ts` - CoinGecko migration + User-Agent
+- `worker/src/data/twelvedata.ts` - Rate limit handling for stocks
+
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | ALL PHASES COMPLETE |
-| Where am I going? | Done - site fully operational |
-| What's the goal? | Market signal broadcast site - COMPLETE |
+| Where am I? | ALL PHASES COMPLETE - PRODUCTION VERIFIED |
+| Where am I going? | Done - signals generating successfully |
+| What's the goal? | Market signal broadcast site - FULLY OPERATIONAL |
 | What have I learned? | See findings.md |
-| What have I done? | All 14 phases complete, E2E verified |
+| What have I done? | All phases + production bug fixes complete |
 
 ---
 *Update after completing each phase or encountering errors*

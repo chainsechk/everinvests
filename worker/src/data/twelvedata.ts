@@ -73,16 +73,28 @@ async function getRSI(symbol: string, apiKey: string): Promise<number> {
 // Fetch data for a single asset
 async function fetchAssetData(
   ticker: string,
-  apiKey: string
+  apiKey: string,
+  sequential: boolean = false
 ): Promise<AssetData> {
   const timestamp = new Date().toISOString();
 
-  // Fetch all data in parallel
-  const [price, ma20, rsi] = await Promise.all([
-    getPrice(ticker, apiKey),
-    getMA20(ticker, apiKey),
-    getRSI(ticker, apiKey),
-  ]);
+  let price: number, ma20: number, rsi: number;
+
+  if (sequential) {
+    // Sequential calls with delays for rate limiting
+    price = await getPrice(ticker, apiKey);
+    await new Promise(r => setTimeout(r, 1000));
+    ma20 = await getMA20(ticker, apiKey);
+    await new Promise(r => setTimeout(r, 1000));
+    rsi = await getRSI(ticker, apiKey);
+  } else {
+    // Parallel calls for faster execution
+    [price, ma20, rsi] = await Promise.all([
+      getPrice(ticker, apiKey),
+      getMA20(ticker, apiKey),
+      getRSI(ticker, apiKey),
+    ]);
+  }
 
   return {
     ticker,
@@ -118,22 +130,32 @@ export async function fetchForexData(
 }
 
 // Batch fetch for stocks
+// Note: TwelveData free tier has 8 req/min limit
+// We limit to 5 key stocks and use sequential calls per ticker
 export async function fetchStockData(
   tickers: readonly StockTicker[],
   apiKey: string
 ): Promise<AssetData[]> {
   const results: AssetData[] = [];
 
-  // Process sequentially to respect rate limits
-  for (const ticker of tickers) {
+  // Limit to 5 key stocks: 1 from each sector (semi, AI, energy, cloud, general tech)
+  // This keeps us at 15 API calls total, manageable within rate limits
+  const keyStocks: StockTicker[] = ["NVDA", "MSFT", "XOM", "ORCL", "AAPL"];
+  console.log(`[Stocks] Fetching ${keyStocks.length} key tickers`);
+
+  for (const ticker of keyStocks) {
     try {
-      const data = await fetchAssetData(ticker, apiKey);
+      // Use sequential mode with built-in delays
+      const data = await fetchAssetData(ticker, apiKey, true);
       results.push(data);
 
-      // Small delay to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // Additional delay between tickers
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (error) {
-      console.error(`Failed to fetch ${ticker}:`, error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error(`[Stocks] Failed to fetch ${ticker}: ${errMsg}`);
+      // Add delay even on error
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
 

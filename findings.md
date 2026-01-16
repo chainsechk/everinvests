@@ -58,7 +58,11 @@ CREATE TABLE signals (
 ## Issues Encountered
 | Issue | Resolution |
 |-------|------------|
-|       |            |
+| Binance API blocked by CF Workers | Migrated to CoinGecko API for crypto data |
+| CoinGecko requires User-Agent header | Added `User-Agent: EverInvests/1.0` to fetch |
+| TwelveData 8 req/min rate limit | Reduced stocks to 5 key tickers, sequential calls |
+| Worker secrets vs Pages secrets | Must deploy secrets to both separately |
+| Binance funding rate wrong domain | Fixed: `fapi.binance.com` not `api.binance.com` |
 
 ## Resources
 - Implementation plan: `docs/plans/2026-01-14-signal-api-foundation.md`
