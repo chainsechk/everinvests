@@ -293,7 +293,7 @@
 #### Task 20: Deploy to production
 - Initial deployment went to Preview (wrong branch)
 - Fixed: Redeployed with `--branch main` for Production
-- Deployed Pages site: https://everinvests.pages.dev
+- Deployed Pages site: https://everinvests.com
 - Deployed Worker: https://everinvests-worker.duyuefeng0708.workers.dev
 - Worker cron: `0 * * * *` (hourly)
 
@@ -322,7 +322,7 @@
 ## Deployment URLs
 | Service | URL |
 |---------|-----|
-| Pages (Frontend) | https://everinvests.pages.dev |
+| Pages (Frontend) | https://everinvests.com |
 | Worker (Signals) | https://everinvests-worker.duyuefeng0708.workers.dev |
 
 ## Session: 2026-01-16

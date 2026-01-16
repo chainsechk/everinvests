@@ -26,6 +26,7 @@ function parseOutput(outputJson: string | null) {
 }
 
 const output = parseOutput(signal.output_json);
+const qualityFlags = output?.quality_flags || null;
 
 function formatDate(dateStr: string): string {
   try {
@@ -101,6 +102,27 @@ function formatDate(dateStr: string): string {
             {risk}
           </li>
         ))}
+      </ul>
+    </div>
+  )}
+
+  <!-- Data Quality -->
+  {qualityFlags && (qualityFlags.macro_fallback || (qualityFlags.missing_assets && qualityFlags.missing_assets.length > 0)) && (
+    <div class="space-y-2">
+      <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Data Quality</h3>
+      <ul class="space-y-1">
+        {qualityFlags.macro_fallback && (
+          <li class="text-sm text-gray-300 flex items-start gap-2">
+            <span class="text-amber-400 mt-0.5">!</span>
+            Macro data unavailable (fallback)
+          </li>
+        )}
+        {qualityFlags.missing_assets && qualityFlags.missing_assets.length > 0 && (
+          <li class="text-sm text-gray-300 flex items-start gap-2">
+            <span class="text-amber-400 mt-0.5">!</span>
+            Missing assets: {qualityFlags.missing_assets.join(", ")}
+          </li>
+        )}
       </ul>
     </div>
   )}

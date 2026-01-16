@@ -6,7 +6,7 @@ Build a complete market signal broadcast site with automated daily signals for C
 ## Current Phase
 **ALL PHASES COMPLETE - PRODUCTION SIGNALS VERIFIED**
 
-- Pages: https://everinvests.pages.dev
+- Pages: https://everinvests.com
 - Worker: https://everinvests-worker.duyuefeng0708.workers.dev
 
 ### Status (2026-01-16)

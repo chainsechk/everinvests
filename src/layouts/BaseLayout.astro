@@ -1,6 +1,7 @@
 ---
 // src/layouts/BaseLayout.astro
 import "../styles/global.css";
+import { absoluteUrl } from "../lib/site";
 
 interface Props {
   title: string;
@@ -15,8 +16,7 @@ const {
 } = Astro.props;
 
 const fullTitle = title === "EverInvests" ? title : `${title} | EverInvests`;
-const siteUrl = "https://everinvests.pages.dev";
-const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
+const canonicalUrl = absoluteUrl(Astro.url.pathname);
 ---
 
 <!doctype html>
@@ -37,7 +37,7 @@ const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={`${siteUrl}${image}`} />
+    <meta property="og:image" content={absoluteUrl(image)} />
     <meta property="og:site_name" content="EverInvests" />
 
     <!-- Twitter -->
@@ -45,7 +45,7 @@ const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
     <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${siteUrl}${image}`} />
+    <meta name="twitter:image" content={absoluteUrl(image)} />
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://t.me" />

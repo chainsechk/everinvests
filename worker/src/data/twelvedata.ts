@@ -5,6 +5,8 @@ import type { AssetData, ForexTicker, StockTicker } from "../types";
 
 const TWELVEDATA_API = "https://api.twelvedata.com";
 
+export const STOCK_KEY_TICKERS = ["NVDA", "MSFT", "XOM", "ORCL", "AAPL"] as const satisfies readonly StockTicker[];
+
 interface TwelveDataQuote {
   symbol: string;
   close: string;
@@ -33,7 +35,11 @@ async function getPrice(symbol: string, apiKey: string): Promise<number> {
     throw new Error(`No price data for ${symbol}`);
   }
 
-  return parseFloat(data.close);
+  const price = parseFloat(data.close);
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new Error(`Invalid price data for ${symbol}`);
+  }
+  return price;
 }
 
 // Get 20-day SMA
@@ -50,7 +56,11 @@ async function getMA20(symbol: string, apiKey: string): Promise<number> {
     throw new Error(`No MA data for ${symbol}`);
   }
 
-  return parseFloat(data.values[0].ma);
+  const ma20 = parseFloat(data.values[0].ma);
+  if (!Number.isFinite(ma20) || ma20 <= 0) {
+    throw new Error(`Invalid MA data for ${symbol}`);
+  }
+  return ma20;
 }
 
 // Get RSI (14-period)
@@ -67,7 +77,11 @@ async function getRSI(symbol: string, apiKey: string): Promise<number> {
     throw new Error(`No RSI data for ${symbol}`);
   }
 
-  return parseFloat(data.values[0].rsi);
+  const rsi = parseFloat(data.values[0].rsi);
+  if (!Number.isFinite(rsi) || rsi < 0 || rsi > 100) {
+    throw new Error(`Invalid RSI data for ${symbol}`);
+  }
+  return rsi;
 }
 
 // Fetch data for a single asset
@@ -138,9 +152,7 @@ export async function fetchStockData(
 ): Promise<AssetData[]> {
   const results: AssetData[] = [];
 
-  // Limit to 5 key stocks: 1 from each sector (semi, AI, energy, cloud, general tech)
-  // This keeps us at 15 API calls total, manageable within rate limits
-  const keyStocks: StockTicker[] = ["NVDA", "MSFT", "XOM", "ORCL", "AAPL"];
+  const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 5);
   console.log(`[Stocks] Fetching ${keyStocks.length} key tickers`);
 
   for (const ticker of keyStocks) {

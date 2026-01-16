@@ -1,0 +1,46 @@
+import { fetchCryptoData, fetchForexData, fetchStockData } from "../data";
+import { STOCK_KEY_TICKERS } from "../data/twelvedata";
+import type { AssetData, Category } from "../types";
+import { CRYPTO_ASSETS, FOREX_ASSETS } from "../types";
+import type { SkillSpec } from "./types";
+
+export interface FetchAssetDataOutput {
+  assetData: AssetData[];
+  expectedTickers: readonly string[];
+  missingTickers: string[];
+}
+
+export const fetchAssetDataSkill: SkillSpec<void, FetchAssetDataOutput> = {
+  id: "fetch_asset_data",
+  version: "1",
+  async run({ env, ctx }) {
+    const category = ctx.category as Category;
+
+    let expectedTickers: readonly string[] = [];
+    let assetData: AssetData[] = [];
+
+    if (category === "crypto") {
+      expectedTickers = CRYPTO_ASSETS;
+      assetData = await fetchCryptoData(CRYPTO_ASSETS);
+    } else if (category === "forex") {
+      expectedTickers = FOREX_ASSETS;
+      if (!env.TWELVEDATA_API_KEY) {
+        throw new Error("TWELVEDATA_API_KEY not configured");
+      }
+      assetData = await fetchForexData(FOREX_ASSETS, env.TWELVEDATA_API_KEY);
+    } else if (category === "stocks") {
+      expectedTickers = STOCK_KEY_TICKERS;
+      if (!env.TWELVEDATA_API_KEY) {
+        throw new Error("TWELVEDATA_API_KEY not configured");
+      }
+      assetData = await fetchStockData(STOCK_KEY_TICKERS, env.TWELVEDATA_API_KEY);
+    } else {
+      throw new Error(`Unsupported category: ${ctx.category}`);
+    }
+
+    const fetched = new Set(assetData.map((a) => a.ticker));
+    const missingTickers = expectedTickers.filter((t) => !fetched.has(t));
+
+    return { assetData, expectedTickers, missingTickers };
+  },
+};

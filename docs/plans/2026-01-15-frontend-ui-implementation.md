@@ -1524,7 +1524,7 @@ cd worker && npm run deploy
 
 **Step 3: Verify deployment**
 
-- Visit https://everinvests.pages.dev (or custom domain)
+- Visit https://everinvests.com (or Pages preview/custom domain)
 - Verify all pages load
 - Check API endpoints return data
 

@@ -104,6 +104,11 @@ npm run worker:deploy
 
 For Pages: Workers & Pages → everinvests-site → Settings → Functions → D1 bindings → Add `DB`
 
+## Canonical Domain
+
+- The site canonical/OG URLs come from `astro.config.mjs` via `site: "https://everinvests.com"`.
+- The Worker uses `SITE_URL` (optional) to build links in Telegram notifications; it defaults to `https://everinvests.com`.
+
 ## API Endpoints
 
 | Endpoint | Description |
@@ -111,6 +116,13 @@ For Pages: Workers & Pages → everinvests-site → Settings → Functions → D
 | `GET /api/today/{category}` | Latest signal for crypto/forex/stocks |
 | `GET /api/history/{category}?limit=N` | Historical signals (default 7, max 30) |
 | `GET /api/macro` | Latest macro context |
+
+## Observability Tables
+
+The Worker writes workflow observability into D1:
+
+- `workflow_runs`: one row per category run
+- `skill_runs`: one row per skill execution within a workflow
 
 ## Project Structure
 
@@ -121,7 +133,10 @@ everinvests/
 │   │   └── api/         # API routes
 │   └── lib/db/          # D1 query layer
 ├── worker/              # Signal generation worker
-│   └── src/index.ts     # Worker entry point
+│   ├── src/index.ts     # Worker entry point
+│   ├── src/pipeline.ts  # Workflow orchestrator
+│   ├── src/skills/      # Modular skills
+│   └── src/workflows/   # Per-category workflows
 ├── migrations/          # D1 schema
 ├── scripts/             # Development scripts
 └── tests/               # Vitest tests

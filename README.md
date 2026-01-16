@@ -14,8 +14,8 @@ Market signal broadcast site. Daily automated signals for Crypto, Forex, Stocks 
 | Category | Assets | Updates |
 |----------|--------|---------|
 | Crypto | BTC, ETH | 00:00, 08:00, 16:00 |
-| Forex | USD/JPY, EUR/USD, USD/CAD, USD/AUD | 00:00, 08:00, 14:00 (weekdays) |
-| Stocks | 25 tickers (semis, AI infra, energy) | 17:00, 21:00 (weekdays) |
+| Forex | USD/JPY, EUR/USD, USD/CAD, AUD/USD | 00:00, 08:00, 14:00 (weekdays) |
+| Stocks | Key tickers (semis, AI infra, energy) | 17:00, 21:00 (weekdays) |
 
 ## API Endpoints
 
@@ -52,7 +52,7 @@ src/
   pages/           # Astro pages and API routes
   lib/db/          # D1 query layer
 migrations/        # D1 schema migrations
-worker/            # Signal generation worker (planned)
+worker/            # Signal generation worker
 ```
 
 ## License

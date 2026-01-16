@@ -1,13 +1,12 @@
 // src/pages/robots.txt.ts
 import type { APIContext } from "astro";
-
-const siteUrl = "https://everinvests.pages.dev";
+import { SITE_URL } from "../lib/site";
 
 export async function GET(context: APIContext) {
   const robotsTxt = `User-agent: *
 Allow: /
 
-Sitemap: ${siteUrl}/sitemap.xml
+Sitemap: ${SITE_URL}/sitemap.xml
 `;
 
   return new Response(robotsTxt, {

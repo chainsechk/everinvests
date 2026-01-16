@@ -15,8 +15,9 @@ interface SummaryInput {
 
 // Build prompt for LLM
 function buildPrompt(input: SummaryInput): string {
+  const secondaryLabel = input.category === "crypto" ? "Funding" : "RSI(14)";
   const assetSummary = input.assets
-    .map(a => `${a.ticker}: ${a.bias} (${a.vsMA20} 20D MA, ${a.secondaryInd})`)
+    .map(a => `${a.ticker}: ${a.bias} (${a.vsMA20} 20D MA, ${secondaryLabel}: ${a.secondaryInd})`)
     .join(", ");
 
   return `You are a professional market analyst. Generate a 1-2 sentence summary for today's ${input.category} signal.
@@ -26,7 +27,10 @@ Overall bias: ${input.bias}
 Assets: ${assetSummary}
 Key risks: ${input.risks.join(", ")}
 
-Write a concise, professional summary that a trader would find useful. Focus on the key takeaway and any notable conditions. Do not use emojis or markdown.`;
+Write a concise, professional summary that a trader would find useful.
+- Use only the data provided above; do not invent indicators (e.g., Fibonacci levels).
+- If macro context is "Unavailable", do not make macro claims.
+- Do not use emojis or markdown.`;
 }
 
 // Generate summary using Workers AI

@@ -21,7 +21,7 @@ const { assets, category } = Astro.props;
 const secondaryLabel: Record<string, string> = {
   crypto: "Funding",
   forex: "RSI(14)",
-  stocks: "vs SPY",
+  stocks: "RSI(14)",
 };
 
 function formatPrice(price: number | null, cat: string): string {
@@ -34,8 +34,11 @@ function formatPrice(price: number | null, cat: string): string {
 function formatSecondary(value: string | null, cat: string): string {
   if (value === null) return "--";
   if (cat === "crypto") {
-    const num = parseFloat(value);
-    return (num * 100).toFixed(3) + "%";
+    const trimmed = value.trim();
+    if (trimmed.endsWith("%")) return trimmed;
+    const num = parseFloat(trimmed);
+    if (!Number.isFinite(num)) return value;
+    return (num * 100).toFixed(4) + "%";
   }
   return value;
 }
@@ -60,7 +63,11 @@ function formatSecondary(value: string | null, cat: string): string {
           <td class="py-3">
             <span class:list={[
               "px-2 py-0.5 rounded text-xs",
-              asset.vs_20d_ma === "above" ? "bg-bullish/20 text-bullish" : "bg-bearish/20 text-bearish"
+              asset.vs_20d_ma === "above"
+                ? "bg-bullish/20 text-bullish"
+                : asset.vs_20d_ma === "below"
+                  ? "bg-bearish/20 text-bearish"
+                  : "bg-gray-700/50 text-gray-400"
             ]}>
               {asset.vs_20d_ma || "--"}
             </span>

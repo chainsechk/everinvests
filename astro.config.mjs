@@ -3,6 +3,7 @@ import cloudflare from "@astrojs/cloudflare";
 import tailwind from "@astrojs/tailwind";
 
 export default defineConfig({
+  site: "https://everinvests.com",
   output: "server",
   adapter: cloudflare({
     platformProxy: {

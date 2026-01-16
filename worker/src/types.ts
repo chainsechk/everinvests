@@ -2,7 +2,7 @@
 
 export type Category = "crypto" | "forex" | "stocks";
 export type Bias = "Bullish" | "Bearish" | "Neutral";
-export type MacroOverall = "Risk-on" | "Risk-off" | "Mixed";
+export type MacroOverall = "Risk-on" | "Risk-off" | "Mixed" | "Unavailable";
 
 // Asset configuration
 export const CRYPTO_ASSETS = ["BTC", "ETH"] as const;

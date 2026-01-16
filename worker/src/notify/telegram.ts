@@ -3,6 +3,7 @@
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
+const DEFAULT_SITE_URL = "https://everinvests.com";
 
 interface TelegramResponse {
   ok: boolean;
@@ -18,7 +19,8 @@ export function formatSignalMessage(
   assets: AssetSignal[],
   macro: MacroSignal,
   date: string,
-  timeSlot: string
+  timeSlot: string,
+  siteUrl?: string
 ): string {
   const biasEmoji = bias === "Bullish" ? "🟢" : bias === "Bearish" ? "🔴" : "🟡";
   const macroEmoji = macro.overall === "Risk-on" ? "📈" : macro.overall === "Risk-off" ? "📉" : "➡️";
@@ -44,7 +46,9 @@ export function formatSignalMessage(
     message += `... and ${assets.length - 10} more\n`;
   }
 
-  message += `\n🔗 <a href="https://everinvests.com/${category}">View Full Analysis</a>`;
+  const baseUrl = (siteUrl || DEFAULT_SITE_URL).replace(/\/$/, "");
+  const analysisUrl = new URL(`/${category}`, baseUrl).href;
+  message += `\n🔗 <a href="${analysisUrl}">View Full Analysis</a>`;
 
   return message;
 }
@@ -87,6 +91,7 @@ export async function sendTelegramMessage(
 export async function notifySignal(
   botToken: string | undefined,
   chatId: string | undefined,
+  siteUrl: string | undefined,
   category: Category,
   bias: Bias,
   summary: string,
@@ -107,7 +112,8 @@ export async function notifySignal(
     assets,
     macro,
     date,
-    timeSlot
+    timeSlot,
+    siteUrl
   );
 
   return sendTelegramMessage(botToken, chatId, message);

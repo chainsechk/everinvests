@@ -1,7 +1,6 @@
 // src/pages/sitemap.xml.ts
 import type { APIContext } from "astro";
-
-const siteUrl = "https://everinvests.pages.dev";
+import { SITE_URL } from "../lib/site";
 
 const staticPages = [
   { url: "/", priority: "1.0", changefreq: "hourly" },
@@ -22,7 +21,7 @@ export async function GET(context: APIContext) {
 ${staticPages
   .map(
     (page) => `  <url>
-    <loc>${siteUrl}${page.url}</loc>
+    <loc>${SITE_URL}${page.url}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
