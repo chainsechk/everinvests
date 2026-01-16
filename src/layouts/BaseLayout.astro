@@ -11,7 +11,7 @@ interface Props {
 
 const {
   title,
-  description = "Daily market signals for Crypto, Forex, and Stocks",
+  description = "Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.",
   image = "/og-image.svg"
 } = Astro.props;
 
@@ -20,7 +20,7 @@ const canonicalUrl = absoluteUrl(Astro.url.pathname);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="antialiased">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -48,19 +48,43 @@ const canonicalUrl = absoluteUrl(Astro.url.pathname);
     <meta name="twitter:image" content={absoluteUrl(image)} />
 
     <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://t.me" />
     <link rel="dns-prefetch" href="https://t.me" />
 
     <!-- Theme color -->
-    <meta name="theme-color" content="#111827" />
+    <meta name="theme-color" content="#0a0e17" />
 
     <title>{fullTitle}</title>
   </head>
-  <body class="min-h-screen flex flex-col">
+  <body class="min-h-screen flex flex-col relative noise">
+    <!-- Ambient glow effects -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div class="absolute -top-40 -right-40 w-96 h-96 bg-cyber/5 rounded-full blur-3xl"></div>
+      <div class="absolute top-1/2 -left-40 w-80 h-80 bg-bullish/3 rounded-full blur-3xl"></div>
+    </div>
+
     <slot name="header" />
-    <main class="flex-grow container mx-auto px-4 py-6">
-      <slot />
+
+    <main class="flex-grow relative z-10">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <slot />
+      </div>
     </main>
+
     <slot name="footer" />
+
+    <!-- Page transition script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Animate elements on page load
+        const animatedElements = document.querySelectorAll('[data-animate]');
+        animatedElements.forEach((el, i) => {
+          (el as HTMLElement).style.animationDelay = `${i * 100}ms`;
+          el.classList.add('animate-slide-up');
+        });
+      });
+    </script>
   </body>
 </html>

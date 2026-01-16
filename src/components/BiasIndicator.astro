@@ -8,23 +8,23 @@ interface Props {
 const { bias, size = "md" } = Astro.props;
 
 function getBiasInfo(bias: string | null) {
-  if (!bias) return { color: "text-gray-400 bg-gray-700", label: "Unknown", arrow: "" };
+  if (!bias) return { class: "bias-neutral", label: "Unknown", icon: "—" };
   const lower = bias.toLowerCase();
-  if (lower.includes("bullish")) return { color: "text-bullish bg-bullish/10", label: bias, arrow: "^" };
-  if (lower.includes("bearish")) return { color: "text-bearish bg-bearish/10", label: bias, arrow: "v" };
-  return { color: "text-neutral bg-neutral/10", label: bias, arrow: "-" };
+  if (lower.includes("bullish")) return { class: "bias-bullish", label: bias, icon: "↗" };
+  if (lower.includes("bearish")) return { class: "bias-bearish", label: bias, icon: "↘" };
+  return { class: "bias-neutral", label: bias, icon: "→" };
 }
 
-const { color, label, arrow } = getBiasInfo(bias);
+const { class: biasClass, label, icon } = getBiasInfo(bias);
 
 const sizeClasses = {
-  sm: "text-sm px-2 py-1",
-  md: "text-base px-3 py-1.5",
-  lg: "text-lg px-4 py-2",
+  sm: "text-xs px-2 py-1",
+  md: "text-sm px-3 py-1.5",
+  lg: "text-base px-4 py-2",
 };
 ---
 
-<span class:list={["inline-flex items-center gap-1 rounded-full font-semibold", color, sizeClasses[size]]}>
+<span class:list={[biasClass, sizeClasses[size]]}>
   {label}
-  {arrow && <span class="opacity-70">{arrow}</span>}
+  <span class="text-[1.1em] ml-0.5">{icon}</span>
 </span>

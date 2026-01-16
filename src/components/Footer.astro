@@ -3,16 +3,69 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="bg-gray-800 border-t border-gray-700 py-6">
-  <div class="container mx-auto px-4">
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-      <p>&copy; {year} EverInvests. Market signals for educational purposes only.</p>
-      <div class="flex items-center gap-4">
-        <a href="/about" class="hover:text-white transition-colors">About</a>
-        <a href="https://t.me/everinvests" target="_blank" rel="noopener" class="hover:text-white transition-colors">
-          Telegram
+<footer class="relative border-t border-void-200/30 mt-16">
+  <div class="absolute inset-0 bg-void-50/50 backdrop-blur-sm"></div>
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative py-12">
+    <div class="grid gap-8 md:grid-cols-3">
+      <!-- Brand -->
+      <div>
+        <a href="/" class="flex items-center gap-3 mb-4 group">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber to-bullish flex items-center justify-center">
+            <svg class="w-4 h-4 text-void" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M13 7l5 5-5 5M6 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="font-display font-bold text-lg text-txt-primary">EverInvests</span>
+        </a>
+        <p class="text-sm text-txt-muted leading-relaxed max-w-xs">
+          Daily market signals for crypto, forex, and stocks. Automated analysis updated multiple times daily.
+        </p>
+      </div>
+
+      <!-- Links -->
+      <div class="flex gap-12 md:justify-center">
+        <div>
+          <h4 class="font-display font-semibold text-sm text-txt-primary mb-3">Markets</h4>
+          <ul class="space-y-2">
+            <li><a href="/crypto" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Crypto</a></li>
+            <li><a href="/forex" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Forex</a></li>
+            <li><a href="/stocks" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Stocks</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-display font-semibold text-sm text-txt-primary mb-3">Info</h4>
+          <ul class="space-y-2">
+            <li><a href="/about" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">About</a></li>
+            <li>
+              <a href="https://t.me/everinvests" target="_blank" rel="noopener" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">
+                Telegram
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="md:text-right">
+        <p class="font-display font-medium text-sm text-txt-primary mb-3">Get real-time updates</p>
+        <a
+          href="https://t.me/everinvests"
+          target="_blank"
+          rel="noopener"
+          class="btn-telegram inline-flex"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+          </svg>
+          Join Channel
         </a>
       </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="mt-12 pt-6 border-t border-void-200/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-txt-muted">
+      <p>&copy; {year} EverInvests. Signals for educational purposes only.</p>
+      <p class="font-mono">Not financial advice • DYOR</p>
     </div>
   </div>
 </footer>

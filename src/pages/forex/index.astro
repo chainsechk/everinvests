@@ -41,16 +41,24 @@ if (db) {
 
   <div class="space-y-8">
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-400">
-      <a href="/" class="hover:text-white transition-colors">Home</a>
-      <span class="mx-2">/</span>
-      <span class="text-white">{categoryTitle}</span>
+    <nav class="flex items-center gap-2 text-sm" data-animate>
+      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">{categoryTitle}</span>
     </nav>
 
     <!-- Page Header -->
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">{categoryTitle} Signals</h1>
-      <p class="text-gray-400">4 major currency pairs</p>
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-animate>
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">$</span>
+          <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary">{categoryTitle} Signals</h1>
+        </div>
+        <p class="text-txt-secondary">USD/JPY, EUR/USD, USD/CAD, AUD/USD with RSI analysis</p>
+      </div>
+      <TelegramCTA variant="compact" />
     </div>
 
     <!-- Macro Context -->
@@ -65,26 +73,29 @@ if (db) {
     {signal ? (
       <SignalDetail signal={signal} />
     ) : (
-      <div class="card text-center py-12">
-        <p class="text-gray-400">No signal available yet. Check back at the next update.</p>
+      <div class="card text-center py-16" data-animate>
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-void-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-txt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-lg text-txt-primary mb-2">No Signal Yet</h3>
+        <p class="text-txt-muted">Check back at the next scheduled update.</p>
       </div>
     )}
 
     <!-- Asset Table -->
     {assets.length > 0 && (
-      <div class="card">
-        <h2 class="text-lg font-semibold text-white mb-4">Asset Breakdown</h2>
+      <div class="card" data-animate>
+        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Currency Pairs</h2>
         <AssetTable assets={assets} category={category} />
       </div>
     )}
 
     <!-- History Mini -->
-    <div class="card">
+    <div class="card" data-animate>
       <HistoryMini signals={history} category={category} />
     </div>
-
-    <!-- Telegram CTA -->
-    <TelegramCTA variant="compact" />
   </div>
 
   <Footer slot="footer" />

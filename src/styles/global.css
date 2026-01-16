@@ -1,21 +1,266 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-bullish: #00ff88;
+    --color-bearish: #ff4466;
+    --color-neutral: #5e6e82;
+    --color-cyber: #00d4ff;
+    --color-void: #0a0e17;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-gray-900 text-gray-100 antialiased;
+    @apply bg-void text-txt-primary antialiased font-body;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.08), transparent),
+      linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 60px 60px, 60px 60px;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-cyber/30 text-white;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-void-50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-void-200 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-txt-muted;
   }
 }
 
 @layer components {
+  /* Premium card with gradient border */
   .card {
-    @apply bg-gray-800 rounded-lg border border-gray-700 p-4;
+    @apply relative bg-void-50/80 backdrop-blur-sm rounded-xl p-5 overflow-hidden;
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .card:hover {
+    border-color: rgba(0, 212, 255, 0.2);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(0, 212, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Glass morphism variant */
+  .card-glass {
+    @apply relative backdrop-blur-xl rounded-xl p-5;
+    background: linear-gradient(135deg, rgba(20, 26, 36, 0.9) 0%, rgba(20, 26, 36, 0.7) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Signal card with category accent */
+  .signal-card {
+    @apply card transition-all duration-300;
+  }
+
+  .signal-card:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Buttons */
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors;
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5
+           font-display font-semibold text-sm rounded-lg
+           bg-cyber text-void transition-all duration-200
+           hover:shadow-glow-cyber hover:scale-[1.02]
+           active:scale-[0.98];
   }
+
   .btn-telegram {
-    @apply bg-sky-500 hover:bg-sky-600 text-white font-medium px-4 py-2 rounded-lg transition-colors;
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5
+           font-display font-semibold text-sm rounded-lg transition-all duration-200
+           hover:scale-[1.02] active:scale-[0.98];
+    background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 136, 204, 0.3);
+  }
+
+  .btn-telegram:hover {
+    box-shadow: 0 6px 24px rgba(0, 136, 204, 0.4);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           font-display font-medium text-sm rounded-lg
+           text-txt-secondary hover:text-txt-primary
+           hover:bg-void-100/50 transition-all duration-200;
+  }
+
+  /* Signal bias pills with glow */
+  .bias-bullish {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+           font-mono font-semibold text-sm tracking-wide;
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 255, 136, 0.08) 100%);
+    color: var(--color-bullish);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    box-shadow: 0 0 16px rgba(0, 255, 136, 0.15);
+  }
+
+  .bias-bearish {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+           font-mono font-semibold text-sm tracking-wide;
+    background: linear-gradient(135deg, rgba(255, 68, 102, 0.15) 0%, rgba(255, 68, 102, 0.08) 100%);
+    color: var(--color-bearish);
+    border: 1px solid rgba(255, 68, 102, 0.2);
+    box-shadow: 0 0 16px rgba(255, 68, 102, 0.15);
+  }
+
+  .bias-neutral {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+           font-mono font-semibold text-sm tracking-wide;
+    background: linear-gradient(135deg, rgba(94, 110, 130, 0.2) 0%, rgba(94, 110, 130, 0.1) 100%);
+    color: var(--color-neutral);
+    border: 1px solid rgba(94, 110, 130, 0.2);
+  }
+
+  /* Macro indicators */
+  .macro-chip {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+           font-mono text-xs tracking-wide
+           bg-void-100/50 border border-void-200/50;
+  }
+
+  /* Animated ticker bar */
+  .ticker-bar {
+    @apply overflow-hidden whitespace-nowrap;
+    mask-image: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+  }
+
+  .ticker-content {
+    @apply inline-flex gap-8 animate-ticker;
+  }
+
+  /* Data table styling */
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table thead tr {
+    @apply border-b border-void-200/50;
+  }
+
+  .data-table th {
+    @apply py-3 px-2 text-left font-display font-medium text-txt-muted text-xs uppercase tracking-wider;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-void-100/30 transition-colors duration-150;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-void-100/30;
+  }
+
+  .data-table td {
+    @apply py-3 px-2;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+  }
+
+  /* Glow effects */
+  .glow-bullish {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), 0 0 40px rgba(0, 255, 136, 0.1);
+  }
+
+  .glow-bearish {
+    box-shadow: 0 0 20px rgba(255, 68, 102, 0.3), 0 0 40px rgba(255, 68, 102, 0.1);
+  }
+
+  .glow-cyber {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1);
+  }
+}
+
+@layer utilities {
+  /* Animation delays for staggered reveals */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-300;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Line clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Noise texture overlay */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* Pulse dot for live indicators */
+  .pulse-dot {
+    @apply relative inline-block w-2 h-2 rounded-full bg-bullish;
+  }
+
+  .pulse-dot::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-bullish animate-ping;
+    animation-duration: 2s;
   }
 }

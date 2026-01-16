@@ -51,12 +51,55 @@ function formatNextUpdate(): string {
   const nextHour = schedules.find((h) => h > utcHour) || schedules[0];
   return `${nextHour.toString().padStart(2, "0")}:00 UTC`;
 }
+
+function formatLastUpdate(): string {
+  const signals = [cryptoSignal, forexSignal, stocksSignal].filter(Boolean);
+  if (signals.length === 0) return "--:--";
+  const latest = signals.reduce((a, b) =>
+    new Date(a?.generated_at || 0) > new Date(b?.generated_at || 0) ? a : b
+  );
+  if (!latest?.time_slot) return "--:--";
+  return latest.time_slot + " UTC";
+}
 ---
 
 <BaseLayout title="EverInvests" description="Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.">
   <Header slot="header" />
 
-  <div class="space-y-8">
+  <div class="space-y-12">
+    <!-- Hero Section -->
+    <section class="text-center py-8 sm:py-12" data-animate>
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-void-100/50 border border-void-200/50 text-xs text-txt-secondary mb-6">
+        <span class="pulse-dot"></span>
+        <span class="font-mono">Live signals updating throughout the day</span>
+      </div>
+
+      <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-txt-primary mb-4 tracking-tight">
+        Market signals,
+        <span class="text-gradient">simplified</span>
+      </h1>
+
+      <p class="text-lg text-txt-secondary max-w-2xl mx-auto mb-8">
+        Automated daily analysis for Crypto, Forex, and Stocks.
+        Cut through the noise with clear, actionable signals.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="https://t.me/everinvests" target="_blank" rel="noopener" class="btn-telegram">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+          </svg>
+          Get Free Signals
+        </a>
+        <a href="/about" class="btn-ghost">
+          Learn more
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
     <!-- Macro Context -->
     <MacroBar
       overall={macro?.overall}
@@ -66,38 +109,79 @@ function formatNextUpdate(): string {
     />
 
     <!-- Signal Cards Grid -->
-    <div class="grid gap-6 md:grid-cols-3">
-      <SignalCard
-        category="crypto"
-        bias={cryptoSignal?.bias}
-        summary={extractSummary(cryptoSignal)}
-        assetCount={cryptoAssetCount}
-        updatedAt={cryptoSignal?.generated_at}
-      />
-      <SignalCard
-        category="forex"
-        bias={forexSignal?.bias}
-        summary={extractSummary(forexSignal)}
-        assetCount={forexAssetCount}
-        updatedAt={forexSignal?.generated_at}
-      />
-      <SignalCard
-        category="stocks"
-        bias={stocksSignal?.bias}
-        summary={extractSummary(stocksSignal)}
-        assetCount={stocksAssetCount}
-        updatedAt={stocksSignal?.generated_at}
-      />
-    </div>
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display font-bold text-xl text-txt-primary">Today's Signals</h2>
+        <div class="text-xs text-txt-muted font-mono">
+          Updated {formatLastUpdate()}
+        </div>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-3">
+        <SignalCard
+          category="crypto"
+          bias={cryptoSignal?.bias}
+          summary={extractSummary(cryptoSignal)}
+          assetCount={cryptoAssetCount}
+          updatedAt={cryptoSignal?.generated_at}
+        />
+        <SignalCard
+          category="forex"
+          bias={forexSignal?.bias}
+          summary={extractSummary(forexSignal)}
+          assetCount={forexAssetCount}
+          updatedAt={forexSignal?.generated_at}
+        />
+        <SignalCard
+          category="stocks"
+          bias={stocksSignal?.bias}
+          summary={extractSummary(stocksSignal)}
+          assetCount={stocksAssetCount}
+          updatedAt={stocksSignal?.generated_at}
+        />
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="grid gap-6 sm:grid-cols-3" data-animate>
+      <div class="card-glass text-center py-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">Automated</h3>
+        <p class="text-sm text-txt-muted">Signals generated 3x daily using live market data</p>
+      </div>
+
+      <div class="card-glass text-center py-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">Objective</h3>
+        <p class="text-sm text-txt-muted">Rules-based analysis removes emotional bias</p>
+      </div>
+
+      <div class="card-glass text-center py-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">Instant Alerts</h3>
+        <p class="text-sm text-txt-muted">Get notified via Telegram when signals update</p>
+      </div>
+    </section>
 
     <!-- Telegram CTA -->
     <TelegramCTA variant="full" />
 
     <!-- Update Schedule -->
-    <div class="text-center text-sm text-gray-500">
-      <p>
-        Last updated: {cryptoSignal?.time_slot || "--:--"} UTC &bull;
-        Next update: {formatNextUpdate()}
+    <div class="text-center text-sm text-txt-muted" data-animate>
+      <p class="font-mono">
+        Next update: <span class="text-cyber">{formatNextUpdate()}</span>
       </p>
     </div>
   </div>

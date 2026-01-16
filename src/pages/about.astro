@@ -9,93 +9,134 @@ import TelegramCTA from "../components/TelegramCTA.astro";
 <BaseLayout title="About" description="Learn about EverInvests methodology and signal generation process.">
   <Header slot="header" />
 
-  <div class="max-w-3xl mx-auto space-y-8">
-    <h1 class="text-3xl font-bold text-white">About EverInvests</h1>
-
-    <div class="space-y-6">
-      <p class="text-lg text-gray-300">
-        EverInvests provides free, automated daily market signals for Crypto, Forex, and Stocks.
-        Our signals are generated using a rule-based system combined with AI-powered summaries.
+  <div class="max-w-3xl mx-auto space-y-12">
+    <!-- Page Header -->
+    <div class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-4xl sm:text-5xl text-txt-primary mb-4">About EverInvests</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">
+        Free, automated daily market signals powered by rules-based analysis and AI summaries.
       </p>
+    </div>
 
-      <h2 class="text-xl font-semibold text-white mt-8 mb-4">Methodology</h2>
-
-      <div class="card space-y-4">
-        <h3 class="font-medium text-white">1. Macro Context</h3>
-        <p class="text-gray-300 text-sm">
+    <!-- Methodology Section -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary flex items-center gap-3">
+        <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber text-sm">1</span>
+        Macro Context
+      </h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
           We analyze three key macro indicators to determine overall market conditions:
         </p>
-        <ul class="text-sm text-gray-300 space-y-1 ml-4">
-          <li>- <strong>DXY (US Dollar Index):</strong> Price vs 20-day moving average</li>
-          <li>- <strong>VIX (Volatility Index):</strong> Below 20 = Risk-on, Above 25 = Risk-off</li>
-          <li>- <strong>US 10Y Yields:</strong> Rising = bearish for risk assets</li>
-        </ul>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="p-4 rounded-lg bg-void-100/30 border border-void-200/20">
+            <div class="font-mono text-sm text-cyber mb-1">DXY</div>
+            <div class="text-sm text-txt-primary font-medium">US Dollar Index</div>
+            <div class="text-xs text-txt-muted mt-1">Price vs 20-day MA</div>
+          </div>
+          <div class="p-4 rounded-lg bg-void-100/30 border border-void-200/20">
+            <div class="font-mono text-sm text-cyber mb-1">VIX</div>
+            <div class="text-sm text-txt-primary font-medium">Volatility Index</div>
+            <div class="text-xs text-txt-muted mt-1">&lt;20 Risk-on, &gt;25 Risk-off</div>
+          </div>
+          <div class="p-4 rounded-lg bg-void-100/30 border border-void-200/20">
+            <div class="font-mono text-sm text-cyber mb-1">10Y</div>
+            <div class="text-sm text-txt-primary font-medium">US Treasury Yields</div>
+            <div class="text-xs text-txt-muted mt-1">Rising = bearish for risk</div>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <div class="card space-y-4">
-        <h3 class="font-medium text-white">2. Per-Asset Analysis</h3>
-        <p class="text-gray-300 text-sm">
-          Each asset is evaluated using two indicators:
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary flex items-center gap-3">
+        <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber text-sm">2</span>
+        Per-Asset Analysis
+      </h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
+          Each asset is evaluated using two indicators with simple scoring:
         </p>
-        <ul class="text-sm text-gray-300 space-y-1 ml-4">
-          <li>- <strong>Primary:</strong> Price vs 20-day moving average</li>
-          <li>- <strong>Secondary:</strong> Funding rate (crypto), RSI (forex), or relative strength (stocks)</li>
-        </ul>
-        <p class="text-gray-300 text-sm">
-          Scoring: 2 bullish indicators = Bullish, 2 bearish = Bearish, otherwise Neutral.
-        </p>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded bg-bullish/10 flex items-center justify-center text-bullish text-xs font-mono">P</span>
+            <div>
+              <div class="text-sm text-txt-primary font-medium">Primary: Price vs 20D MA</div>
+              <div class="text-xs text-txt-muted">Above = bullish, Below = bearish</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded bg-bullish/10 flex items-center justify-center text-bullish text-xs font-mono">S</span>
+            <div>
+              <div class="text-sm text-txt-primary font-medium">Secondary: Asset-specific indicator</div>
+              <div class="text-xs text-txt-muted">Funding rate (crypto), RSI (forex/stocks)</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-void-200/30 text-sm text-txt-muted">
+          <strong class="text-txt-secondary">Scoring:</strong> 2 bullish = Bullish, 2 bearish = Bearish, else Neutral
+        </div>
       </div>
+    </section>
 
-      <div class="card space-y-4">
-        <h3 class="font-medium text-white">3. AI-Powered Summaries</h3>
-        <p class="text-gray-300 text-sm">
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary flex items-center gap-3">
+        <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber text-sm">3</span>
+        AI-Powered Summaries
+      </h2>
+      <div class="card">
+        <p class="text-txt-secondary">
           Each signal includes a 1-2 sentence summary generated by AI, providing context
-          and highlighting key levels and risks in plain English.
+          and highlighting key levels and risks in plain English. No jargon, just actionable insights.
         </p>
       </div>
+    </section>
 
-      <h2 class="text-xl font-semibold text-white mt-8 mb-4">Update Schedule (UTC)</h2>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    <!-- Schedule -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Update Schedule</h2>
+      <div class="card overflow-hidden">
+        <table class="data-table">
           <thead>
-            <tr class="border-b border-gray-700 text-left text-gray-400">
-              <th class="pb-3">Category</th>
-              <th class="pb-3">Assets</th>
-              <th class="pb-3">Updates</th>
+            <tr>
+              <th>Category</th>
+              <th>Assets</th>
+              <th>Updates (UTC)</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-700/50 text-gray-300">
+          <tbody>
             <tr>
-              <td class="py-3">Crypto</td>
-              <td class="py-3">BTC, ETH</td>
-              <td class="py-3">00:00, 08:00, 16:00 (daily)</td>
+              <td><span class="font-medium text-txt-primary">Crypto</span></td>
+              <td class="font-mono text-sm">BTC, ETH</td>
+              <td class="text-sm">00:00, 08:00, 16:00 daily</td>
             </tr>
             <tr>
-              <td class="py-3">Forex</td>
-              <td class="py-3">USD/JPY, EUR/USD, USD/CAD, AUD/USD</td>
-              <td class="py-3">00:00, 08:00, 14:00 (weekdays)</td>
+              <td><span class="font-medium text-txt-primary">Forex</span></td>
+              <td class="font-mono text-sm">USD/JPY, EUR/USD, USD/CAD, AUD/USD</td>
+              <td class="text-sm">00:00, 08:00, 14:00 weekdays</td>
             </tr>
             <tr>
-              <td class="py-3">Stocks</td>
-              <td class="py-3">Key tickers (semis, AI, energy)</td>
-              <td class="py-3">17:00, 21:00 (weekdays)</td>
+              <td><span class="font-medium text-txt-primary">Stocks</span></td>
+              <td class="font-mono text-sm">NVDA, MSFT, ORCL, XOM, AAPL</td>
+              <td class="text-sm">17:00, 21:00 weekdays</td>
             </tr>
           </tbody>
         </table>
       </div>
+    </section>
 
-      <h2 class="text-xl font-semibold text-white mt-8 mb-4">Disclaimer</h2>
-
-      <p class="text-sm text-gray-400">
-        EverInvests signals are for educational and informational purposes only. They do not constitute
-        financial advice, investment recommendations, or trading signals. Always do your own research
-        and consult with qualified professionals before making investment decisions. Past performance
-        does not guarantee future results.
-      </p>
-    </div>
-
+    <!-- Telegram CTA -->
     <TelegramCTA variant="full" />
+
+    <!-- Disclaimer -->
+    <section class="text-center py-8" data-animate>
+      <div class="text-xs text-txt-muted max-w-xl mx-auto leading-relaxed">
+        <strong class="text-txt-secondary">Disclaimer:</strong> EverInvests signals are for educational and
+        informational purposes only. They do not constitute financial advice, investment recommendations,
+        or trading signals. Always do your own research and consult with qualified professionals before
+        making investment decisions. Past performance does not guarantee future results.
+      </div>
+    </section>
   </div>
 
   <Footer slot="footer" />

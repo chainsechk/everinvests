@@ -11,21 +11,41 @@ const premiumUrl = "https://t.me/everinvests_premium";
 ---
 
 {variant === "full" ? (
-  <div class="card bg-gradient-to-r from-gray-800 to-gray-800/50 border-sky-500/30">
-    <div class="flex flex-col sm:flex-row items-center gap-6">
-      <div class="flex-shrink-0 text-4xl">
-        <svg class="w-12 h-12 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
-        </svg>
-      </div>
-      <div class="flex-grow text-center sm:text-left">
-        <h3 class="text-lg font-semibold text-white mb-1">Join Telegram</h3>
-        <p class="text-sm text-gray-400 mb-3">
-          Get real-time notifications when signals update. Premium members get hedge-fund-grade analysis.
-        </p>
-        <div class="flex flex-wrap justify-center sm:justify-start gap-3">
+  <div class="relative overflow-hidden rounded-2xl" data-animate>
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0088cc]/20 via-cyber/10 to-[#0088cc]/20"></div>
+    <div class="absolute inset-0 bg-void-50/80 backdrop-blur-sm"></div>
+
+    <!-- Content -->
+    <div class="relative p-6 sm:p-8">
+      <div class="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+        <!-- Icon -->
+        <div class="flex-shrink-0">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0088cc] to-[#00aaff] flex items-center justify-center shadow-lg">
+            <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="flex-grow text-center lg:text-left">
+          <h3 class="font-display font-bold text-xl text-txt-primary mb-2">
+            Get signals delivered instantly
+          </h3>
+          <p class="text-sm text-txt-secondary max-w-lg">
+            Join our Telegram channel for real-time notifications when signals update.
+            Premium members unlock hedge-fund-grade analysis and priority alerts.
+          </p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3">
           <a href={freeChannelUrl} target="_blank" rel="noopener" class="btn-telegram">
-            Join Free Channel
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+            </svg>
+            Join Free
           </a>
           <a href={premiumUrl} target="_blank" rel="noopener" class="btn-primary">
             Explore Premium
@@ -35,7 +55,12 @@ const premiumUrl = "https://t.me/everinvests_premium";
     </div>
   </div>
 ) : (
-  <a href={freeChannelUrl} target="_blank" rel="noopener" class="btn-telegram inline-flex items-center gap-2">
+  <a
+    href={freeChannelUrl}
+    target="_blank"
+    rel="noopener"
+    class="btn-telegram inline-flex"
+  >
     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
     </svg>

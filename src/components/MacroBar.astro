@@ -10,43 +10,86 @@ interface Props {
 const { overall, dxyBias, vixLevel, yieldsBias } = Astro.props;
 
 function getOverallColor(value: string | null): string {
-  if (!value) return "text-gray-400";
+  if (!value) return "text-txt-muted";
   const lower = value.toLowerCase();
-  if (lower.includes("risk-on")) return "text-riskon";
-  if (lower.includes("risk-off")) return "text-riskoff";
+  if (lower.includes("risk-on")) return "text-bullish";
+  if (lower.includes("risk-off")) return "text-bearish";
   return "text-mixed";
 }
 
-function formatDxy(bias: string | null): string {
-  if (!bias) return "DXY: --";
-  return `DXY ${bias}`;
+function getOverallGlow(value: string | null): string {
+  if (!value) return "";
+  const lower = value.toLowerCase();
+  if (lower.includes("risk-on")) return "glow-bullish";
+  if (lower.includes("risk-off")) return "glow-bearish";
+  return "";
 }
 
-function formatVix(level: string | null): string {
-  if (!level) return "VIX: --";
+function formatDxy(bias: string | null): { label: string; icon: string } {
+  if (!bias) return { label: "--", icon: "~" };
+  const lower = bias.toLowerCase();
+  if (lower === "bullish" || lower === "above") return { label: "Strong", icon: "^" };
+  if (lower === "bearish" || lower === "below") return { label: "Weak", icon: "v" };
+  return { label: "Neutral", icon: "~" };
+}
+
+function formatVix(level: string | null): { label: string; color: string } {
+  if (!level) return { label: "--", color: "text-txt-muted" };
   const lower = level.toLowerCase();
-  if (lower === "risk_on") return "VIX low";
-  if (lower === "risk_off") return "VIX high";
-  return "VIX neutral";
+  if (lower === "risk_on" || lower === "low") return { label: "Low", color: "text-bullish" };
+  if (lower === "risk_off" || lower === "high") return { label: "High", color: "text-bearish" };
+  return { label: "Moderate", color: "text-mixed" };
 }
 
-function formatYields(bias: string | null): string {
-  if (!bias) return "Yields: --";
-  if (bias === "falling") return "Yields falling";
-  if (bias === "rising") return "Yields rising";
-  return "Yields stable";
+function formatYields(bias: string | null): { label: string; icon: string } {
+  if (!bias) return { label: "--", icon: "~" };
+  if (bias === "falling") return { label: "Falling", icon: "v" };
+  if (bias === "rising") return { label: "Rising", icon: "^" };
+  return { label: "Stable", icon: "~" };
 }
+
+const dxy = formatDxy(dxyBias);
+const vix = formatVix(vixLevel);
+const yields = formatYields(yieldsBias);
 ---
 
-<div class="card flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm">
-  <div class="flex items-center gap-2">
-    <span class="text-gray-400">MACRO:</span>
-    <span class:list={["font-semibold", getOverallColor(overall)]}>
-      {overall || "Loading..."}
-    </span>
+<div class="card-glass" data-animate>
+  <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-0">
+    <!-- Overall Macro Sentiment -->
+    <div class="flex items-center gap-3 sm:pr-6 sm:border-r border-void-200/30">
+      <div class="flex items-center gap-2">
+        <span class="pulse-dot"></span>
+        <span class="font-mono text-xs text-txt-muted uppercase tracking-wider">Macro</span>
+      </div>
+      <span class:list={[
+        "font-display font-bold text-lg tracking-tight",
+        getOverallColor(overall)
+      ]}>
+        {overall || "Loading..."}
+      </span>
+    </div>
+
+    <!-- Indicators Grid -->
+    <div class="flex items-center gap-4 sm:gap-6 sm:pl-6 flex-wrap justify-center">
+      <!-- DXY -->
+      <div class="macro-chip">
+        <span class="text-txt-muted">DXY</span>
+        <span class="text-txt-primary font-medium">{dxy.label}</span>
+        <span class="font-mono text-cyber">{dxy.icon}</span>
+      </div>
+
+      <!-- VIX -->
+      <div class="macro-chip">
+        <span class="text-txt-muted">VIX</span>
+        <span class:list={["font-medium", vix.color]}>{vix.label}</span>
+      </div>
+
+      <!-- Yields -->
+      <div class="macro-chip">
+        <span class="text-txt-muted">10Y</span>
+        <span class="text-txt-primary font-medium">{yields.label}</span>
+        <span class="font-mono text-cyber">{yields.icon}</span>
+      </div>
+    </div>
   </div>
-  <div class="hidden sm:block w-px h-4 bg-gray-600"></div>
-  <span class="text-gray-300">{formatDxy(dxyBias)}</span>
-  <span class="text-gray-300">{formatVix(vixLevel)}</span>
-  <span class="text-gray-300">{formatYields(yieldsBias)}</span>
 </div>

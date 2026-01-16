@@ -42,38 +42,46 @@ function formatSecondary(value: string | null, cat: string): string {
   }
   return value;
 }
+
+function getMaClass(value: string | null): string {
+  if (value === "above") return "text-bullish bg-bullish/10 border-bullish/20";
+  if (value === "below") return "text-bearish bg-bearish/10 border-bearish/20";
+  return "text-txt-muted bg-void-100/50 border-void-200/30";
+}
 ---
 
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
+<div class="overflow-x-auto -mx-5 px-5">
+  <table class="data-table">
     <thead>
-      <tr class="border-b border-gray-700 text-left text-gray-400">
-        <th class="pb-3 font-medium">Ticker</th>
-        <th class="pb-3 font-medium">Price</th>
-        <th class="pb-3 font-medium">vs 20D MA</th>
-        <th class="pb-3 font-medium">{secondaryLabel[category]}</th>
-        <th class="pb-3 font-medium">Bias</th>
+      <tr>
+        <th>Ticker</th>
+        <th>Price</th>
+        <th>vs 20D MA</th>
+        <th>{secondaryLabel[category]}</th>
+        <th>Bias</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-700/50">
+    <tbody>
       {assets.map((asset) => (
-        <tr class="hover:bg-gray-700/30 transition-colors">
-          <td class="py-3 font-mono font-medium text-white">{asset.ticker}</td>
-          <td class="py-3 font-mono">{formatPrice(asset.price, category)}</td>
-          <td class="py-3">
+        <tr>
+          <td>
+            <span class="font-mono font-semibold text-txt-primary">{asset.ticker}</span>
+          </td>
+          <td>
+            <span class="font-mono text-txt-secondary">{formatPrice(asset.price, category)}</span>
+          </td>
+          <td>
             <span class:list={[
-              "px-2 py-0.5 rounded text-xs",
-              asset.vs_20d_ma === "above"
-                ? "bg-bullish/20 text-bullish"
-                : asset.vs_20d_ma === "below"
-                  ? "bg-bearish/20 text-bearish"
-                  : "bg-gray-700/50 text-gray-400"
+              "inline-flex px-2 py-0.5 rounded text-xs font-medium border",
+              getMaClass(asset.vs_20d_ma)
             ]}>
               {asset.vs_20d_ma || "--"}
             </span>
           </td>
-          <td class="py-3 font-mono">{formatSecondary(asset.secondary_ind, category)}</td>
-          <td class="py-3">
+          <td>
+            <span class="font-mono text-sm text-txt-secondary">{formatSecondary(asset.secondary_ind, category)}</span>
+          </td>
+          <td>
             <BiasIndicator bias={asset.bias} size="sm" />
           </td>
         </tr>

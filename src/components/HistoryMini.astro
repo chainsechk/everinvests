@@ -28,24 +28,29 @@ function formatDate(dateStr: string): string {
 
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Recent Signals</h3>
-    <a href={`/${category}/history`} class="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-      View all &rarr;
+    <h3 class="font-display font-semibold text-sm text-txt-muted uppercase tracking-wider">Recent Signals</h3>
+    <a href={`/${category}/history`} class="flex items-center gap-1.5 text-sm font-medium text-cyber hover:gap-2.5 transition-all">
+      View all
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
     </a>
   </div>
 
-  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-    {signals.slice(0, 7).map((signal) => (
-      <div class="bg-gray-700/30 rounded-lg px-3 py-2 flex items-center justify-between">
-        <div class="text-xs text-gray-400">
-          {formatDate(signal.date)} {signal.time_slot}
+  {signals.length > 0 ? (
+    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      {signals.slice(0, 7).map((signal) => (
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-void-100/30 border border-void-200/20 hover:border-void-200/40 transition-colors">
+          <div class="text-xs text-txt-muted font-mono">
+            {formatDate(signal.date)} <span class="text-txt-muted/60">{signal.time_slot}</span>
+          </div>
+          <BiasIndicator bias={signal.bias} size="sm" />
         </div>
-        <BiasIndicator bias={signal.bias} size="sm" />
-      </div>
-    ))}
-  </div>
-
-  {signals.length === 0 && (
-    <p class="text-sm text-gray-500 italic">No historical signals available yet.</p>
+      ))}
+    </div>
+  ) : (
+    <div class="text-center py-8">
+      <p class="text-sm text-txt-muted">No historical signals available yet.</p>
+    </div>
   )}
 </div>

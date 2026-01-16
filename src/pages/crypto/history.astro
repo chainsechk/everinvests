@@ -22,18 +22,25 @@ if (db) {
 
   <div class="space-y-8">
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-400">
-      <a href="/" class="hover:text-white transition-colors">Home</a>
-      <span class="mx-2">/</span>
-      <a href={`/${category}`} class="hover:text-white transition-colors">{categoryTitle}</a>
-      <span class="mx-2">/</span>
-      <span class="text-white">History</span>
+    <nav class="flex items-center gap-2 text-sm" data-animate>
+      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <a href={`/${category}`} class="text-txt-muted hover:text-txt-primary transition-colors">{categoryTitle}</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">History</span>
     </nav>
 
     <!-- Page Header -->
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">{categoryTitle} Signal History</h1>
-      <p class="text-gray-400">{signals.length} signals in archive</p>
+    <div data-animate>
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">₿</span>
+        <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary">{categoryTitle} History</h1>
+      </div>
+      <p class="text-txt-secondary font-mono">{signals.length} signals in archive</p>
     </div>
 
     <!-- Signal List -->
