@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: Draft
+Status: In Progress (Phase 0-1 complete, Phase 2 partial)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -48,74 +48,75 @@ Data:
 - Add prompt_versions and llm_runs tables for provenance and evaluation.
 - Add quality flags to signal output_json for UI visibility.
 
-## Phase 0: Baseline Alignment (1 week)
+## Phase 0: Baseline Alignment ✅ COMPLETE
 
 Scope: Validate domain and baseline metrics before larger changes.
 
 Tasks:
-- Confirm and centralize SITE_URL config in:
+- [x] Confirm and centralize SITE_URL config in:
+  - src/lib/site.ts (new central module)
   - src/layouts/BaseLayout.astro
   - src/pages/sitemap.xml.ts
   - src/pages/robots.txt.ts
-  - worker/src/notify/telegram.ts
-- Add scripts/baseline-report.ts to compute:
-  - run success rate
-  - asset completeness per run
-  - LLM fallback rate
-  - average time per run
-- Update docs/development.md with baseline procedure.
+  - worker/src/notify/telegram.ts (uses env.SITE_URL)
+- [ ] Add scripts/baseline-report.ts (deferred - observability tables now provide this)
+- [x] Update docs/development.md with baseline procedure.
 
 Acceptance:
-- All site outputs use a single canonical domain.
-- Baseline report runs locally against D1 data.
+- [x] All site outputs use a single canonical domain.
+- [x] Observability via workflow_runs and skill_runs tables replaces baseline report.
 
-## Phase 1: Workflow Orchestrator and Skill Registry (2 weeks)
+## Phase 1: Workflow Orchestrator and Skill Registry ✅ COMPLETE
 
 Scope: Convert worker logic into modular skills and workflow configs.
 
 Tasks:
-- Add worker/src/skills/types.ts with SkillSpec interface:
+- [x] Add worker/src/skills/types.ts with SkillSpec interface:
   - id, version, inputs, outputs, run()
-- Move existing logic into skills:
+- [x] Move existing logic into skills:
   - fetchMacroDataSkill
   - fetchAssetDataSkill
   - computeBiasSkill
+  - qualityChecksSkill (added)
   - generateSummarySkill
   - storeSignalSkill
   - notifyTelegramSkill
-- Add worker/src/workflows/crypto.ts, forex.ts, stocks.ts.
-- Add worker/src/pipeline.ts to execute skills with dependency graph.
-- Add D1 migration 0002_agent_workflows.sql:
+- [x] Add worker/src/workflows/crypto.ts, forex.ts, stocks.ts.
+- [x] Add worker/src/pipeline.ts to execute skills with dependency graph.
+- [x] Add D1 migration 0002_agent_workflows.sql:
   - workflow_runs(id, workflow_id, category, date, time_slot, status, duration_ms)
   - skill_runs(id, workflow_run_id, skill_id, skill_version, status, duration_ms, error_msg)
-- Add tests for pipeline execution and dependency ordering.
+- [x] Add tests for pipeline execution and dependency ordering.
+- [x] Deploy worker and apply migration to production.
 
 Acceptance:
-- All categories run through workflow configs.
-- A skill version can be swapped without code changes in other skills.
+- [x] All categories run through workflow configs.
+- [x] A skill version can be swapped without code changes in other skills.
+- [x] Workflow and skill runs recorded in D1 with timing data.
 
-## Phase 2: Data Quality and Rate-Limit Resilience (2 weeks)
+## Phase 2: Data Quality and Rate-Limit Resilience (In Progress)
 
 Scope: Improve data completeness and stability under API limits.
 
 Tasks:
-- Add worker/src/cache/ttl.ts and use for:
+- [ ] Add worker/src/cache/ttl.ts and use for:
   - TwelveData quote, sma, rsi
   - AlphaVantage macro calls
-- Add worker/src/quality/checks.ts:
+- [x] Add worker/src/quality/checks.ts:
   - missing assets
-  - outlier values
-  - stale timestamps
-- Write quality_flags into signals.output_json:
-  - missing_assets, stale_assets, macro_fallback
-- Add UI labels in:
+  - [ ] outlier values (pending)
+  - [ ] stale timestamps (pending)
+- [x] Write quality_flags into signals.output_json:
+  - missing_assets, macro_fallback
+  - [ ] stale_assets (pending)
+- [x] Add UI labels in:
   - src/components/SignalDetail.astro
-  - src/components/AssetTable.astro
-- Add tests for quality check thresholds.
+  - [ ] src/components/AssetTable.astro (pending - only detail view shows flags)
+- [ ] Add tests for quality check thresholds.
 
 Acceptance:
-- Partial data is visible in the UI.
-- Runs record quality flags and do not silently pass.
+- [x] Partial data is visible in the UI (SignalDetail shows quality flags).
+- [x] Runs record quality flags and do not silently pass.
 
 ## Phase 3: Prompt Registry and LLM Provenance (2 to 3 weeks)
 
