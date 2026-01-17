@@ -53,8 +53,14 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
     if (!env.ALPHAVANTAGE_API_KEY) {
       macroFallback = true;
       fallbackReason = "ALPHAVANTAGE_API_KEY not configured";
+    } else if (!env.TWELVEDATA_API_KEY) {
+      macroFallback = true;
+      fallbackReason = "TWELVEDATA_API_KEY not configured";
     } else {
-      macroData = await fetchMacroData(env.ALPHAVANTAGE_API_KEY);
+      macroData = await fetchMacroData({
+        twelveData: env.TWELVEDATA_API_KEY,
+        alphaVantage: env.ALPHAVANTAGE_API_KEY,
+      });
       if (!isValidMacroData(macroData)) {
         macroFallback = true;
         fallbackReason = "Macro fetch returned invalid data";
