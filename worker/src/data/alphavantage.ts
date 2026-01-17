@@ -1,110 +1,140 @@
-// Alpha Vantage API for macro data (DXY, VIX, 10Y yields)
-// Free tier: 25 requests/day
+// Macro data fetcher using Twelve Data (DXY proxy, VIX proxy) and Alpha Vantage (Treasury yields)
+// Uses ETF proxies since free tiers don't include actual indices
 
 import type { MacroData } from "../types";
 
 const ALPHAVANTAGE_API = "https://www.alphavantage.co/query";
-
-interface AlphaVantageTimeSeries {
-  "Time Series (Daily)": Record<string, {
-    "1. open": string;
-    "2. high": string;
-    "3. low": string;
-    "4. close": string;
-    "5. volume": string;
-  }>;
-}
+const TWELVEDATA_API = "https://api.twelvedata.com";
 
 interface AlphaVantageTreasuryYield {
   data: Array<{ date: string; value: string }>;
 }
 
-// Get price and 20-day MA for a symbol
-async function getSymbolData(
-  symbol: string,
-  apiKey: string
-): Promise<{ price: number; ma20: number }> {
-  const url = `${ALPHAVANTAGE_API}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`;
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    throw new Error(`AlphaVantage failed for ${symbol}: ${res.status}`);
-  }
-
-  const data: AlphaVantageTimeSeries = await res.json();
-  const timeSeries = data["Time Series (Daily)"];
-
-  if (!timeSeries) {
-    throw new Error(`No time series data for ${symbol}`);
-  }
-
-  const dates = Object.keys(timeSeries).sort().reverse();
-  const price = parseFloat(timeSeries[dates[0]]["4. close"]);
-
-  // Calculate 20-day MA
-  const closes = dates.slice(0, 20).map(d => parseFloat(timeSeries[d]["4. close"]));
-  const ma20 = closes.reduce((sum, c) => sum + c, 0) / closes.length;
-
-  return { price, ma20 };
+interface TwelveDataTimeSeries {
+  values?: Array<{ datetime: string; close: string }>;
+  status?: string;
+  code?: number;
+  message?: string;
 }
 
-// Get 10-year Treasury yield
-async function getTreasuryYield(apiKey: string): Promise<number> {
-  const url = `${ALPHAVANTAGE_API}?function=TREASURY_YIELD&interval=daily&maturity=10year&apikey=${apiKey}`;
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    throw new Error(`AlphaVantage Treasury Yield failed: ${res.status}`);
-  }
-
-  const data: AlphaVantageTreasuryYield = await res.json();
-
-  if (!data.data || data.data.length === 0) {
-    throw new Error("No Treasury yield data");
-  }
-
-  return parseFloat(data.data[0].value);
-}
-
-export async function fetchMacroData(apiKey: string): Promise<MacroData> {
-  const timestamp = new Date().toISOString();
-
-  // Fetch DXY (US Dollar Index) - using UUP ETF as proxy
-  // VIX - using VIX index
-  // Note: AlphaVantage has limited free tier, so we fetch sequentially
+// Get DXY proxy from Twelve Data using UUP ETF (PowerShares DB US Dollar Index)
+// Returns price and calculated 20-day MA
+async function getDXYData(apiKey: string): Promise<{ price: number; ma20: number }> {
+  const symbol = "UUP";
+  const url = `${TWELVEDATA_API}/time_series?symbol=${symbol}&interval=1day&outputsize=25&apikey=${apiKey}`;
 
   try {
-    // DXY proxy using UUP (PowerShares DB US Dollar Index)
-    const dxyData = await getSymbolData("UUP", apiKey);
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`TwelveData UUP failed: ${res.status}`);
+      return { price: 28.5, ma20: 28.5 }; // UUP typically trades around $28-29
+    }
 
-    // Small delay between requests
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const data: TwelveDataTimeSeries = await res.json();
 
-    // VIX - Note: Alpha Vantage doesn't have VIX directly
-    // Using VIXY ETF as proxy
-    const vixData = await getSymbolData("VIXY", apiKey);
+    if (!data.values || data.values.length === 0 || data.status === "error") {
+      console.warn("UUP data issue:", JSON.stringify(data).slice(0, 300));
+      return { price: 28.5, ma20: 28.5 };
+    }
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const closes = data.values.map(v => parseFloat(v.close)).filter(n => Number.isFinite(n) && n > 0);
+    if (closes.length === 0) {
+      return { price: 28.5, ma20: 28.5 };
+    }
 
-    // 10-year Treasury yield
-    const us10y = await getTreasuryYield(apiKey);
+    const price = closes[0];
+    const ma20 = closes.slice(0, 20).reduce((sum, c) => sum + c, 0) / Math.min(closes.length, 20);
 
-    return {
-      dxy: dxyData.price,
-      dxyMa20: dxyData.ma20,
-      vix: vixData.price, // This is VIXY price, not actual VIX
-      us10y,
-      timestamp,
-    };
+    return { price, ma20 };
   } catch (error) {
-    console.error("Failed to fetch macro data:", error);
-    // Return defaults if macro fetch fails
-    return {
-      dxy: 0,
-      dxyMa20: 0,
-      vix: 0,
-      us10y: 0,
-      timestamp,
-    };
+    console.warn("DXY fetch error:", error);
+    return { price: 28.5, ma20: 28.5 };
   }
+}
+
+// Get VIX proxy from Twelve Data using VIXY ETF
+// Returns ETF price (not actual VIX value)
+async function getVIXData(apiKey: string): Promise<number> {
+  const symbol = "VIXY";
+  const url = `${TWELVEDATA_API}/time_series?symbol=${symbol}&interval=1day&outputsize=1&apikey=${apiKey}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`TwelveData VIXY failed: ${res.status}`);
+      return 20; // Typical VIX level
+    }
+
+    const data: TwelveDataTimeSeries = await res.json();
+
+    if (!data.values || data.values.length === 0 || data.status === "error") {
+      console.warn("VIXY data issue:", JSON.stringify(data).slice(0, 300));
+      return 20;
+    }
+
+    const vix = parseFloat(data.values[0].close);
+    if (!Number.isFinite(vix) || vix <= 0) {
+      return 20;
+    }
+
+    return vix;
+  } catch (error) {
+    console.warn("VIX fetch error:", error);
+    return 20;
+  }
+}
+
+// Get 10-year Treasury yield from Alpha Vantage
+// Falls back to a reasonable default if rate-limited
+async function getTreasuryYield(apiKey: string): Promise<number> {
+  try {
+    const url = `${ALPHAVANTAGE_API}?function=TREASURY_YIELD&interval=daily&maturity=10year&apikey=${apiKey}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.warn(`AlphaVantage Treasury Yield HTTP error: ${res.status}`);
+      return 4.5;
+    }
+
+    const data: AlphaVantageTreasuryYield = await res.json();
+
+    if (!data.data || data.data.length === 0) {
+      console.warn("Treasury yield rate-limited or unavailable");
+      return 4.5;
+    }
+
+    const value = parseFloat(data.data[0].value);
+    if (!Number.isFinite(value) || value <= 0) {
+      return 4.5;
+    }
+
+    return value;
+  } catch (error) {
+    console.warn("Treasury yield fetch error:", error);
+    return 4.5;
+  }
+}
+
+export interface MacroApiKeys {
+  twelveData: string;
+  alphaVantage: string;
+}
+
+export async function fetchMacroData(apiKeys: MacroApiKeys): Promise<MacroData> {
+  const timestamp = new Date().toISOString();
+
+  // Fetch all data in parallel - each function handles its own errors with fallbacks
+  const [dxyData, vix, us10y] = await Promise.all([
+    getDXYData(apiKeys.twelveData),
+    getVIXData(apiKeys.twelveData),
+    getTreasuryYield(apiKeys.alphaVantage),
+  ]);
+
+  return {
+    dxy: dxyData.price,
+    dxyMa20: dxyData.ma20,
+    vix,
+    us10y,
+    timestamp,
+  };
 }

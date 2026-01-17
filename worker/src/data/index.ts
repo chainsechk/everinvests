@@ -1,3 +1,3 @@
 export { fetchCryptoData } from "./binance";
 export { fetchForexData, fetchStockData } from "./twelvedata";
-export { fetchMacroData } from "./alphavantage";
+export { fetchMacroData, type MacroApiKeys } from "./alphavantage";

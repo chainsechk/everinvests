@@ -78,12 +78,19 @@ function calculatePriceAndMA(ohlc: CoinGeckoOHLC[]): { price: number; ma20: numb
 }
 
 // Get funding rate from Binance (optional, returns 0 on failure)
+// Note: Binance Futures API may block cloud provider IPs (Cloudflare Workers, AWS, etc.)
 async function getFundingRate(symbol: string): Promise<number> {
   try {
     const url = `${BINANCE_FUTURES_API}/fapi/v1/fundingRate?symbol=${symbol}USDT&limit=1`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "EverInvests/1.0 (https://everinvests.com)",
+        "Accept": "application/json",
+      },
+    });
 
     if (!res.ok) {
+      // 403 is common when Binance blocks cloud provider IPs - this is expected
       console.warn(`Binance funding rate unavailable for ${symbol}: ${res.status}`);
       return 0;
     }
