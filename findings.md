@@ -10,6 +10,32 @@
 
 ## Research Findings
 
+### Phase 2 Complete (2026-01-17)
+
+**TTL Cache Implementation:**
+- worker/src/cache/ttl.ts: Cloudflare Cache API integration
+- TTL: 5 min for quotes, 15 min for SMA/RSI, 60 min for macro
+- Cache hit tracking and staleness detection built-in
+
+**Quality Checks Enhanced:**
+- QualityFlags: `missing_assets`, `macro_fallback`, `macro_stale`, `stale_assets`, `outlier_values`
+- Outlier detection: price vs MA deviation, extreme RSI, extreme funding rate
+- Thresholds: 50% MA deviation, RSI 5-95, 1% funding rate
+
+**Data Fetching Updated:**
+- TwelveData: cached fetch, returns cacheHits and staleAssets
+- AlphaVantage: cached fetch, returns cached and isStale flags
+- Skills updated to v2 with new output fields
+
+**UI Updated:**
+- SignalDetail.astro: shows all quality flag types
+- AssetTable.astro: shows stale/outlier icons per asset with tooltips
+- Category pages pass qualityFlags to AssetTable
+
+**Tests Added:**
+- tests/worker/quality-checks.test.ts (20 tests)
+- All 37 tests passing
+
 ### Project State (Task 1 Discovery)
 - **Empty repo** - no Astro scaffolding exists
 - Only docs present: CLAUDE.md, design.md, docs/plans/

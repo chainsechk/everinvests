@@ -20,6 +20,7 @@ let macro = null;
 let signal = null;
 let assets: any[] = [];
 let history: any[] = [];
+let qualityFlags: any = null;
 
 if (db) {
   [macro, signal] = await Promise.all([
@@ -32,6 +33,16 @@ if (db) {
       getAssetSignals(db, signal.id),
       getSignalHistory(db, category, 7),
     ]);
+
+    // Parse quality flags from output_json
+    if (signal.output_json) {
+      try {
+        const output = JSON.parse(signal.output_json);
+        qualityFlags = output.quality_flags || null;
+      } catch {
+        // Ignore parse errors
+      }
+    }
   }
 }
 ---
@@ -88,7 +99,7 @@ if (db) {
     {assets.length > 0 && (
       <div class="card" data-animate>
         <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Ticker Breakdown</h2>
-        <AssetTable assets={assets} category={category} />
+        <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} />
       </div>
     )}
 

@@ -12,12 +12,12 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
     steps: [
       {
         id: "macro",
-        skill: { id: "fetch_macro_data", version: "1" },
+        skill: { id: "fetch_macro_data", version: "2" },
         input: ({ ctx }) => ({ date: ctx.date, timeSlot: ctx.timeSlot }),
       },
       {
         id: "assets",
-        skill: { id: "fetch_asset_data", version: "1" },
+        skill: { id: "fetch_asset_data", version: "2" },
       },
       {
         id: "bias",
@@ -30,12 +30,19 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "quality",
-        skill: { id: "quality_checks", version: "1" },
+        skill: { id: "quality_checks", version: "2" },
         dependsOn: ["macro", "assets"],
-        input: ({ state }) => {
+        input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;
           const assets = state["assets"] as FetchAssetDataOutput;
-          return { missingTickers: assets.missingTickers, macroFallback: macro.macroFallback };
+          return {
+            missingTickers: assets.missingTickers,
+            macroFallback: macro.macroFallback,
+            macroStale: macro.macroStale,
+            staleAssets: assets.staleAssets,
+            assets: assets.assetData,
+            category: ctx.category as Category,
+          };
         },
       },
       {

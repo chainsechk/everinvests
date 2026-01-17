@@ -132,7 +132,13 @@ function getMacroColor(macro: string | null): string {
   </div>
 
   <!-- Data Quality -->
-  {qualityFlags && (qualityFlags.macro_fallback || (qualityFlags.missing_assets && qualityFlags.missing_assets.length > 0)) && (
+  {qualityFlags && (
+    qualityFlags.macro_fallback ||
+    qualityFlags.macro_stale ||
+    (qualityFlags.missing_assets && qualityFlags.missing_assets.length > 0) ||
+    (qualityFlags.stale_assets && qualityFlags.stale_assets.length > 0) ||
+    (qualityFlags.outlier_values && qualityFlags.outlier_values.length > 0)
+  ) && (
     <div class="pt-4 border-t border-void-200/30">
       <div class="flex items-start gap-2 text-sm text-mixed">
         <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,8 +148,17 @@ function getMacroColor(macro: string | null): string {
           {qualityFlags.macro_fallback && (
             <p>Macro data unavailable - using fallback</p>
           )}
+          {qualityFlags.macro_stale && (
+            <p>Macro data may be stale (cached)</p>
+          )}
           {qualityFlags.missing_assets && qualityFlags.missing_assets.length > 0 && (
             <p>Missing assets: {qualityFlags.missing_assets.join(", ")}</p>
+          )}
+          {qualityFlags.stale_assets && qualityFlags.stale_assets.length > 0 && (
+            <p>Stale data: {qualityFlags.stale_assets.join(", ")}</p>
+          )}
+          {qualityFlags.outlier_values && qualityFlags.outlier_values.length > 0 && (
+            <p>Outlier values detected: {qualityFlags.outlier_values.map((o: {ticker: string; reason: string}) => `${o.ticker} (${o.reason})`).join(", ")}</p>
           )}
         </div>
       </div>
