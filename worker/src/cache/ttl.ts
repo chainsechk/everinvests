@@ -22,11 +22,15 @@ export const DEFAULT_TTL: CacheConfig = {
 };
 
 // Cache key prefix to avoid collisions
-const CACHE_PREFIX = "everinvests-api-cache:v1";
+const CACHE_PREFIX = "everinvests-api-cache-v1";
 
 // Generate cache key from URL
+// Must return a valid URL for the Cloudflare Cache API Request constructor
 function getCacheKey(url: string): string {
-  return `${CACHE_PREFIX}:${url}`;
+  // Use a fake domain with the URL encoded to create a valid cache key
+  // Strip API keys from the URL to avoid exposing them in cache
+  const sanitizedUrl = url.replace(/apikey=[^&]+/, "apikey=REDACTED");
+  return `https://cache.everinvests.local/${CACHE_PREFIX}/${encodeURIComponent(sanitizedUrl)}`;
 }
 
 // Create a cacheable response with TTL header
@@ -47,6 +51,18 @@ function getDefaultCache(): Cache {
   return (caches as any).default as Cache;
 }
 
+// Check if response is an API error (TwelveData/AlphaVantage style)
+function isApiErrorResponse(data: unknown): boolean {
+  if (typeof data !== "object" || data === null) return false;
+  // TwelveData errors have { code, message, status: "error" }
+  if ("status" in data && (data as { status: string }).status === "error") return true;
+  // AlphaVantage errors have { "Error Message": "..." }
+  if ("Error Message" in data) return true;
+  // Rate limit messages
+  if ("Note" in data) return true;
+  return false;
+}
+
 // Fetch with TTL caching
 export async function cachedFetch<T>(
   url: string,
@@ -61,8 +77,13 @@ export async function cachedFetch<T>(
   const cachedResponse = await cache.match(cacheRequest);
   if (cachedResponse) {
     const data = await cachedResponse.json() as T;
-    const cachedAt = cachedResponse.headers.get("X-Cached-At") || undefined;
-    return { data, cached: true, cachedAt };
+    // Don't return cached error responses - delete and fetch fresh
+    if (isApiErrorResponse(data)) {
+      await cache.delete(cacheRequest);
+    } else {
+      const cachedAt = cachedResponse.headers.get("X-Cached-At") || undefined;
+      return { data, cached: true, cachedAt };
+    }
   }
 
   // Fetch fresh data
@@ -73,9 +94,11 @@ export async function cachedFetch<T>(
 
   const data = await response.json() as T;
 
-  // Store in cache with TTL
-  const cacheResponse = createCacheResponse(data, ttlSeconds);
-  await cache.put(cacheRequest, cacheResponse);
+  // Only cache successful responses, not API errors
+  if (!isApiErrorResponse(data)) {
+    const cacheResponse = createCacheResponse(data, ttlSeconds);
+    await cache.put(cacheRequest, cacheResponse);
+  }
 
   return { data, cached: false };
 }

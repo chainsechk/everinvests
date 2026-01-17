@@ -24,8 +24,30 @@ interface TwelveDataMA {
   values: Array<{ datetime: string; ma: string }>;
 }
 
+// Time series response for computing MA ourselves
+interface TwelveDataTimeSeries {
+  values: Array<{ datetime: string; close: string }>;
+}
+
 interface TwelveDataRSI {
   values: Array<{ datetime: string; rsi: string }>;
+}
+
+// TwelveData error response (returned with 200 status code)
+interface TwelveDataError {
+  code: number;
+  message: string;
+  status: "error";
+}
+
+// Check if response is a TwelveData error
+function isTwelveDataError(data: unknown): data is TwelveDataError {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "status" in data &&
+    (data as TwelveDataError).status === "error"
+  );
 }
 
 // Stale threshold in minutes (data older than this is considered stale)
@@ -37,10 +59,15 @@ async function getPrice(
   apiKey: string
 ): Promise<{ price: number; cached: boolean; cachedAt?: string }> {
   const url = `${TWELVEDATA_API}/quote?symbol=${symbol}&apikey=${apiKey}`;
-  const { data, cached, cachedAt } = await cachedFetch<TwelveDataQuote>(
+  const { data, cached, cachedAt } = await cachedFetch<TwelveDataQuote | TwelveDataError>(
     url,
     DEFAULT_TTL.TWELVEDATA_QUOTE
   );
+
+  // Check for TwelveData API error
+  if (isTwelveDataError(data)) {
+    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
+  }
 
   if (!data.close) {
     throw new Error(`No price data for ${symbol}`);
@@ -53,25 +80,44 @@ async function getPrice(
   return { price, cached, cachedAt };
 }
 
-// Get 20-day SMA with caching
+// Get 20-day SMA by fetching time series and computing locally
+// This is more reliable than the SMA endpoint for forex pairs
 async function getMA20(
   symbol: string,
   apiKey: string
 ): Promise<{ ma20: number; cached: boolean }> {
-  const url = `${TWELVEDATA_API}/sma?symbol=${symbol}&interval=1day&time_period=20&apikey=${apiKey}`;
-  const { data, cached } = await cachedFetch<TwelveDataMA>(
+  // Fetch last 25 days of data to ensure we have at least 20 data points
+  const url = `${TWELVEDATA_API}/time_series?symbol=${symbol}&interval=1day&outputsize=25&apikey=${apiKey}`;
+  const { data, cached } = await cachedFetch<TwelveDataTimeSeries | TwelveDataError>(
     url,
     DEFAULT_TTL.TWELVEDATA_SMA
   );
 
-  if (!data.values || data.values.length === 0) {
+  // Check for TwelveData API error
+  if (isTwelveDataError(data)) {
+    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
+  }
+
+  if (!data.values || data.values.length < 20) {
+    console.warn(`[TwelveData] Insufficient time series data for ${symbol}: ${data.values?.length || 0} values`);
     throw new Error(`No MA data for ${symbol}`);
   }
 
-  const ma20 = parseFloat(data.values[0].ma);
-  if (!Number.isFinite(ma20) || ma20 <= 0) {
+  // Calculate 20-day SMA from the most recent 20 close prices
+  const closes = data.values.slice(0, 20).map(v => parseFloat(v.close));
+  const validCloses = closes.filter(c => Number.isFinite(c) && c > 0);
+
+  if (validCloses.length < 20) {
+    console.warn(`[TwelveData] Only ${validCloses.length} valid close prices for ${symbol}`);
     throw new Error(`Invalid MA data for ${symbol}`);
   }
+
+  const ma20 = validCloses.reduce((sum, c) => sum + c, 0) / validCloses.length;
+
+  if (!Number.isFinite(ma20) || ma20 <= 0) {
+    throw new Error(`Invalid MA calculation for ${symbol}`);
+  }
+
   return { ma20, cached };
 }
 
@@ -81,10 +127,15 @@ async function getRSI(
   apiKey: string
 ): Promise<{ rsi: number; cached: boolean }> {
   const url = `${TWELVEDATA_API}/rsi?symbol=${symbol}&interval=1day&time_period=14&apikey=${apiKey}`;
-  const { data, cached } = await cachedFetch<TwelveDataRSI>(
+  const { data, cached } = await cachedFetch<TwelveDataRSI | TwelveDataError>(
     url,
     DEFAULT_TTL.TWELVEDATA_RSI
   );
+
+  // Check for TwelveData API error
+  if (isTwelveDataError(data)) {
+    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
+  }
 
   if (!data.values || data.values.length === 0) {
     throw new Error(`No RSI data for ${symbol}`);
@@ -161,6 +212,8 @@ async function fetchAssetData(
 }
 
 // Batch fetch for forex
+// Note: TwelveData free tier has 8 req/min limit
+// 4 forex pairs × 3 calls each = 12 calls, so we use sequential mode
 export async function fetchForexData(
   tickers: readonly ForexTicker[],
   apiKey: string
@@ -169,11 +222,13 @@ export async function fetchForexData(
   let totalCacheHits = 0;
   const staleAssets: string[] = [];
 
+  console.log(`[Forex] Fetching ${tickers.length} currency pairs`);
+
   // Process sequentially to respect rate limits (8/min)
   for (const ticker of tickers) {
     try {
-      // TwelveData uses format like "EUR/USD"
-      const result = await fetchAssetData(ticker, apiKey);
+      // Use sequential mode with built-in delays (like stocks)
+      const result = await fetchAssetData(ticker, apiKey, true);
       results.push(result.data);
       totalCacheHits += result.cacheHits;
 
@@ -181,12 +236,15 @@ export async function fetchForexData(
         staleAssets.push(ticker);
       }
 
-      // Only delay if we're making fresh API calls
+      // Add delay between tickers if we made fresh API calls
       if (result.cacheHits < 3) {
-        await new Promise(resolve => setTimeout(resolve, 250));
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     } catch (error) {
-      console.error(`Failed to fetch ${ticker}:`, error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error(`[Forex] Failed to fetch ${ticker}: ${errMsg}`);
+      // Add delay even on error to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
 
