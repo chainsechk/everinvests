@@ -403,3 +403,71 @@
 - Verified workflow_runs and skill_runs recording in D1
 - Updated docs/plans/2026-01-16-agent-skill-evolution.md with completion status
 
+
+## Session: 2026-01-17
+
+### Phase 2 Completion: Data Quality and Rate-Limit Resilience
+- **Status:** complete
+- **Started:** 2026-01-17
+- **Completed:** 2026-01-17
+
+#### Tasks Completed:
+
+1. **TTL Cache Implementation**
+   - Created worker/src/cache/ttl.ts with Cloudflare Cache API integration
+   - Default TTL: 5min for quotes, 15min for SMA/RSI, 1hr for macro
+   - Cache hit tracking and staleness detection
+
+2. **TwelveData Integration**
+   - Updated worker/src/data/twelvedata.ts to use cached fetch
+   - Returns cache hits and stale assets list
+   - Reduced API delays when cache hit
+
+3. **AlphaVantage Integration**
+   - Updated worker/src/data/alphavantage.ts to use cached fetch
+   - Returns MacroDataResult with cached/isStale flags
+
+4. **Quality Checks Enhancement**
+   - Added outlier detection (price vs MA, extreme RSI, extreme funding)
+   - Added stale timestamps detection
+   - Added stale_assets to QualityFlags
+   - Updated computeQualityFlags with new inputs
+   - Added hasQualityIssues helper function
+
+5. **Skills Updates**
+   - fetchAssetDataSkill v2: returns staleAssets, cacheHits
+   - fetchMacroDataSkill v2: returns macroStale flag
+   - qualityChecksSkill v2: handles new quality inputs
+
+6. **Workflow Updates**
+   - Updated category workflow to use v2 skills
+   - Pass staleAssets and assets to quality checks
+
+7. **UI Updates**
+   - AssetTable.astro: shows stale/outlier icons per asset
+   - SignalDetail.astro: shows all quality flag types
+   - Category pages pass qualityFlags to AssetTable
+
+8. **Tests**
+   - Created tests/worker/quality-checks.test.ts (20 tests)
+   - All 37 tests passing
+
+#### Files Created:
+- worker/src/cache/ttl.ts
+- worker/src/cache/index.ts
+- tests/worker/quality-checks.test.ts
+
+#### Files Modified:
+- worker/src/quality/checks.ts
+- worker/src/data/twelvedata.ts
+- worker/src/data/alphavantage.ts
+- worker/src/skills/fetchAssetData.ts
+- worker/src/skills/fetchMacroData.ts
+- worker/src/skills/qualityChecks.ts
+- worker/src/workflows/category.ts
+- src/components/AssetTable.astro
+- src/components/SignalDetail.astro
+- src/pages/crypto/index.astro
+- src/pages/forex/index.astro
+- src/pages/stocks/index.astro
+

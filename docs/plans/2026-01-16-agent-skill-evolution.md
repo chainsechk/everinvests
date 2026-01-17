@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: In Progress (Phase 0-1 complete, Phase 2 partial)
+Status: In Progress (Phase 0-2 complete, Phase 3 next)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -94,29 +94,33 @@ Acceptance:
 - [x] A skill version can be swapped without code changes in other skills.
 - [x] Workflow and skill runs recorded in D1 with timing data.
 
-## Phase 2: Data Quality and Rate-Limit Resilience (In Progress)
+## Phase 2: Data Quality and Rate-Limit Resilience ✅ COMPLETE
 
 Scope: Improve data completeness and stability under API limits.
 
 Tasks:
-- [ ] Add worker/src/cache/ttl.ts and use for:
+- [x] Add worker/src/cache/ttl.ts and use for:
   - TwelveData quote, sma, rsi
   - AlphaVantage macro calls
 - [x] Add worker/src/quality/checks.ts:
   - missing assets
-  - [ ] outlier values (pending)
-  - [ ] stale timestamps (pending)
+  - [x] outlier values
+  - [x] stale timestamps
 - [x] Write quality_flags into signals.output_json:
   - missing_assets, macro_fallback
-  - [ ] stale_assets (pending)
+  - [x] stale_assets
+  - [x] outlier_values
+  - [x] macro_stale
 - [x] Add UI labels in:
   - src/components/SignalDetail.astro
-  - [ ] src/components/AssetTable.astro (pending - only detail view shows flags)
-- [ ] Add tests for quality check thresholds.
+  - [x] src/components/AssetTable.astro (shows stale/outlier icons)
+- [x] Add tests for quality check thresholds (20 tests in tests/worker/quality-checks.test.ts)
 
 Acceptance:
-- [x] Partial data is visible in the UI (SignalDetail shows quality flags).
+- [x] Partial data is visible in the UI (SignalDetail and AssetTable show quality flags).
 - [x] Runs record quality flags and do not silently pass.
+- [x] TTL cache reduces API calls and improves rate limit resilience.
+- [x] Outlier detection flags unusual values for review.
 
 ## Phase 3: Prompt Registry and LLM Provenance (2 to 3 weeks)
 

@@ -13,9 +13,10 @@ export interface FetchMacroOutput {
   macroSignal: MacroSignal;
   macroId: number | null;
   macroFallback: boolean;
+  macroStale: boolean;
 }
 
-const SHARED_KEY = "macro:v1";
+const SHARED_KEY = "macro:v2";
 
 function isValidMacroData(data: MacroData): boolean {
   return (
@@ -40,7 +41,7 @@ function writeShared(shared: SharedState, value: FetchMacroOutput): void {
 
 export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> = {
   id: "fetch_macro_data",
-  version: "1",
+  version: "2",
   async run({ env, input, shared }) {
     const cached = readShared(shared);
     if (cached) return cached;
@@ -48,6 +49,7 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
     let macroData: MacroData | null = null;
     let macroSignal: MacroSignal | null = null;
     let macroFallback = false;
+    let macroStale = false;
     let fallbackReason: string | undefined;
 
     if (!env.ALPHAVANTAGE_API_KEY) {
@@ -57,10 +59,13 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
       macroFallback = true;
       fallbackReason = "TWELVEDATA_API_KEY not configured";
     } else {
-      macroData = await fetchMacroData({
+      const result = await fetchMacroData({
         twelveData: env.TWELVEDATA_API_KEY,
         alphaVantage: env.ALPHAVANTAGE_API_KEY,
       });
+      macroData = result.data;
+      macroStale = result.isStale;
+
       if (!isValidMacroData(macroData)) {
         macroFallback = true;
         fallbackReason = "Macro fetch returned invalid data";
@@ -89,6 +94,7 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
       macroSignal: signalForDownstream,
       macroId: macroId || null,
       macroFallback,
+      macroStale,
     };
 
     writeShared(shared, result);
