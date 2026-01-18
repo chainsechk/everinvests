@@ -55,12 +55,10 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
     if (!env.ALPHAVANTAGE_API_KEY) {
       macroFallback = true;
       fallbackReason = "ALPHAVANTAGE_API_KEY not configured";
-    } else if (!env.TWELVEDATA_API_KEY) {
-      macroFallback = true;
-      fallbackReason = "TWELVEDATA_API_KEY not configured";
     } else {
+      // DXY and VIX now use Yahoo Finance (no API key needed)
+      // Only Alpha Vantage key is required for Treasury yields
       const result = await fetchMacroData({
-        twelveData: env.TWELVEDATA_API_KEY,
         alphaVantage: env.ALPHAVANTAGE_API_KEY,
       });
       macroData = result.data;
