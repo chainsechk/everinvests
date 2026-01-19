@@ -9,6 +9,7 @@ export interface CacheConfig {
   ALPHAVANTAGE_SYMBOL: number;
   ALPHAVANTAGE_TREASURY: number;
   MACRO: number;
+  COINGECKO_OHLC: number;
 }
 
 // Default TTL configuration
@@ -19,6 +20,7 @@ export const DEFAULT_TTL: CacheConfig = {
   ALPHAVANTAGE_SYMBOL: 60 * 60, // 1 hour for daily time series
   ALPHAVANTAGE_TREASURY: 60 * 60, // 1 hour for treasury yields
   MACRO: 60 * 60, // 1 hour for macro data (DXY, VIX, Treasury)
+  COINGECKO_OHLC: 15 * 60, // 15 minutes for OHLC data
 };
 
 // Cache key prefix to avoid collisions

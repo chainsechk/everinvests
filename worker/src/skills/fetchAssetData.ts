@@ -25,8 +25,10 @@ export const fetchAssetDataSkill: SkillSpec<void, FetchAssetDataOutput> = {
 
     if (category === "crypto") {
       expectedTickers = CRYPTO_ASSETS;
-      // Crypto uses CoinGecko which doesn't have caching yet
-      assetData = await fetchCryptoData(CRYPTO_ASSETS);
+      const result = await fetchCryptoData(CRYPTO_ASSETS);
+      assetData = result.data;
+      staleAssets = result.staleAssets;
+      cacheHits = result.cacheHits;
     } else if (category === "forex") {
       expectedTickers = FOREX_ASSETS;
       if (!env.TWELVEDATA_API_KEY) {

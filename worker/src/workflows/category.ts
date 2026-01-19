@@ -47,7 +47,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "summary",
-        skill: { id: "generate_summary", version: "1" },
+        skill: { id: "generate_summary", version: "2" },
         dependsOn: ["macro", "bias"],
         input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;

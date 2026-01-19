@@ -174,15 +174,15 @@ async function fetchAssetData(
   let rsiResult: { rsi: number; cached: boolean };
 
   if (sequential) {
-    // Sequential calls with delays for rate limiting
+    // Sequential calls with delays for rate limiting (8 req/min = 7.5s per call)
     priceResult = await getPrice(ticker, apiKey);
-    // Only delay if not cached (fresh API call)
+    // Delay between calls to stay within rate limit
     if (!priceResult.cached) {
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 5000));
     }
     maResult = await getMA20(ticker, apiKey);
     if (!maResult.cached) {
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 5000));
     }
     rsiResult = await getRSI(ticker, apiKey);
   } else {
@@ -261,7 +261,7 @@ export async function fetchForexData(
 
 // Batch fetch for stocks
 // Note: TwelveData free tier has 8 req/min limit
-// We limit to 5 key stocks and use sequential calls per ticker
+// 8 tickers × 3 calls = 24 calls, requires ~3 minutes with 8s inter-ticker delays
 export async function fetchStockData(
   tickers: readonly StockTicker[],
   apiKey: string
@@ -284,15 +284,16 @@ export async function fetchStockData(
         staleAssets.push(ticker);
       }
 
-      // Only add delay if we're making fresh API calls
+      // Add delay to stay within 8 req/min rate limit
+      // 8 tickers × 3 calls = 24 calls, need ~3 minutes minimum
       if (result.cacheHits < 3) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 8000));
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       console.error(`[Stocks] Failed to fetch ${ticker}: ${errMsg}`);
-      // Add delay even on error
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Add delay even on error to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 8000));
     }
   }
 
