@@ -11,6 +11,7 @@
     "db:migrate:local": "wrangler d1 migrations apply everinvests-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply everinvests-db --remote",
     "db:seed": "wrangler d1 execute everinvests-db --local --file=./scripts/seed.sql",
+    "eval:llm": "npx tsx scripts/eval-llm.ts",
     "worker:dev": "cd worker && npm run dev",
     "worker:deploy": "cd worker && npm run deploy",
     "deploy": "npm run build && wrangler pages deploy dist",

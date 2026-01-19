@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: In Progress (Phase 0-2 complete, Phase 3 next)
+Status: In Progress (Phase 0-3 complete, Phase 4 next)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -122,24 +122,36 @@ Acceptance:
 - [x] TTL cache reduces API calls and improves rate limit resilience.
 - [x] Outlier detection flags unusual values for review.
 
-## Phase 3: Prompt Registry and LLM Provenance (2 to 3 weeks)
+## Phase 3: Prompt Registry and LLM Provenance ✅ COMPLETE
 
 Scope: Make LLM evolution controlled and auditable.
 
 Tasks:
-- Add worker/src/llm/prompts.ts with versioned prompt templates.
-- Add D1 migration 0003_llm_provenance.sql:
+- [x] Add worker/src/llm/prompts.ts with versioned prompt templates.
+  - Prompt registry with name/version lookup
+  - Two prompt versions: v1 (original) and v2 (enhanced structure)
+  - buildPromptFromRegistry() for dynamic prompt building
+- [x] Add D1 migration 0003_llm_provenance.sql:
   - prompt_versions(id, name, version, template, created_at)
-  - llm_runs(id, signal_id, prompt_version_id, model, tokens_in, tokens_out, latency_ms, status, error_msg)
-- Update worker/src/llm/summary.ts to:
+  - llm_runs(id, signal_id, prompt_version_id, model, tokens_in, tokens_out, latency_ms, status, error_msg, fallback_reason, created_at)
+- [x] Update worker/src/llm/summary.ts to:
   - record prompt version and model
   - enforce output checks (length, tone, forbidden phrases)
   - mark fallback reason in output_json
-- Add scripts/eval-llm.ts with a small golden dataset.
+  - sanitize outputs (remove emojis, markdown)
+- [x] Add worker/src/llm/validation.ts with:
+  - Length checks (30-300 chars, 5-60 words)
+  - Forbidden patterns (fibonacci, MACD, disclaimers, NFA/DYOR)
+  - Emoji and markdown detection
+  - Sensational language warnings
+- [x] Add scripts/eval-llm.ts with golden dataset (4 test cases).
+- [x] Add tests for prompt registry (16 tests) and validation (26 tests).
+- [x] Update generateSummarySkill to version 2 with provenance tracking.
 
 Acceptance:
-- Every summary is traceable to a prompt version and model.
-- Prompt changes can be evaluated before rollout.
+- [x] Every summary is traceable to a prompt version and model.
+- [x] Prompt changes can be evaluated before rollout.
+- [x] Output validation prevents low-quality summaries.
 
 ## Phase 4: Programmatic SEO Expansion (2 to 3 weeks)
 
