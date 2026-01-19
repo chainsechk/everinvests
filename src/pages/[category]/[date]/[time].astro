@@ -1,0 +1,301 @@
+---
+// src/pages/[category]/[date]/[time].astro
+// Per-signal detail page for SEO expansion
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import MacroBar from "../../../components/MacroBar.astro";
+import SignalDetail from "../../../components/SignalDetail.astro";
+import AssetTable from "../../../components/AssetTable.astro";
+import BiasIndicator from "../../../components/BiasIndicator.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import {
+  normalizeCategory,
+  getSignalByDateTime,
+  getAssetSignals,
+  getLatestMacro,
+  getPreviousSignal,
+  getNextSignal,
+  getSignalHistory,
+  getRelatedSignals,
+} from "../../../lib/db";
+import type { Category } from "../../../lib/db";
+import { absoluteUrl } from "../../../lib/site";
+import RelatedSignals from "../../../components/RelatedSignals.astro";
+
+const { category: catParam, date, time } = Astro.params;
+
+// Validate category
+const category = normalizeCategory(catParam ?? "");
+if (!category) {
+  return Astro.redirect("/404");
+}
+
+// Validate date format (YYYY-MM-DD)
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+if (!date || !dateRegex.test(date)) {
+  return Astro.redirect(`/${category}`);
+}
+
+// Validate time format (HH:00)
+const timeRegex = /^\d{2}:00$/;
+if (!time || !timeRegex.test(time)) {
+  return Astro.redirect(`/${category}`);
+}
+
+const db = Astro.locals.runtime?.env?.DB;
+if (!db) {
+  return Astro.redirect(`/${category}`);
+}
+
+const signal = await getSignalByDateTime(db, category, date, time);
+
+if (!signal) {
+  return Astro.redirect(`/${category}`);
+}
+
+const [assets, macro, prevSignal, nextSignal, recentSignals, relatedSignals] = await Promise.all([
+  getAssetSignals(db, signal.id),
+  getLatestMacro(db),
+  getPreviousSignal(db, category, date, time),
+  getNextSignal(db, category, date, time),
+  getSignalHistory(db, category, 5),
+  getRelatedSignals(db, date, time),
+]);
+
+// Parse quality flags
+let qualityFlags: any = null;
+if (signal.output_json) {
+  try {
+    const output = JSON.parse(signal.output_json);
+    qualityFlags = output.quality_flags || null;
+  } catch {
+    // Ignore parse errors
+  }
+}
+
+// Category metadata
+const categoryMeta: Record<Category, { title: string; icon: string }> = {
+  crypto: { title: "Crypto", icon: "₿" },
+  forex: { title: "Forex", icon: "$" },
+  stocks: { title: "Stocks", icon: "📈" },
+};
+
+const { title: categoryTitle, icon: categoryIcon } = categoryMeta[category];
+
+function formatDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatShortDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
+const pageTitle = `${categoryTitle} Signal - ${formatShortDate(date)} at ${time} UTC`;
+const pageDescription = `${categoryTitle} market signal for ${formatDate(date)} at ${time} UTC. Bias: ${signal.bias}.`;
+
+// Parse summary for JSON-LD
+let summary = "";
+if (signal.output_json) {
+  try {
+    const output = JSON.parse(signal.output_json);
+    summary = output.summary || "";
+  } catch {
+    // Ignore
+  }
+}
+
+// Article schema for this signal
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: pageTitle,
+  description: pageDescription,
+  datePublished: `${date}T${time.replace(":", "")}:00Z`,
+  dateModified: signal.generated_at,
+  author: {
+    "@type": "Organization",
+    name: "EverInvests",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "EverInvests",
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteUrl("/favicon.svg"),
+    },
+  },
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": absoluteUrl(`/${category}/${date}/${time}`),
+  },
+  articleBody: summary,
+  about: {
+    "@type": "Thing",
+    name: `${categoryTitle} Market Analysis`,
+  },
+};
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} jsonLd={articleSchema}>
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm flex-wrap" data-animate>
+      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <a href={`/${category}`} class="text-txt-muted hover:text-txt-primary transition-colors">{categoryTitle}</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">{formatShortDate(date)} {time}</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-animate>
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">{categoryIcon}</span>
+          <h1 class="font-display font-bold text-2xl sm:text-3xl text-txt-primary">
+            {categoryTitle} Signal
+          </h1>
+        </div>
+        <p class="text-txt-secondary">{formatDate(date)} at {time} UTC</p>
+      </div>
+      <TelegramCTA variant="compact" />
+    </div>
+
+    <!-- Macro Context (if available for this signal) -->
+    {signal.macro_overall && (
+      <MacroBar
+        overall={macro?.overall}
+        dxyBias={macro?.dxy_bias}
+        vixLevel={macro?.vix_level}
+        yieldsBias={macro?.yields_bias}
+      />
+    )}
+
+    <!-- Signal Detail -->
+    <SignalDetail signal={signal} />
+
+    <!-- Asset Table -->
+    {assets.length > 0 && (
+      <div class="card" data-animate>
+        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Asset Breakdown</h2>
+        <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} />
+      </div>
+    )}
+
+    <!-- Related Signals from Other Categories -->
+    <RelatedSignals
+      currentCategory={category}
+      date={date}
+      timeSlot={time}
+      relatedSignals={relatedSignals}
+    />
+
+    <!-- Navigation: Previous / Next -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-between" data-animate>
+      {prevSignal ? (
+        <a
+          href={`/${category}/${prevSignal.date}/${prevSignal.time_slot}`}
+          class="card-glass flex items-center gap-3 px-4 py-3 hover:border-cyber/30 transition-colors group flex-1"
+        >
+          <svg class="w-5 h-5 text-txt-muted group-hover:text-cyber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide">Previous</div>
+            <div class="flex items-center gap-2">
+              <span class="text-txt-primary font-medium">{formatShortDate(prevSignal.date)} {prevSignal.time_slot}</span>
+              <BiasIndicator bias={prevSignal.bias} size="sm" />
+            </div>
+          </div>
+        </a>
+      ) : (
+        <div class="flex-1"></div>
+      )}
+
+      {nextSignal ? (
+        <a
+          href={`/${category}/${nextSignal.date}/${nextSignal.time_slot}`}
+          class="card-glass flex items-center justify-end gap-3 px-4 py-3 hover:border-cyber/30 transition-colors group flex-1 text-right"
+        >
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide">Next</div>
+            <div class="flex items-center justify-end gap-2">
+              <BiasIndicator bias={nextSignal.bias} size="sm" />
+              <span class="text-txt-primary font-medium">{formatShortDate(nextSignal.date)} {nextSignal.time_slot}</span>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-txt-muted group-hover:text-cyber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      ) : (
+        <div class="flex-1"></div>
+      )}
+    </div>
+
+    <!-- Recent Signals -->
+    {recentSignals.length > 0 && (
+      <div class="card" data-animate>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display font-semibold text-lg text-txt-primary">Recent {categoryTitle} Signals</h2>
+          <a href={`/${category}/history`} class="text-sm text-cyber hover:text-cyber-light transition-colors">
+            View all &rarr;
+          </a>
+        </div>
+        <div class="grid gap-2">
+          {recentSignals.slice(0, 5).map((s) => (
+            <a
+              href={`/${category}/${s.date}/${s.time_slot}`}
+              class:list={[
+                "flex items-center justify-between px-3 py-2 rounded-lg hover:bg-void-100/50 transition-colors",
+                s.id === signal.id && "bg-void-100/30 border border-cyber/20"
+              ]}
+            >
+              <div class="flex items-center gap-3">
+                <BiasIndicator bias={s.bias} size="sm" />
+                <span class="text-txt-secondary text-sm">
+                  {formatShortDate(s.date)} at {s.time_slot}
+                </span>
+              </div>
+              {s.id === signal.id && (
+                <span class="text-xs text-cyber font-medium">Current</span>
+              )}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Back to Category -->
+    <div class="text-center" data-animate>
+      <a
+        href={`/${category}`}
+        class="inline-flex items-center gap-2 text-txt-muted hover:text-txt-primary transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to {categoryTitle} Signals
+      </a>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>

@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: In Progress (Phase 0-3 complete, Phase 4 next)
+Status: In Progress (Phase 0-4 complete, Phase 5 next)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -153,27 +153,34 @@ Acceptance:
 - [x] Prompt changes can be evaluated before rollout.
 - [x] Output validation prevents low-quality summaries.
 
-## Phase 4: Programmatic SEO Expansion (2 to 3 weeks)
+## Phase 4: Programmatic SEO Expansion ✅ COMPLETE
 
 Scope: Increase indexable pages and structured data.
 
 Tasks:
-- Add per-signal pages:
+- [x] Add per-signal pages:
   - src/pages/[category]/[date]/[time].astro
-- Add per-asset pages:
+  - Includes navigation (prev/next), breadcrumbs, and recent signals
+- [x] Add per-asset pages:
   - src/pages/stocks/[ticker].astro
   - src/pages/crypto/[ticker].astro
   - src/pages/forex/[pair].astro
-- Add JSON-LD for:
-  - WebSite, Article, and FinancialProduct
-- Expand sitemap in src/pages/sitemap.xml.ts:
-  - Include recent signal pages and asset pages.
-- Add internal linking blocks:
-  - "Related signals" and "Recent changes".
+  - Each shows current status, signal history, and links to other assets
+- [x] Add JSON-LD for:
+  - WebSite and Organization (in BaseLayout for all pages)
+  - Article (on per-signal pages)
+  - FinancialProduct (on per-asset pages)
+- [x] Expand sitemap in src/pages/sitemap.xml.ts:
+  - Include recent signal pages (up to 500)
+  - Include all asset pages (crypto, forex, stocks tickers)
+- [x] Add internal linking blocks:
+  - RelatedSignals component for cross-category linking
+  - AssetTable now links each ticker to its detail page
+  - HistoryMini and HistoryList link to signal detail pages
 
 Acceptance:
-- New page types appear in sitemap.
-- Pages render correctly for data present in D1.
+- [x] New page types appear in sitemap.
+- [x] Pages render correctly for data present in D1.
 
 ## Phase 5: Distribution and Engagement Loops (2 weeks)
 

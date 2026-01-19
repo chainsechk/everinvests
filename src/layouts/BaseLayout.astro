@@ -1,22 +1,48 @@
 ---
 // src/layouts/BaseLayout.astro
 import "../styles/global.css";
-import { absoluteUrl } from "../lib/site";
+import { absoluteUrl, SITE_URL } from "../lib/site";
+import JsonLd from "../components/JsonLd.astro";
 
 interface Props {
   title: string;
   description?: string;
   image?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title,
   description = "Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.",
-  image = "/og-image.svg"
+  image = "/og-image.svg",
+  jsonLd,
 } = Astro.props;
 
 const fullTitle = title === "EverInvests" ? title : `${title} | EverInvests`;
 const canonicalUrl = absoluteUrl(Astro.url.pathname);
+
+// Base schemas for every page
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "EverInvests",
+  url: SITE_URL || "https://everinvests.com",
+  description: "Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL || "https://everinvests.com"}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "EverInvests",
+  url: SITE_URL || "https://everinvests.com",
+  logo: absoluteUrl("/favicon.svg"),
+  sameAs: ["https://t.me/everinvests"],
+};
 ---
 
 <!doctype html>
@@ -57,6 +83,11 @@ const canonicalUrl = absoluteUrl(Astro.url.pathname);
     <meta name="theme-color" content="#0a0e17" />
 
     <title>{fullTitle}</title>
+
+    <!-- Structured Data -->
+    <JsonLd schema={websiteSchema} />
+    <JsonLd schema={organizationSchema} />
+    {jsonLd && (Array.isArray(jsonLd) ? jsonLd.map((schema) => <JsonLd schema={schema} />) : <JsonLd schema={jsonLd} />)}
   </head>
   <body class="min-h-screen flex flex-col relative noise">
     <!-- Ambient glow effects -->

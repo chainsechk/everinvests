@@ -1,0 +1,220 @@
+---
+// src/pages/stocks/[ticker].astro
+// Per-asset detail page for stocks
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import BiasIndicator from "../../components/BiasIndicator.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import { getAssetHistory, getDistinctTickers, getLatestSignal, getAssetSignals } from "../../lib/db";
+import type { Category } from "../../lib/db";
+import { absoluteUrl } from "../../lib/site";
+
+const category: Category = "stocks";
+const { ticker } = Astro.params;
+
+if (!ticker) {
+  return Astro.redirect("/stocks");
+}
+
+const normalizedTicker = ticker.toUpperCase();
+
+const db = Astro.locals.runtime?.env?.DB;
+if (!db) {
+  return Astro.redirect("/stocks");
+}
+
+// Check if ticker exists in our data
+const validTickers = await getDistinctTickers(db, category);
+if (!validTickers.includes(normalizedTicker)) {
+  return Astro.redirect("/stocks");
+}
+
+// Get asset history (last 30 signals)
+const assetHistory = await getAssetHistory(db, category, normalizedTicker, 30);
+
+// Get latest signal to show current status
+const latestSignal = await getLatestSignal(db, category);
+let currentAsset = null;
+if (latestSignal) {
+  const assets = await getAssetSignals(db, latestSignal.id);
+  currentAsset = assets.find(a => a.ticker === normalizedTicker) || null;
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatPrice(price: number | null): string {
+  if (price === null) return "—";
+  return price.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+const pageTitle = `${normalizedTicker} Stock Signals`;
+const pageDescription = `Daily trading signals and analysis for ${normalizedTicker} stock, including bias, price levels, and RSI indicators.`;
+
+// FinancialProduct schema for this stock
+const financialProductSchema = {
+  "@context": "https://schema.org",
+  "@type": "FinancialProduct",
+  name: `${normalizedTicker} Stock`,
+  description: pageDescription,
+  url: absoluteUrl(`/stocks/${normalizedTicker.toLowerCase()}`),
+  provider: {
+    "@type": "Organization",
+    name: "EverInvests",
+  },
+  ...(currentAsset?.price && {
+    offers: {
+      "@type": "Offer",
+      price: currentAsset.price,
+      priceCurrency: "USD",
+    },
+  }),
+};
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} jsonLd={financialProductSchema}>
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm" data-animate>
+      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <a href="/stocks" class="text-txt-muted hover:text-txt-primary transition-colors">Stocks</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">{normalizedTicker}</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-animate>
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">📈</span>
+          <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary">{normalizedTicker}</h1>
+        </div>
+        <p class="text-txt-secondary">Signal history and analysis</p>
+      </div>
+      <TelegramCTA variant="compact" />
+    </div>
+
+    <!-- Current Status -->
+    {currentAsset && (
+      <div class="card" data-animate>
+        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Current Status</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">Bias</div>
+            <BiasIndicator bias={currentAsset.bias} size="md" />
+          </div>
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">Price</div>
+            <div class="font-mono font-semibold text-txt-primary">{formatPrice(currentAsset.price)}</div>
+          </div>
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">vs 20D MA</div>
+            <div class:list={[
+              "font-medium",
+              currentAsset.vs_20d_ma === "above" ? "text-bullish" : currentAsset.vs_20d_ma === "below" ? "text-bearish" : "text-txt-secondary"
+            ]}>
+              {currentAsset.vs_20d_ma === "above" ? "Above" : currentAsset.vs_20d_ma === "below" ? "Below" : "—"}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">RSI(14)</div>
+            <div class="font-mono text-txt-primary">{currentAsset.secondary_ind || "—"}</div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Signal History -->
+    <div class="card" data-animate>
+      <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Signal History</h2>
+      {assetHistory.length > 0 ? (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-void-200/30">
+                <th class="text-left py-2 px-3 text-txt-muted font-medium">Date</th>
+                <th class="text-left py-2 px-3 text-txt-muted font-medium">Time</th>
+                <th class="text-left py-2 px-3 text-txt-muted font-medium">Bias</th>
+                <th class="text-right py-2 px-3 text-txt-muted font-medium">Price</th>
+                <th class="text-center py-2 px-3 text-txt-muted font-medium">vs 20D MA</th>
+                <th class="text-right py-2 px-3 text-txt-muted font-medium">RSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assetHistory.map((row, index) => (
+                <tr class:list={["border-b border-void-200/20 hover:bg-void-100/30", index === 0 && "bg-void-100/20"]}>
+                  <td class="py-2 px-3">
+                    <a href={`/stocks/${row.date}/${row.time_slot}`} class="text-txt-primary hover:text-cyber transition-colors">
+                      {formatDate(row.date)}
+                    </a>
+                  </td>
+                  <td class="py-2 px-3 text-txt-secondary font-mono text-xs">{row.time_slot}</td>
+                  <td class="py-2 px-3">
+                    <BiasIndicator bias={row.bias} size="sm" />
+                  </td>
+                  <td class="py-2 px-3 text-right font-mono text-txt-primary">{formatPrice(row.price)}</td>
+                  <td class="py-2 px-3 text-center">
+                    <span class:list={[
+                      "text-xs font-medium px-2 py-0.5 rounded",
+                      row.vs_20d_ma === "above" ? "bg-bullish/10 text-bullish" :
+                      row.vs_20d_ma === "below" ? "bg-bearish/10 text-bearish" : "bg-void-100 text-txt-muted"
+                    ]}>
+                      {row.vs_20d_ma === "above" ? "Above" : row.vs_20d_ma === "below" ? "Below" : "—"}
+                    </span>
+                  </td>
+                  <td class="py-2 px-3 text-right font-mono text-txt-secondary">{row.secondary_ind || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p class="text-txt-muted text-center py-8">No signal history available for this ticker.</p>
+      )}
+    </div>
+
+    <!-- Other Tickers -->
+    <div class="card" data-animate>
+      <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Other Stocks</h2>
+      <div class="flex flex-wrap gap-2">
+        {validTickers.filter(t => t !== normalizedTicker).map((t) => (
+          <a
+            href={`/stocks/${t.toLowerCase()}`}
+            class="px-3 py-1.5 text-sm rounded-lg bg-void-100/50 border border-void-200/30 text-txt-secondary hover:text-txt-primary hover:border-cyber/30 transition-colors"
+          >
+            {t}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Back to Stocks -->
+    <div class="text-center" data-animate>
+      <a
+        href="/stocks"
+        class="inline-flex items-center gap-2 text-txt-muted hover:text-txt-primary transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Stocks
+      </a>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>

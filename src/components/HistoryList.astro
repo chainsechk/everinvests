@@ -48,7 +48,12 @@ function getMacroColor(macro: string | null): string {
 
 <div class="space-y-4">
   {signals.map((signal, index) => (
-    <div class="card hover:border-cyber/30 transition-all" data-animate style={`animation-delay: ${index * 50}ms`}>
+    <a
+      href={`/${category}/${signal.date}/${signal.time_slot}`}
+      class="card block hover:border-cyber/30 transition-all"
+      data-animate
+      style={`animation-delay: ${index * 50}ms`}
+    >
       <div class="flex flex-wrap items-start justify-between gap-4 mb-3">
         <div>
           <div class="font-display font-medium text-txt-primary">{formatDate(signal.date)}</div>
@@ -68,7 +73,7 @@ function getMacroColor(macro: string | null): string {
           {extractSummary(signal.output_json)}
         </p>
       )}
-    </div>
+    </a>
   ))}
 
   {signals.length === 0 && (
