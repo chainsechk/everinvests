@@ -4,6 +4,7 @@ import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
 import { logRun } from "./storage/d1";
+import { checkSignalAccuracy } from "./accuracy";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -40,6 +41,18 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<void> {
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+
+    // Run accuracy check at 01:00 UTC (checks yesterday's signals)
+    if (utcHour === 1) {
+      ctx.waitUntil(
+        checkSignalAccuracy(env).catch((err) =>
+          console.error("[Accuracy] Check failed:", err)
+        )
+      );
+    }
+
     ctx.waitUntil(runScheduledJob(env, event.cron));
   },
 
@@ -54,6 +67,11 @@ export default {
       const category = url.searchParams.get("category") as Category | null;
       await runScheduledJob(env, "manual", category ? [category] : undefined);
       return Response.json({ triggered: true, category: category ?? "all scheduled" });
+    }
+
+    if (url.pathname === "/check-accuracy") {
+      await checkSignalAccuracy(env);
+      return Response.json({ checked: true });
     }
 
     return new Response("everinvests-worker", { status: 200 });
