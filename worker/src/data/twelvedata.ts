@@ -12,7 +12,14 @@ export interface TwelveDataFetchResult {
   staleAssets: string[];
 }
 
-export const STOCK_KEY_TICKERS = ["NVDA", "MSFT", "XOM", "ORCL", "AAPL"] as const satisfies readonly StockTicker[];
+// Key stocks: 2 per sector for balanced coverage
+// Semis: NVDA, AMD | AI Infra: MSFT, AAPL | Energy: XOM, CVX | Cloud: ORCL, PLTR
+export const STOCK_KEY_TICKERS = [
+  "NVDA", "AMD",    // Semiconductors
+  "MSFT", "AAPL",   // AI Infrastructure
+  "XOM", "CVX",     // Energy
+  "ORCL", "PLTR",   // Data Centers / Cloud
+] as const satisfies readonly StockTicker[];
 
 interface TwelveDataQuote {
   symbol: string;
@@ -263,7 +270,7 @@ export async function fetchStockData(
   let totalCacheHits = 0;
   const staleAssets: string[] = [];
 
-  const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 5);
+  const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 8);
   console.log(`[Stocks] Fetching ${keyStocks.length} key tickers`);
 
   for (const ticker of keyStocks) {
