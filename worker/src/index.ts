@@ -5,6 +5,7 @@ import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
 import { logRun } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
+import { generateWeeklyBlogPosts } from "./blog";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -53,6 +54,16 @@ export default {
       );
     }
 
+    // Run weekly blog generation on Sundays at 23:00 UTC
+    const dayOfWeek = now.getUTCDay();
+    if (dayOfWeek === 0 && utcHour === 23) {
+      ctx.waitUntil(
+        generateWeeklyBlogPosts(env).catch((err) =>
+          console.error("[WeeklyBlog] Generation failed:", err)
+        )
+      );
+    }
+
     ctx.waitUntil(runScheduledJob(env, event.cron));
   },
 
@@ -72,6 +83,11 @@ export default {
     if (url.pathname === "/check-accuracy") {
       await checkSignalAccuracy(env);
       return Response.json({ checked: true });
+    }
+
+    if (url.pathname === "/generate-weekly-blog") {
+      await generateWeeklyBlogPosts(env);
+      return Response.json({ generated: true });
     }
 
     return new Response("everinvests-worker", { status: 200 });

@@ -1,0 +1,173 @@
+---
+// src/pages/blog/[slug].astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import BiasIndicator from "../../components/BiasIndicator.astro";
+
+interface BlogPost {
+  id: number;
+  signal_id: number | null;
+  slug: string;
+  title: string;
+  content: string;
+  category: string;
+  published_at: string;
+  views: number;
+}
+
+interface Signal {
+  id: number;
+  category: string;
+  date: string;
+  bias: string;
+  output_json: string;
+}
+
+const { slug } = Astro.params;
+const db = Astro.locals.runtime.env.DB;
+
+// Fetch blog post
+const post = await db.prepare(
+  "SELECT * FROM blog_posts WHERE slug = ?"
+).bind(slug).first<BlogPost>();
+
+if (!post) {
+  return Astro.redirect("/blog");
+}
+
+// Increment view count
+await db.prepare(
+  "UPDATE blog_posts SET views = views + 1 WHERE id = ?"
+).bind(post.id).run();
+
+// Fetch associated signal for additional context
+let signal: Signal | null = null;
+if (post.signal_id) {
+  signal = await db.prepare(
+    "SELECT * FROM signals WHERE id = ?"
+  ).bind(post.signal_id).first<Signal>();
+}
+
+const publishedDate = new Date(post.published_at);
+const formattedDate = publishedDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+
+const categoryColors: Record<string, string> = {
+  crypto: "text-cyber",
+  forex: "text-bullish",
+  stocks: "text-bearish"
+};
+
+const categoryColor = categoryColors[post.category] || "text-txt-primary";
+const categoryTitle = post.category.charAt(0).toUpperCase() + post.category.slice(1);
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.content.slice(0, 160) + "..."}
+>
+  <Header slot="header" />
+
+  <article class="max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm" data-animate>
+      <ol class="flex items-center gap-2 text-txt-muted">
+        <li><a href="/" class="hover:text-cyber transition-colors">Home</a></li>
+        <li>/</li>
+        <li><a href="/blog" class="hover:text-cyber transition-colors">Blog</a></li>
+        <li>/</li>
+        <li class="text-txt-secondary truncate max-w-[200px]">{post.title}</li>
+      </ol>
+    </nav>
+
+    <!-- Article Header -->
+    <header class="mb-8 space-y-4" data-animate>
+      <div class="flex items-center gap-3 text-sm">
+        <a
+          href={`/${post.category}`}
+          class={`font-mono uppercase tracking-wide ${categoryColor} hover:underline`}
+        >
+          {categoryTitle}
+        </a>
+        <span class="text-txt-muted">|</span>
+        <time datetime={post.published_at} class="text-txt-muted">
+          {formattedDate}
+        </time>
+        {signal && (
+          <>
+            <span class="text-txt-muted">|</span>
+            <BiasIndicator bias={signal.bias as any} size="sm" />
+          </>
+        )}
+      </div>
+
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary leading-tight">
+        {post.title}
+      </h1>
+    </header>
+
+    <!-- Article Content -->
+    <div class="card" data-animate>
+      <div class="prose prose-invert prose-cyber max-w-none">
+        {post.content.split('\n\n').map((paragraph) => (
+          <p class="text-txt-secondary leading-relaxed mb-4 last:mb-0">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+
+    <!-- Signal Link -->
+    {signal && (
+      <div class="mt-6 p-4 rounded-lg bg-void-100/30 border border-void-200/20" data-animate>
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm text-txt-muted mb-1">Associated Signal</div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-sm text-txt-primary">{signal.date}</span>
+              <BiasIndicator bias={signal.bias as any} size="sm" />
+            </div>
+          </div>
+          <a
+            href={`/${post.category}`}
+            class="btn-secondary text-sm"
+          >
+            View Signal
+          </a>
+        </div>
+      </div>
+    )}
+
+    <!-- CTA -->
+    <div class="mt-12" data-animate>
+      <TelegramCTA variant="full" />
+    </div>
+
+    <!-- Navigation -->
+    <nav class="mt-8 pt-8 border-t border-void-200/30" data-animate>
+      <div class="flex justify-between">
+        <a href="/blog" class="text-sm text-txt-muted hover:text-cyber transition-colors">
+          &larr; All Posts
+        </a>
+        <a href={`/${post.category}`} class="text-sm text-txt-muted hover:text-cyber transition-colors">
+          {categoryTitle} Signals &rarr;
+        </a>
+      </div>
+    </nav>
+
+    <!-- Disclaimer -->
+    <div class="mt-8 text-center" data-animate>
+      <div class="text-xs text-txt-muted max-w-xl mx-auto leading-relaxed">
+        <strong class="text-txt-secondary">Disclaimer:</strong> This content is for educational and
+        informational purposes only. It does not constitute financial advice or trading recommendations.
+      </div>
+    </div>
+  </article>
+
+  <Footer slot="footer" />
+</BaseLayout>
