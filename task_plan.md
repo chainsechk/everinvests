@@ -14,10 +14,14 @@ Build a complete market signal broadcast site with automated daily signals for C
   - Signal Generation: ✅ Crypto, Forex, Stocks
   - Telegram Channel: ✅ Free notifications working
   - Website: ✅ All pages live
-- **VIP Bridge: IN PROGRESS**
-  - Design docs: ✅ Complete (v6.0)
-  - Waitlist funnel: 🔄 Ready to implement
-  - Expanded free sources: 🔄 Research phase
+- **VIP Bridge: COMPLETE**
+  - CTA Configuration: ✅ waitlist/live/none modes
+  - TG Message CTA: ✅ Configurable CTA in messages
+  - Website CTA: ✅ VIPCTA component on all pages
+  - SEO Updates: ✅ JSON-LD schemas, meta descriptions
+  - Expanded Sources: ✅ F&G, BTC Dom, Gold, Yield Spread
+  - Analytics: ✅ Click tracking in CTA
+  - OG Images: ✅ Dynamic SVG endpoint
 
 ### Funnel States
 | State | CTA Points To | Status |
@@ -79,7 +83,7 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 - [x] Task 6: Live Stats Component (/api/stats endpoint)
 - Commit: `caa7eff feat: add signal accuracy tracking (Phase 1 Tasks 1-2, 6)`
 
-### Phase 2: Content Automation - IN PROGRESS
+### Phase 2: Content Automation - COMPLETE
 - [x] Task 3: Auto-Generated Blog Posts (2026-01-19)
   - Created `blog_posts` table (migration 0004)
   - **Weekly summaries** (not per-signal) - runs Sundays 23:00 UTC
@@ -87,7 +91,11 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
   - Created `/blog` index page and `/blog/[slug]` dynamic page
   - Manual trigger: `/generate-weekly-blog` endpoint
   - Deployed worker and frontend
-- [ ] Task 5: Shareable Signal Cards (OG Images)
+- [x] Task 5: Shareable Signal Cards (OG Images) (2026-01-20)
+  - Created `/api/og/[category].svg` dynamic endpoint
+  - SVG shows category icon, bias with color, date/time, branding
+  - 5-minute cache for optimal performance
+  - Category pages now use dynamic OG images
 
 ### Phase 3: Social Proof - PENDING
 - [ ] Task 7: Performance Page
