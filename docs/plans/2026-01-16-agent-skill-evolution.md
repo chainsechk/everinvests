@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: In Progress (Phase 0-4 complete, Phase 5 next)
+Status: In Progress (Phase 0-5 complete, Phase 6 next)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -182,19 +182,30 @@ Acceptance:
 - [x] New page types appear in sitemap.
 - [x] Pages render correctly for data present in D1.
 
-## Phase 5: Distribution and Engagement Loops (2 weeks)
+## Phase 5: Distribution and Engagement Loops ✅ COMPLETE
 
-Scope: Increase retention and sharing.
+Scope: Increase retention and sharing via Telegram.
 
 Tasks:
-- Add "delta since last update" computation in worker/src/signals/.
-- Render deltas in history list and detail pages.
-- Add daily digest summary skill and optional email capture page.
-- Add UTM tags for Telegram CTA links and track them.
+- [x] Add "delta since last update" computation in worker/src/signals/delta.ts.
+  - Computes bias change, price deltas, biggest movers
+  - Integrated into storeSignal skill (v2)
+  - 8 unit tests for delta computation
+- [x] Render deltas in history list and detail pages.
+  - Added DeltaBadge component (compact and full variants)
+  - Shows bias changes, top gainers/losers in HistoryList
+  - Full delta section on signal detail pages
+- [x] Add daily digest summary skill.
+  - worker/src/digest/daily.ts aggregates daily signals
+  - Scheduled at 23:00 UTC
+  - Manual trigger via /send-daily-digest endpoint
+- [x] Add UTM tags for Telegram CTA links.
+  - Updated telegram.ts to include utm_source, utm_medium, utm_campaign
+  - Links now point to signal detail pages with tracking
 
 Acceptance:
-- Each signal shows delta vs previous signal.
-- Digest skill runs on schedule and logs results.
+- [x] Each signal shows delta vs previous signal.
+- [x] Digest skill runs on schedule and logs results.
 
 ## Phase 6: Continuous Evolution Ops (ongoing)
 

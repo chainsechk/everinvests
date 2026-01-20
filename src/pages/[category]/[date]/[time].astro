@@ -22,6 +22,7 @@ import {
 import type { Category } from "../../../lib/db";
 import { absoluteUrl } from "../../../lib/site";
 import RelatedSignals from "../../../components/RelatedSignals.astro";
+import DeltaBadge from "../../../components/DeltaBadge.astro";
 
 const { category: catParam, date, time } = Astro.params;
 
@@ -63,12 +64,14 @@ const [assets, macro, prevSignal, nextSignal, recentSignals, relatedSignals] = a
   getRelatedSignals(db, date, time),
 ]);
 
-// Parse quality flags
+// Parse quality flags and delta
 let qualityFlags: any = null;
+let delta: any = null;
 if (signal.output_json) {
   try {
     const output = JSON.parse(signal.output_json);
     qualityFlags = output.quality_flags || null;
+    delta = output.delta || null;
   } catch {
     // Ignore parse errors
   }
@@ -190,6 +193,13 @@ const articleSchema = {
 
     <!-- Signal Detail -->
     <SignalDetail signal={signal} />
+
+    <!-- Delta vs Previous Signal -->
+    {delta && delta.previousBias && (
+      <div data-animate>
+        <DeltaBadge delta={delta} variant="full" />
+      </div>
+    )}
 
     <!-- Asset Table -->
     {assets.length > 0 && (

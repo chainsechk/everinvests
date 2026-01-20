@@ -1,6 +1,7 @@
 ---
 // src/components/HistoryList.astro
 import BiasIndicator from "./BiasIndicator.astro";
+import DeltaBadge from "./DeltaBadge.astro";
 
 interface Signal {
   id: number;
@@ -32,6 +33,16 @@ function extractSummary(outputJson: string | null): string | null {
   try {
     const output = JSON.parse(outputJson);
     return output.summary || null;
+  } catch {
+    return null;
+  }
+}
+
+function extractDelta(outputJson: string | null): any | null {
+  if (!outputJson) return null;
+  try {
+    const output = JSON.parse(outputJson);
+    return output.delta || null;
   } catch {
     return null;
   }
@@ -72,6 +83,11 @@ function getMacroColor(macro: string | null): string {
         <p class="text-sm text-txt-secondary leading-relaxed line-clamp-2">
           {extractSummary(signal.output_json)}
         </p>
+      )}
+      {extractDelta(signal.output_json) && (
+        <div class="mt-2 pt-2 border-t border-void-100/50">
+          <DeltaBadge delta={extractDelta(signal.output_json)} variant="compact" />
+        </div>
       )}
     </a>
   ))}

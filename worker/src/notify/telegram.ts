@@ -1,6 +1,7 @@
 // Telegram Bot API for signal notifications
 
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
+import type { SignalDelta } from "../signals";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const DEFAULT_SITE_URL = "https://everinvests.com";
@@ -9,6 +10,38 @@ interface TelegramResponse {
   ok: boolean;
   result?: any;
   description?: string;
+}
+
+// Format delta section for message
+function formatDeltaSection(delta: SignalDelta | null): string {
+  if (!delta || !delta.previousBias) {
+    return "";
+  }
+
+  const parts: string[] = [];
+
+  // Bias change
+  if (delta.biasChanged) {
+    const changeEmoji = delta.currentBias === "Bullish" ? "⬆️" : delta.currentBias === "Bearish" ? "⬇️" : "➡️";
+    parts.push(`${changeEmoji} Bias: ${delta.previousBias} → ${delta.currentBias}`);
+  }
+
+  // Biggest movers
+  if (delta.priceMovers.biggest_gainer) {
+    const { ticker, delta: pct } = delta.priceMovers.biggest_gainer;
+    parts.push(`📈 ${ticker} +${pct.toFixed(1)}%`);
+  }
+  if (delta.priceMovers.biggest_loser) {
+    const { ticker, delta: pct } = delta.priceMovers.biggest_loser;
+    parts.push(`📉 ${ticker} ${pct.toFixed(1)}%`);
+  }
+
+  // Changed assets summary
+  if (delta.changedAssets > 0) {
+    parts.push(`🔄 ${delta.changedAssets}/${delta.totalAssets} changed bias`);
+  }
+
+  return parts.length > 0 ? `<b>Changes:</b>\n${parts.join("\n")}\n\n` : "";
 }
 
 // Format signal message for Telegram
@@ -20,7 +53,8 @@ export function formatSignalMessage(
   macro: MacroSignal,
   date: string,
   timeSlot: string,
-  siteUrl?: string
+  siteUrl?: string,
+  delta?: SignalDelta | null
 ): string {
   const biasEmoji = bias === "Bullish" ? "🟢" : bias === "Bearish" ? "🔴" : "🟡";
   const macroEmoji = macro.overall === "Risk-on" ? "📈" : macro.overall === "Risk-off" ? "📉" : "➡️";
@@ -31,6 +65,9 @@ export function formatSignalMessage(
   message += `📅 ${date} ${timeSlot} UTC\n\n`;
 
   message += `${summary}\n\n`;
+
+  // Delta section (if available)
+  message += formatDeltaSection(delta ?? null);
 
   message += `${macroEmoji} <b>Macro:</b> ${macro.overall}\n`;
   message += `• DXY: ${macro.dxyBias}\n`;
@@ -46,9 +83,13 @@ export function formatSignalMessage(
     message += `... and ${assets.length - 10} more\n`;
   }
 
+  // Build URL with UTM parameters
   const baseUrl = (siteUrl || DEFAULT_SITE_URL).replace(/\/$/, "");
-  const analysisUrl = new URL(`/${category}`, baseUrl).href;
-  message += `\n🔗 <a href="${analysisUrl}">View Full Analysis</a>`;
+  const analysisUrl = new URL(`/${category}/${date}/${timeSlot}`, baseUrl);
+  analysisUrl.searchParams.set("utm_source", "telegram");
+  analysisUrl.searchParams.set("utm_medium", "notification");
+  analysisUrl.searchParams.set("utm_campaign", `${category}_signal`);
+  message += `\n🔗 <a href="${analysisUrl.href}">View Full Analysis</a>`;
 
   return message;
 }
@@ -98,7 +139,8 @@ export async function notifySignal(
   assets: AssetSignal[],
   macro: MacroSignal,
   date: string,
-  timeSlot: string
+  timeSlot: string,
+  delta?: SignalDelta | null
 ): Promise<boolean> {
   if (!botToken || !chatId) {
     console.log("Telegram credentials not configured, skipping notification");
@@ -113,7 +155,8 @@ export async function notifySignal(
     macro,
     date,
     timeSlot,
-    siteUrl
+    siteUrl,
+    delta
   );
 
   return sendTelegramMessage(botToken, chatId, message);

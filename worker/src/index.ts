@@ -6,6 +6,7 @@ import { skillRegistry } from "./skills";
 import { logRun } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
 import { generateWeeklyBlogPosts } from "./blog";
+import { sendDailyDigest } from "./digest";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -54,8 +55,17 @@ export default {
       );
     }
 
-    // Run weekly blog generation on Sundays at 23:00 UTC
+    // Run daily digest at 23:00 UTC
     const dayOfWeek = now.getUTCDay();
+    if (utcHour === 23) {
+      ctx.waitUntil(
+        sendDailyDigest(env).catch((err) =>
+          console.error("[DailyDigest] Send failed:", err)
+        )
+      );
+    }
+
+    // Run weekly blog generation on Sundays at 23:00 UTC
     if (dayOfWeek === 0 && utcHour === 23) {
       ctx.waitUntil(
         generateWeeklyBlogPosts(env).catch((err) =>
@@ -88,6 +98,11 @@ export default {
     if (url.pathname === "/generate-weekly-blog") {
       await generateWeeklyBlogPosts(env);
       return Response.json({ generated: true });
+    }
+
+    if (url.pathname === "/send-daily-digest") {
+      const sent = await sendDailyDigest(env);
+      return Response.json({ sent });
     }
 
     return new Response("everinvests-worker", { status: 200 });

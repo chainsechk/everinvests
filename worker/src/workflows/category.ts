@@ -5,6 +5,7 @@ import type { FetchMacroOutput } from "../skills/fetchMacroData";
 import type { ComputeBiasOutput } from "../skills/computeBias";
 import type { QualityChecksOutput } from "../skills/qualityChecks";
 import type { GenerateSummaryOutput } from "../skills/generateSummary";
+import type { StoreSignalOutput } from "../skills/storeSignal";
 
 export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
   return {
@@ -64,7 +65,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "store",
-        skill: { id: "store_signal", version: "1" },
+        skill: { id: "store_signal", version: "2" },
         dependsOn: ["macro", "assets", "bias", "quality", "summary"],
         input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;
@@ -90,12 +91,13 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "notify",
-        skill: { id: "notify_telegram", version: "1" },
+        skill: { id: "notify_telegram", version: "2" },
         dependsOn: ["macro", "bias", "summary", "store"],
         input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;
           const bias = state["bias"] as ComputeBiasOutput;
           const summary = state["summary"] as GenerateSummaryOutput;
+          const store = state["store"] as StoreSignalOutput;
 
           return {
             category: ctx.category as Category,
@@ -105,6 +107,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
             macro: macro.macroSignal,
             date: ctx.date,
             timeSlot: ctx.timeSlot,
+            delta: store.delta,
           };
         },
       },

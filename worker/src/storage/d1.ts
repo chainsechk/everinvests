@@ -146,6 +146,60 @@ export async function logRun(args: {
 }
 
 // ============================================================
+// Delta Computation Support
+// ============================================================
+
+export interface PreviousSignalForDelta {
+  bias: Bias;
+  assets: Array<{
+    ticker: string;
+    price: number;
+    bias: Bias;
+  }>;
+}
+
+export async function getPreviousSignalForDelta(args: {
+  db: D1Database;
+  category: Category;
+  date: string;
+  timeSlot: string;
+}): Promise<PreviousSignalForDelta | null> {
+  const { db, category, date, timeSlot } = args;
+
+  // Get the previous signal for this category
+  const prevSignal = await db
+    .prepare(
+      `SELECT id, bias
+       FROM signals
+       WHERE category = ?
+         AND (date < ? OR (date = ? AND time_slot < ?))
+       ORDER BY date DESC, time_slot DESC
+       LIMIT 1`
+    )
+    .bind(category, date, date, timeSlot)
+    .first<{ id: number; bias: Bias }>();
+
+  if (!prevSignal) {
+    return null;
+  }
+
+  // Get asset signals for the previous signal
+  const { results: assets } = await db
+    .prepare(
+      `SELECT ticker, price, bias
+       FROM asset_signals
+       WHERE signal_id = ?`
+    )
+    .bind(prevSignal.id)
+    .all<{ ticker: string; price: number; bias: Bias }>();
+
+  return {
+    bias: prevSignal.bias,
+    assets: assets ?? [],
+  };
+}
+
+// ============================================================
 // LLM Provenance Functions
 // ============================================================
 
