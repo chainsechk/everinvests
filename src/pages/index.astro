@@ -6,6 +6,7 @@ import Footer from "../components/Footer.astro";
 import MacroBar from "../components/MacroBar.astro";
 import SignalCard from "../components/SignalCard.astro";
 import TelegramCTA from "../components/TelegramCTA.astro";
+import VIPCTA from "../components/VIPCTA.astro";
 import { getLatestMacro, getLatestSignal, getAssetSignals } from "../lib/db";
 
 const db = Astro.locals.runtime?.env?.DB;
@@ -177,6 +178,9 @@ function formatLastUpdate(): string {
 
     <!-- Telegram CTA -->
     <TelegramCTA variant="full" />
+
+    <!-- VIP CTA -->
+    <VIPCTA category="all" mode="waitlist" utmSource="homepage" />
 
     <!-- Update Schedule -->
     <div class="text-center text-sm text-txt-muted" data-animate>

@@ -1,0 +1,104 @@
+---
+// src/components/VIPCTA.astro
+interface Props {
+  category?: string;
+  mode?: 'waitlist' | 'live';
+  utmSource?: string;
+}
+
+const { category = 'crypto', mode = 'waitlist', utmSource = 'website' } = Astro.props;
+
+const config = {
+  waitlist: {
+    title: 'EverInvests VIP Launching Soon',
+    subtitle: "We're building professional-grade signals with:",
+    cta: 'Join VIP Waitlist',
+    url: `https://t.me/EverInvestsBot?start=waitlist_${utmSource}_${category}`,
+    subtext: 'Be first to know when we launch',
+  },
+  live: {
+    title: 'Want More Than Just Bias?',
+    subtitle: 'Free signals show direction only. EverInvests VIP gives you:',
+    cta: 'Join EverInvests VIP',
+    url: `https://t.me/EverInvestsVIPBot?start=${utmSource}_${category}`,
+    subtext: null,
+  },
+};
+
+const c = config[mode];
+
+const features = [
+  { name: 'Regime', desc: '8-12 market states, not just bullish/bearish' },
+  { name: 'Confidence', desc: 'How much to trust this signal' },
+  { name: 'Directives', desc: 'Position size, leverage, stop-loss' },
+  { name: 'Evidence', desc: 'What data triggered this call' },
+  { name: 'Invalidation', desc: 'When to exit or distrust' },
+  { name: 'Alerts', desc: 'Real-time threshold notifications' },
+];
+---
+
+<div class="relative overflow-hidden rounded-2xl my-8" data-animate>
+  <!-- Background gradient -->
+  <div class="absolute inset-0 bg-gradient-to-br from-vip/20 via-cyber/10 to-vip/20"></div>
+  <div class="absolute inset-0 bg-void-50/90 backdrop-blur-sm"></div>
+
+  <!-- Content -->
+  <div class="relative p-6 sm:p-8">
+    <!-- Header -->
+    <div class="mb-6">
+      <h3 class="font-display font-bold text-xl text-txt-primary mb-2 flex items-center gap-2">
+        <span class="text-2xl">🚀</span>
+        {c.title}
+      </h3>
+      <p class="text-sm text-txt-secondary">
+        {c.subtitle}
+      </p>
+    </div>
+
+    <!-- Features grid -->
+    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      {features.map(f => (
+        <li class="flex items-start gap-2 text-sm">
+          <span class="text-vip mt-0.5 flex-shrink-0">✓</span>
+          <span>
+            <strong class="text-txt-primary">{f.name}</strong>
+            <span class="text-txt-muted"> — {f.desc}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+
+    <!-- CTA -->
+    <div class="flex flex-col sm:flex-row items-center gap-4">
+      <a
+        href={c.url}
+        target="_blank"
+        rel="noopener"
+        class="btn-vip inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all"
+        data-analytics="vip_cta_click"
+        data-category={category}
+      >
+        {c.cta}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+      {c.subtext && (
+        <span class="text-sm text-txt-tertiary">{c.subtext}</span>
+      )}
+    </div>
+  </div>
+</div>
+
+<style>
+  .btn-vip {
+    background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(233, 69, 96, 0.4);
+  }
+
+  .btn-vip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+  }
+</style>

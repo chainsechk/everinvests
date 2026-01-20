@@ -36,6 +36,11 @@ export default {
           DEFAULT: "#00d4ff",
           glow: "rgba(0, 212, 255, 0.4)",
         },
+        // VIP accent
+        vip: {
+          DEFAULT: "#e94560",
+          glow: "rgba(233, 69, 96, 0.4)",
+        },
         // Text hierarchy
         txt: {
           primary: "#f8fafc",

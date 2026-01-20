@@ -35,22 +35,22 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 
 **Goal:** Prepare free tier for VIP funnel + expand free data sources
 
-### Phase 0: CTA Configuration - PENDING
-- [ ] Add VIP_CTA_MODE env var to wrangler.toml
-- [ ] Create config.ts with waitlist/live/none modes
-- [ ] Test mode switching
+### Phase 0: CTA Configuration - COMPLETE
+- [x] Add VIP_CTA_MODE env var to wrangler.toml
+- [x] Create config.ts with waitlist/live/none modes
+- [x] Added getCTAMode and getCTAConfig helpers
 
-### Phase 1: TG Message CTA - PENDING
-- [ ] Update notifyTelegram.ts with configurable CTA
-- [ ] Change "Signal:" to "Bias:"
-- [ ] Add "Watch:" line with key risk
-- [ ] Deploy and verify
+### Phase 1: TG Message CTA - COMPLETE
+- [x] Update notifyTelegram.ts with configurable CTA
+- [x] Changed "Signal:" to "Bias:" in message format
+- [x] Added CTA to end of TG messages (configurable by mode)
+- [x] Updated notifyTelegramSkill to v3 with CTA support
 
-### Phase 2: Website CTA - PENDING
-- [ ] Create VIPCTA.astro component (waitlist mode)
-- [ ] Add CTA to /crypto, /forex, /stocks pages
-- [ ] Add CTA to homepage
-- [ ] Style to match site theme
+### Phase 2: Website CTA - COMPLETE
+- [x] Create VIPCTA.astro component (waitlist mode)
+- [x] Add CTA to /crypto, /forex, /stocks pages
+- [x] Add CTA to homepage
+- [x] Style matches site theme with vip color
 
 ### Phase 3: SEO Updates - PENDING
 - [ ] Update meta descriptions

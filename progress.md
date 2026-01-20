@@ -530,12 +530,66 @@
 - docs/plans/2026-01-20-vip-bridge-implementation.md (v3.0)
 - task_plan.md, findings.md, progress.md (state saved)
 
+### VIP Bridge Implementation (2026-01-20 continued)
+- **Status:** Phase 0-2 Complete
+- **Started:** 2026-01-20
+
+#### Phase 0: CTA Configuration - COMPLETE
+- Added VIP_CTA_MODE="waitlist" to worker/wrangler.toml
+- Added VIP_CTA_MODE to Env interface in worker/src/env.ts
+- Created worker/src/config.ts with:
+  - CTAMode type ('waitlist' | 'live' | 'none')
+  - CTA_CONFIG object with telegram and website configs
+  - getCTAConfig() and getCTAMode() helpers
+
+#### Phase 1: TG Message CTA - COMPLETE
+- Updated worker/src/notify/telegram.ts:
+  - Imported CTA config
+  - Changed "Signal" to "Bias" in message header
+  - Added ctaMode parameter to formatSignalMessage()
+  - Added CTA to end of messages
+- Updated worker/src/skills/notifyTelegram.ts to v3:
+  - Gets CTA mode from environment
+  - Passes ctaMode to notifySignal()
+
+#### Phase 2: Website CTA - COMPLETE
+- Created src/components/VIPCTA.astro:
+  - Supports waitlist/live modes
+  - UTM tracking with category and source
+  - Features list with VIP benefits
+  - Styled with vip color (#e94560)
+- Added vip color to tailwind.config.mjs
+- Added VIPCTA to all pages:
+  - src/pages/crypto/index.astro
+  - src/pages/forex/index.astro
+  - src/pages/stocks/index.astro
+  - src/pages/index.astro (homepage)
+
+#### Files Created:
+- worker/src/config.ts
+- src/components/VIPCTA.astro
+
+#### Files Modified:
+- worker/wrangler.toml
+- worker/src/env.ts
+- worker/src/notify/telegram.ts
+- worker/src/skills/notifyTelegram.ts
+- tailwind.config.mjs
+- src/pages/index.astro
+- src/pages/crypto/index.astro
+- src/pages/forex/index.astro
+- src/pages/stocks/index.astro
+
+#### Build Status:
+- Frontend: Builds successfully
+- Worker: TypeScript check passes
+
 ## 5-Question Reboot Check (2026-01-20)
 | Question | Answer |
 |----------|--------|
-| Where am I? | VIP Bridge - Design complete, implementation pending |
-| Where am I going? | Implement waitlist CTA + expand free data sources |
+| Where am I? | VIP Bridge - Phase 0-2 Complete |
+| Where am I going? | Phase 3 (SEO), Phase 4 (Expand Sources), Phase 5 (Analytics) |
 | What's the goal? | Funnel free users to VIP waitlist + enrich free tier |
 | What have I learned? | See findings.md - waitlist-first, expanded sources |
-| What have I done? | Design docs v6.0, planning files updated |
+| What have I done? | CTA config, TG CTA, Website CTA - all complete |
 

@@ -17,3 +17,4 @@ binding = "AI"
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
+VIP_CTA_MODE = "waitlist"  # Options: "waitlist", "live", "none"

@@ -2,6 +2,7 @@
 
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
 import type { SignalDelta } from "../signals";
+import { getCTAConfig, getCTAMode, type CTAMode } from "../config";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const DEFAULT_SITE_URL = "https://everinvests.com";
@@ -54,14 +55,15 @@ export function formatSignalMessage(
   date: string,
   timeSlot: string,
   siteUrl?: string,
-  delta?: SignalDelta | null
+  delta?: SignalDelta | null,
+  ctaMode?: CTAMode
 ): string {
   const biasEmoji = bias === "Bullish" ? "🟢" : bias === "Bearish" ? "🔴" : "🟡";
   const macroEmoji = macro.overall === "Risk-on" ? "📈" : macro.overall === "Risk-off" ? "📉" : "➡️";
 
   const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
 
-  let message = `${biasEmoji} <b>${categoryTitle} Signal - ${bias}</b>\n`;
+  let message = `${biasEmoji} <b>${categoryTitle} Bias: ${bias}</b>\n`;
   message += `📅 ${date} ${timeSlot} UTC\n\n`;
 
   message += `${summary}\n\n`;
@@ -90,6 +92,12 @@ export function formatSignalMessage(
   analysisUrl.searchParams.set("utm_medium", "notification");
   analysisUrl.searchParams.set("utm_campaign", `${category}_signal`);
   message += `\n🔗 <a href="${analysisUrl.href}">View Full Analysis</a>`;
+
+  // Add VIP CTA if configured
+  const cta = getCTAConfig(ctaMode || 'waitlist').telegram;
+  if (cta) {
+    message += cta;
+  }
 
   return message;
 }
@@ -140,7 +148,8 @@ export async function notifySignal(
   macro: MacroSignal,
   date: string,
   timeSlot: string,
-  delta?: SignalDelta | null
+  delta?: SignalDelta | null,
+  ctaMode?: CTAMode
 ): Promise<boolean> {
   if (!botToken || !chatId) {
     console.log("Telegram credentials not configured, skipping notification");
@@ -156,7 +165,8 @@ export async function notifySignal(
     date,
     timeSlot,
     siteUrl,
-    delta
+    delta,
+    ctaMode
   );
 
   return sendTelegramMessage(botToken, chatId, message);

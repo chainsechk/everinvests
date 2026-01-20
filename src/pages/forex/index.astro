@@ -8,6 +8,7 @@ import SignalDetail from "../../components/SignalDetail.astro";
 import AssetTable from "../../components/AssetTable.astro";
 import HistoryMini from "../../components/HistoryMini.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
+import VIPCTA from "../../components/VIPCTA.astro";
 import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } from "../../lib/db";
 
 const category = "forex" as const;
@@ -102,6 +103,9 @@ if (db) {
         <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} />
       </div>
     )}
+
+    <!-- VIP CTA -->
+    <VIPCTA category="forex" mode="waitlist" utmSource="forex_page" />
 
     <!-- History Mini -->
     <div class="card" data-animate>
