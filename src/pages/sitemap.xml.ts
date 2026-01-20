@@ -23,6 +23,7 @@ const staticPages = [
   { url: "/crypto", priority: "0.9", changefreq: "hourly" },
   { url: "/forex", priority: "0.9", changefreq: "hourly" },
   { url: "/stocks", priority: "0.9", changefreq: "hourly" },
+  { url: "/performance", priority: "0.8", changefreq: "daily" },
   { url: "/crypto/history", priority: "0.7", changefreq: "daily" },
   { url: "/forex/history", priority: "0.7", changefreq: "daily" },
   { url: "/stocks/history", priority: "0.7", changefreq: "daily" },

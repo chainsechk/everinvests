@@ -1,0 +1,318 @@
+---
+// src/pages/performance.astro
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import TelegramCTA from "../components/TelegramCTA.astro";
+import VIPCTA from "../components/VIPCTA.astro";
+
+interface AccuracyData {
+  category: string;
+  period: { days: number; since: string };
+  overall: { total: number; correct: number; rate: number | null };
+  byBias: Record<string, { total: number; correct: number; rate: number }>;
+  recent: Array<{ date: string; bias: string; priceChange: number; correct: boolean }>;
+}
+
+interface StatsData {
+  totalSignals: number;
+  accuracyRate: number | null;
+  signalsToday: number;
+  last30Days: { byCategory: Record<string, number> };
+  generatedAt: string;
+}
+
+const db = Astro.locals.runtime?.env?.DB;
+
+let stats: StatsData | null = null;
+let cryptoAccuracy: AccuracyData | null = null;
+let forexAccuracy: AccuracyData | null = null;
+let stocksAccuracy: AccuracyData | null = null;
+
+if (db) {
+  const today = new Date().toISOString().split("T")[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // Fetch stats
+  const [signals, accuracy, signalsToday, categories] = await Promise.all([
+    db.prepare("SELECT COUNT(*) as count FROM signals").first<{ count: number }>(),
+    db.prepare(`SELECT AVG(correct) * 100 as rate FROM signal_outcomes WHERE checked_at >= ?`).bind(thirtyDaysAgo).first<{ rate: number | null }>(),
+    db.prepare("SELECT COUNT(*) as count FROM signals WHERE date = ?").bind(today).first<{ count: number }>(),
+    db.prepare(`SELECT category, COUNT(*) as count FROM signals WHERE date >= ? GROUP BY category`).bind(thirtyDaysAgo).all<{ category: string; count: number }>(),
+  ]);
+
+  const categoryBreakdown: Record<string, number> = {};
+  for (const row of categories.results || []) {
+    categoryBreakdown[row.category] = row.count;
+  }
+
+  stats = {
+    totalSignals: signals?.count ?? 0,
+    accuracyRate: accuracy?.rate ? Math.round(accuracy.rate) : null,
+    signalsToday: signalsToday?.count ?? 0,
+    last30Days: { byCategory: categoryBreakdown },
+    generatedAt: new Date().toISOString(),
+  };
+
+  // Fetch accuracy per category
+  const fetchCategoryAccuracy = async (category: string): Promise<AccuracyData | null> => {
+    const cutoff = thirtyDaysAgo;
+
+    const statsQuery = await db
+      .prepare(`SELECT predicted_bias, COUNT(*) as total, SUM(correct) as correct FROM signal_outcomes WHERE category = ? AND checked_at >= ? GROUP BY predicted_bias`)
+      .bind(category, cutoff)
+      .all<{ predicted_bias: string; total: number; correct: number }>();
+
+    let total = 0;
+    let correct = 0;
+    const byBias: Record<string, { total: number; correct: number; rate: number }> = {
+      Bullish: { total: 0, correct: 0, rate: 0 },
+      Bearish: { total: 0, correct: 0, rate: 0 },
+      Neutral: { total: 0, correct: 0, rate: 0 },
+    };
+
+    for (const row of statsQuery.results || []) {
+      total += row.total;
+      correct += row.correct;
+      byBias[row.predicted_bias] = {
+        total: row.total,
+        correct: row.correct,
+        rate: row.total > 0 ? Math.round((row.correct / row.total) * 100) : 0,
+      };
+    }
+
+    const recentQuery = await db
+      .prepare(`SELECT s.date, o.predicted_bias as bias, o.price_change_pct, o.correct FROM signal_outcomes o JOIN signals s ON o.signal_id = s.id WHERE o.category = ? ORDER BY o.checked_at DESC LIMIT 10`)
+      .bind(category)
+      .all<{ date: string; bias: string; price_change_pct: number; correct: number }>();
+
+    return {
+      category,
+      period: { days: 30, since: cutoff },
+      overall: { total, correct, rate: total > 0 ? Math.round((correct / total) * 100) : null },
+      byBias,
+      recent: (recentQuery.results || []).map((r) => ({
+        date: r.date,
+        bias: r.bias,
+        priceChange: Math.round(r.price_change_pct * 100) / 100,
+        correct: r.correct === 1,
+      })),
+    };
+  };
+
+  [cryptoAccuracy, forexAccuracy, stocksAccuracy] = await Promise.all([
+    fetchCategoryAccuracy("crypto"),
+    fetchCategoryAccuracy("forex"),
+    fetchCategoryAccuracy("stocks"),
+  ]);
+}
+
+const categories = [
+  { key: "crypto", label: "Crypto", icon: "₿", data: cryptoAccuracy },
+  { key: "forex", label: "Forex", icon: "$", data: forexAccuracy },
+  { key: "stocks", label: "Stocks", icon: "◊", data: stocksAccuracy },
+];
+
+// Combine all recent outcomes for timeline
+const allRecent = categories
+  .flatMap(c => (c.data?.recent || []).map(r => ({ ...r, category: c.key, label: c.label })))
+  .sort((a, b) => b.date.localeCompare(a.date))
+  .slice(0, 15);
+
+// Structured data for SEO
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://everinvests.com" },
+    { "@type": "ListItem", position: 2, name: "Performance", item: "https://everinvests.com/performance" },
+  ],
+};
+---
+
+<BaseLayout
+  title="Signal Performance"
+  description="Track EverInvests signal accuracy across crypto, forex, and stocks. Transparent performance metrics updated daily."
+  jsonLd={[breadcrumbSchema]}
+>
+  <Header slot="header" />
+
+  <div class="space-y-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm" data-animate>
+      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">Performance</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="text-center py-4" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-3">Signal Performance</h1>
+      <p class="text-txt-secondary max-w-xl mx-auto">
+        Transparent tracking of our signal accuracy. Updated daily based on price outcomes.
+      </p>
+    </div>
+
+    <!-- Overall Stats -->
+    {stats && (
+      <div class="grid gap-4 sm:grid-cols-3" data-animate>
+        <div class="card text-center py-6">
+          <div class="font-mono text-4xl font-bold text-cyber mb-2">{stats.totalSignals.toLocaleString()}</div>
+          <div class="text-sm text-txt-muted">Total Signals</div>
+        </div>
+        <div class="card text-center py-6">
+          <div class="font-mono text-4xl font-bold text-txt-primary mb-2">
+            {stats.accuracyRate !== null ? `${stats.accuracyRate}%` : "—"}
+          </div>
+          <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+        </div>
+        <div class="card text-center py-6">
+          <div class="font-mono text-4xl font-bold text-txt-secondary mb-2">{stats.signalsToday}</div>
+          <div class="text-sm text-txt-muted">Signals Today</div>
+        </div>
+      </div>
+    )}
+
+    <!-- Category Breakdown -->
+    <div class="space-y-4" data-animate>
+      <h2 class="font-display font-semibold text-xl text-txt-primary">Accuracy by Category</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        {categories.map(({ key, label, icon, data }) => (
+          <div class="card">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-2xl">{icon}</span>
+              <div>
+                <h3 class="font-display font-semibold text-lg text-txt-primary">{label}</h3>
+                <a href={`/${key}`} class="text-xs text-cyber hover:underline">View signals →</a>
+              </div>
+            </div>
+
+            {data && data.overall.total > 0 ? (
+              <div class="space-y-4">
+                <!-- Accuracy Rate Circle -->
+                <div class="flex items-center justify-center">
+                  <div class="relative w-24 h-24">
+                    <svg class="w-24 h-24 -rotate-90">
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="currentColor"
+                        stroke-width="8"
+                        fill="none"
+                        class="text-void-200"
+                      />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="currentColor"
+                        stroke-width="8"
+                        fill="none"
+                        stroke-dasharray={`${(data.overall.rate || 0) * 2.51} 251`}
+                        class={data.overall.rate && data.overall.rate >= 60 ? "text-bullish" : data.overall.rate && data.overall.rate >= 50 ? "text-cyber" : "text-bearish"}
+                      />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="font-mono text-xl font-bold text-txt-primary">
+                        {data.overall.rate ?? 0}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="text-center text-sm text-txt-muted">
+                  {data.overall.correct} / {data.overall.total} correct
+                </div>
+
+                <!-- Bias Breakdown -->
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div class="p-2 rounded bg-bullish/10">
+                    <div class="font-mono text-bullish">{data.byBias.Bullish.rate}%</div>
+                    <div class="text-txt-muted">Bullish</div>
+                  </div>
+                  <div class="p-2 rounded bg-void-100">
+                    <div class="font-mono text-txt-secondary">{data.byBias.Neutral.rate}%</div>
+                    <div class="text-txt-muted">Neutral</div>
+                  </div>
+                  <div class="p-2 rounded bg-bearish/10">
+                    <div class="font-mono text-bearish">{data.byBias.Bearish.rate}%</div>
+                    <div class="text-txt-muted">Bearish</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div class="text-center py-6 text-txt-muted text-sm">
+                No verified outcomes yet
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Recent Outcomes Timeline -->
+    {allRecent.length > 0 && (
+      <div class="card" data-animate>
+        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Recent Outcomes</h2>
+        <div class="space-y-3">
+          {allRecent.map((outcome) => (
+            <div class="flex items-center gap-3 py-2 border-b border-void-200/20 last:border-0">
+              <!-- Status Icon -->
+              <div class={`w-8 h-8 rounded-full flex items-center justify-center ${outcome.correct ? 'bg-bullish/20 text-bullish' : 'bg-bearish/20 text-bearish'}`}>
+                {outcome.correct ? (
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                ) : (
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                )}
+              </div>
+
+              <!-- Details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium text-txt-primary">{outcome.label}</span>
+                  <span class={`text-xs px-2 py-0.5 rounded ${outcome.bias === 'Bullish' ? 'bg-bullish/10 text-bullish' : outcome.bias === 'Bearish' ? 'bg-bearish/10 text-bearish' : 'bg-void-100 text-txt-secondary'}`}>
+                    {outcome.bias}
+                  </span>
+                </div>
+                <div class="text-xs text-txt-muted">
+                  {outcome.date} • {outcome.priceChange >= 0 ? '+' : ''}{outcome.priceChange}%
+                </div>
+              </div>
+
+              <!-- Result -->
+              <div class={`text-xs font-medium ${outcome.correct ? 'text-bullish' : 'text-bearish'}`}>
+                {outcome.correct ? 'Correct' : 'Incorrect'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Methodology Link -->
+    <div class="card text-center py-8" data-animate>
+      <h3 class="font-display font-semibold text-lg text-txt-primary mb-2">How We Measure Accuracy</h3>
+      <p class="text-sm text-txt-muted mb-4 max-w-lg mx-auto">
+        Signals are verified against next-day price movements. Bullish signals are correct if price rises,
+        bearish if it falls. Neutral signals are considered correct if price moves less than 0.5%.
+      </p>
+      <a href="/about" class="text-cyber hover:underline text-sm">Learn more about our methodology →</a>
+    </div>
+
+    <!-- VIP CTA -->
+    <VIPCTA category="performance" mode="waitlist" utmSource="performance_page" />
+
+    <!-- Telegram CTA -->
+    <TelegramCTA variant="compact" />
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
