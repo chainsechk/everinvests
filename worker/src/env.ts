@@ -7,5 +7,6 @@ export interface Env {
   OPENROUTER_API_KEY?: string;
   TWELVEDATA_API_KEY?: string;
   ALPHAVANTAGE_API_KEY?: string;
+  FRED_API_KEY?: string;
   VIP_CTA_MODE?: string;
 }

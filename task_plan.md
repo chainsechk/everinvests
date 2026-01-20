@@ -56,14 +56,14 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 - [ ] Update meta descriptions
 - [ ] Add structured data
 
-### Phase 4: Expand Free Sources - PENDING (HIGH PRIORITY)
-- [ ] Research: Test OpenBB Platform API
-- [ ] Research: Evaluate FRED API for macro
-- [ ] Research: Check CoinGecko for BTC dominance
-- [ ] Implement: BTC Fear & Greed (Alternative.me)
-- [ ] Implement: Gold price (TwelveData)
-- [ ] Implement: 2Y-10Y Spread (FRED)
-- [ ] Update computeBias.ts with new indicators
+### Phase 4: Expand Free Sources - COMPLETE
+- [x] Implement: BTC Fear & Greed (Alternative.me)
+- [x] Implement: BTC Dominance (CoinGecko)
+- [x] Implement: Gold price (TwelveData)
+- [x] Implement: 2Y-10Y Spread (FRED)
+- [x] Update MacroData types with expanded fields
+- [x] Update fetchMacroDataSkill to v3 with new sources
+- [x] Update MacroBar UI to display expanded indicators
 
 ### Phase 5: Analytics - PENDING
 - [ ] Add UTM parameters to CTA links

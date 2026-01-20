@@ -5,9 +5,37 @@ interface Props {
   dxyBias: string | null;
   vixLevel: string | null;
   yieldsBias: string | null;
+  dataJson?: string | null; // Raw macro data JSON with expanded fields
 }
 
-const { overall, dxyBias, vixLevel, yieldsBias } = Astro.props;
+const { overall, dxyBias, vixLevel, yieldsBias, dataJson } = Astro.props;
+
+// Parse expanded macro data from data_json
+interface ExpandedMacroData {
+  fearGreed?: number;
+  fearGreedLabel?: string;
+  btcDominance?: number;
+  goldPrice?: number;
+  goldChange?: number;
+  yieldSpread?: number;
+}
+
+let expanded: ExpandedMacroData = {};
+if (dataJson) {
+  try {
+    const parsed = JSON.parse(dataJson);
+    expanded = {
+      fearGreed: parsed.fearGreed,
+      fearGreedLabel: parsed.fearGreedLabel,
+      btcDominance: parsed.btcDominance,
+      goldPrice: parsed.goldPrice,
+      goldChange: parsed.goldChange,
+      yieldSpread: parsed.yieldSpread,
+    };
+  } catch {
+    // Ignore parse errors
+  }
+}
 
 function getOverallColor(value: string | null): string {
   if (!value) return "text-txt-muted";
@@ -48,9 +76,29 @@ function formatYields(bias: string | null): { label: string; icon: string } {
   return { label: "Stable", icon: "~" };
 }
 
+function formatFearGreed(value: number | undefined): { label: string; color: string } {
+  if (value === undefined) return { label: "--", color: "text-txt-muted" };
+  if (value <= 25) return { label: `${value} Fear`, color: "text-bearish" };
+  if (value <= 45) return { label: `${value}`, color: "text-mixed" };
+  if (value <= 55) return { label: `${value}`, color: "text-txt-primary" };
+  if (value <= 75) return { label: `${value}`, color: "text-mixed" };
+  return { label: `${value} Greed`, color: "text-bullish" };
+}
+
+function formatSpread(value: number | undefined): { label: string; color: string } {
+  if (value === undefined) return { label: "--", color: "text-txt-muted" };
+  const isInverted = value < 0;
+  const label = `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+  const color = isInverted ? "text-bearish" : "text-bullish";
+  return { label, color };
+}
+
 const dxy = formatDxy(dxyBias);
 const vix = formatVix(vixLevel);
 const yields = formatYields(yieldsBias);
+const fearGreed = formatFearGreed(expanded.fearGreed);
+const spread = formatSpread(expanded.yieldSpread);
+const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !== undefined;
 ---
 
 <div class="card-glass" data-animate>
@@ -90,6 +138,21 @@ const yields = formatYields(yieldsBias);
         <span class="text-txt-primary font-medium">{yields.label}</span>
         <span class="font-mono text-cyber">{yields.icon}</span>
       </div>
+
+      {/* Expanded indicators - only show if data available */}
+      {expanded.fearGreed !== undefined && (
+        <div class="macro-chip">
+          <span class="text-txt-muted">F&G</span>
+          <span class:list={["font-medium", fearGreed.color]}>{fearGreed.label}</span>
+        </div>
+      )}
+
+      {expanded.yieldSpread !== undefined && (
+        <div class="macro-chip">
+          <span class="text-txt-muted">2Y-10Y</span>
+          <span class:list={["font-medium font-mono", spread.color]}>{spread.label}</span>
+        </div>
+      )}
     </div>
   </div>
 </div>

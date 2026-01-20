@@ -1,9 +1,11 @@
 // Macro data fetcher using Yahoo Finance (DXY, VIX) and Alpha Vantage (Treasury yields)
 // Uses direct index data from Yahoo Finance - no ETF proxies needed
+// Expanded with free sources: Fear & Greed, BTC Dominance, Gold, FRED
 
 import type { MacroData } from "../types";
 import { cachedFetch, DEFAULT_TTL, getTimestampAgeMinutes } from "../cache";
 import { fetchDXY, fetchVIX } from "./yahoo";
+import { fetchFearGreed, fetchBTCDominance, fetchGoldPrice, fetchTreasurySpread } from "./freesources";
 
 const ALPHAVANTAGE_API = "https://www.alphavantage.co/query";
 
@@ -53,6 +55,8 @@ async function getTreasuryYield(apiKey: string): Promise<{
 
 export interface MacroApiKeys {
   alphaVantage: string;
+  twelveData?: string;
+  fred?: string;
 }
 
 export async function fetchMacroData(apiKeys: MacroApiKeys): Promise<MacroDataResult> {
@@ -61,18 +65,36 @@ export async function fetchMacroData(apiKeys: MacroApiKeys): Promise<MacroDataRe
   let isStale = false;
 
   // Fetch all data in parallel - each function handles its own errors with fallbacks
-  // DXY and VIX use Yahoo Finance (no API key needed)
-  // Treasury yields use Alpha Vantage
-  const [dxyData, vixData, treasuryData] = await Promise.all([
+  // Core: DXY, VIX (Yahoo), Treasury yields (Alpha Vantage)
+  // Expanded: Fear & Greed (Alternative.me), BTC Dominance (CoinGecko), Gold (TwelveData), Spread (FRED)
+  const [
+    dxyData,
+    vixData,
+    treasuryData,
+    fearGreedData,
+    btcDomData,
+    goldData,
+    spreadData,
+  ] = await Promise.all([
     fetchDXY(),
     fetchVIX(),
     getTreasuryYield(apiKeys.alphaVantage),
+    fetchFearGreed(),
+    fetchBTCDominance(),
+    apiKeys.twelveData ? fetchGoldPrice(apiKeys.twelveData) : Promise.resolve({ price: 0, change: 0, changePercent: 0, cached: false }),
+    apiKeys.fred ? fetchTreasurySpread(apiKeys.fred) : Promise.resolve({ spread: 0, isInverted: false, cached: false }),
   ]);
 
-  // Count cache hits
+  // Count cache hits (core indicators)
   if (dxyData.cached) cacheHits++;
   if (vixData.cached) cacheHits++;
   if (treasuryData.cached) cacheHits++;
+  // Expanded sources cache hits (separate count for logging)
+  let expandedCacheHits = 0;
+  if (fearGreedData.cached) expandedCacheHits++;
+  if (btcDomData.cached) expandedCacheHits++;
+  if (goldData.cached) expandedCacheHits++;
+  if (spreadData.cached) expandedCacheHits++;
 
   // Check staleness based on DXY (most important indicator)
   if (dxyData.cached && dxyData.cachedAt) {
@@ -81,7 +103,8 @@ export async function fetchMacroData(apiKeys: MacroApiKeys): Promise<MacroDataRe
   }
 
   console.log(`[Macro] DXY: ${dxyData.price.toFixed(2)}, VIX: ${vixData.vix.toFixed(2)}, 10Y: ${treasuryData.yield.toFixed(2)}%`);
-  console.log(`[Macro] Cache hits: ${cacheHits}/3, Stale: ${isStale}`);
+  console.log(`[Macro] F&G: ${fearGreedData.value}, BTC.D: ${btcDomData.dominance.toFixed(1)}%, Gold: $${goldData.price.toFixed(0)}, Spread: ${spreadData.spread.toFixed(2)}%`);
+  console.log(`[Macro] Cache hits: ${cacheHits}/3 core, ${expandedCacheHits}/4 expanded, Stale: ${isStale}`);
 
   return {
     data: {
@@ -90,6 +113,13 @@ export async function fetchMacroData(apiKeys: MacroApiKeys): Promise<MacroDataRe
       vix: vixData.vix,
       us10y: treasuryData.yield,
       timestamp,
+      // Expanded free sources
+      fearGreed: fearGreedData.value,
+      fearGreedLabel: fearGreedData.classification,
+      btcDominance: btcDomData.dominance,
+      goldPrice: goldData.price || undefined,
+      goldChange: goldData.changePercent || undefined,
+      yieldSpread: spreadData.spread || undefined,
     },
     cacheHits,
     isStale,

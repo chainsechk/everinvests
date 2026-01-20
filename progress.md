@@ -584,12 +584,43 @@
 - Frontend: Builds successfully
 - Worker: TypeScript check passes
 
-## 5-Question Reboot Check (2026-01-20)
+### Phase 4: Expand Free Data Sources - COMPLETE
+- **Status:** Complete
+- **Started:** 2026-01-21
+
+#### New Data Sources Implemented:
+| Source | Data | API |
+|--------|------|-----|
+| Alternative.me | BTC Fear & Greed (0-100) | Public, no key |
+| CoinGecko | BTC Dominance (%) | Public, no key |
+| TwelveData | Gold price (XAU/USD) | Existing key |
+| FRED | 2Y-10Y Treasury Spread | Optional key |
+
+#### Files Created:
+- worker/src/data/freesources.ts - New data fetchers for expanded sources
+
+#### Files Modified:
+- worker/src/types.ts - Added expanded MacroData fields
+- worker/src/env.ts - Added FRED_API_KEY
+- worker/src/data/alphavantage.ts - Integrated expanded sources
+- worker/src/data/index.ts - Export new fetchers
+- worker/src/skills/fetchMacroData.ts - v3 with expanded sources
+- src/components/MacroBar.astro - Display F&G and 2Y-10Y spread
+- src/pages/index.astro - Pass dataJson to MacroBar
+- src/pages/crypto/index.astro - Pass dataJson to MacroBar
+- src/pages/forex/index.astro - Pass dataJson to MacroBar
+- src/pages/stocks/index.astro - Pass dataJson to MacroBar
+
+#### Build Status:
+- Worker: TypeScript check passes
+- Frontend: Build successful
+
+## 5-Question Reboot Check (2026-01-21)
 | Question | Answer |
 |----------|--------|
-| Where am I? | VIP Bridge - Phase 0-2 Complete |
-| Where am I going? | Phase 3 (SEO), Phase 4 (Expand Sources), Phase 5 (Analytics) |
+| Where am I? | VIP Bridge - Phase 0-2, Phase 4 Complete |
+| Where am I going? | Phase 3 (SEO), Phase 5 (Analytics) |
 | What's the goal? | Funnel free users to VIP waitlist + enrich free tier |
-| What have I learned? | See findings.md - waitlist-first, expanded sources |
-| What have I done? | CTA config, TG CTA, Website CTA - all complete |
+| What have I learned? | Free APIs: Alternative.me, CoinGecko, FRED all work |
+| What have I done? | CTA config, TG CTA, Website CTA, Expanded sources |
 

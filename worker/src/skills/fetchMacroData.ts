@@ -41,7 +41,7 @@ function writeShared(shared: SharedState, value: FetchMacroOutput): void {
 
 export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> = {
   id: "fetch_macro_data",
-  version: "2",
+  version: "3",
   async run({ env, input, shared }) {
     const cached = readShared(shared);
     if (cached) return cached;
@@ -56,10 +56,13 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
       macroFallback = true;
       fallbackReason = "ALPHAVANTAGE_API_KEY not configured";
     } else {
-      // DXY and VIX now use Yahoo Finance (no API key needed)
-      // Only Alpha Vantage key is required for Treasury yields
+      // Core: DXY and VIX use Yahoo Finance (no API key needed)
+      // Core: Treasury yields use Alpha Vantage
+      // Expanded: Fear & Greed (no key), BTC Dominance (no key), Gold (TwelveData), Spread (FRED)
       const result = await fetchMacroData({
         alphaVantage: env.ALPHAVANTAGE_API_KEY,
+        twelveData: env.TWELVEDATA_API_KEY,
+        fred: env.FRED_API_KEY,
       });
       macroData = result.data;
       macroStale = result.isStale;

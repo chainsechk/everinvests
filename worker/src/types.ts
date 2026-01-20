@@ -37,6 +37,13 @@ export interface MacroData {
   vix: number;
   us10y: number;
   timestamp: string;
+  // Expanded free sources
+  fearGreed?: number; // 0-100, BTC Fear & Greed Index
+  fearGreedLabel?: string; // "Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"
+  btcDominance?: number; // percentage, e.g., 52.5
+  goldPrice?: number; // XAU/USD
+  goldChange?: number; // daily change percentage
+  yieldSpread?: number; // 2Y-10Y spread, negative = inverted
 }
 
 // Calculated signals
