@@ -87,7 +87,6 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
   - Created `/blog` index page and `/blog/[slug]` dynamic page
   - Manual trigger: `/generate-weekly-blog` endpoint
   - Deployed worker and frontend
-- [ ] Task 4: Social Distribution (Twitter templates)
 - [ ] Task 5: Shareable Signal Cards (OG Images)
 
 ### Phase 3: Social Proof - PENDING
@@ -101,6 +100,11 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 ### Phase 5: Agent-Native Features - PENDING
 - [ ] Task 11: MCP Server
 - [ ] Task 12: Structured API
+
+### Phase 6: Social Distribution - LOW PRIORITY (LAST)
+- [ ] Task 4: X/Twitter Auto-Posting (via Zapier free tier)
+  - Requires webhook trigger from worker
+  - Can wait until other features complete
 
 ---
 
