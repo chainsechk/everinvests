@@ -105,31 +105,61 @@ CREATE TABLE signals (
 - **Separate project:** EverInvests VIP (paid TG group, edge bot, premium signals)
 - **"VIP Bridge":** CTAs added to free tier that funnel users to paid VIP
 
-### Product Tiers
-| Tier | Channel | Model | Repo |
-|------|---------|-------|------|
-| EverInvests (Free) | Website + Free TG Channel | Free | this repo |
-| EverInvests VIP | Private TG Group | $49-399/mo | separate |
+### Funnel States (Progressive)
+| State | CTA Points To | VIP Status |
+|-------|---------------|------------|
+| **Pre-Launch** | Waitlist (TG bot or form) | Not built yet |
+| Soft Launch | Edge bot (limited access) | MVP ready |
+| Live | Edge bot (open subscriptions) | Full product |
 
-### Payment Flow (VIP - separate project)
-1. CTA links to **edge bot** (e.g., `t.me/EverInvestsVIPBot` - TBD)
-2. User subscribes via edge bot (powered by **MemberPaywall.org**)
-3. Edge bot generates **private invite link** to VIP group
-4. User joins VIP group
+**Current state:** Pre-Launch (waitlist mode)
 
-**Key:** VIP group is private - no public t.me link. All invites generated per-user by edge bot.
+### CTA Configuration
+Environment-based switching between modes:
+```toml
+# wrangler.toml
+[vars]
+VIP_CTA_MODE = "waitlist"  # Options: "waitlist", "live", "none"
+```
 
-### CTA = Call To Action
-Marketing element in FREE tier prompting users to upgrade:
+### Waitlist Mode CTA
+```
+━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 EverInvests VIP launching soon
+Regime analysis • Confidence scores • Directives
+👉 Join waitlist: t.me/EverInvestsBot?start=waitlist
+```
+
+### Live Mode CTA (when VIP ready)
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━
 Want regime + confidence + directives?
-👉 Join EverInvests VIP: [bot link TBD]
+👉 Join EverInvests VIP: t.me/EverInvestsVIPBot
 ```
 
+### Expanded Free Sources Strategy
+
+**Current free sources (limited):**
+- DXY, VIX, 10Y (Alpha Vantage)
+- Price, MA20, RSI (TwelveData)
+- Funding rate (Binance)
+
+**To add (expand free tier value):**
+| Source | Data | Why Add |
+|--------|------|---------|
+| Alternative.me | BTC Fear & Greed | Sentiment |
+| CoinGecko | BTC Dominance | Alt season indicator |
+| FRED | 2Y-10Y Spread | Recession indicator |
+| FRED | Fed Funds Rate | Rate cycle |
+| TwelveData | Gold (XAU/USD) | Risk-off proxy |
+
+**Differentiation principle:**
+- Free = Rich data + Simple output (Bias)
+- VIP = Premium sources + Complex analysis (Regime, Directives)
+
 ### Design Files
-- `docs/plans/2026-01-20-vip-bridge-design.md` - Full architecture
-- `docs/plans/2026-01-20-vip-bridge-implementation.md` - Implementation tasks
+- `docs/plans/2026-01-20-vip-bridge-design.md` - Full architecture (v6.0)
+- `docs/plans/2026-01-20-vip-bridge-implementation.md` - Implementation tasks (v3.0)
 
 ---
 *Update this file after every 2 view/browser/search operations*

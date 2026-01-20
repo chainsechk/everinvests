@@ -499,3 +499,43 @@
 - `2026-01-20-apex-design.md` → `2026-01-20-vip-bridge-design.md`
 - `2026-01-20-apex-implementation.md` → `2026-01-20-vip-bridge-implementation.md`
 
+### VIP Bridge v6.0: Waitlist Funnel + Expanded Free Sources
+- **Status:** Design complete, implementation pending
+- **Updated:** 2026-01-20
+
+#### Key Changes to Design:
+1. **Added Funnel States:** Pre-Launch (waitlist) → Soft Launch → Live
+2. **Environment-based CTA config:** `VIP_CTA_MODE` in wrangler.toml
+3. **Waitlist-first approach:** Capture interest before VIP MVP exists
+4. **Expanded free sources strategy:** FRED, OpenBB, CoinGecko, Alternative.me
+
+#### Design Doc Updates (v6.0):
+- Section 6: Pre-VIP Funnel (waitlist architecture)
+- Section 8: Expanded Free Data Sources
+- Section 9: Success Metrics (free tier focus)
+- Section 10: Updated key decisions
+
+#### Implementation Plan Updates (v3.0):
+- Phase 0: CTA Configuration (environment-based)
+- Phase 4: Expand Free Sources (FRED, CoinGecko, etc.)
+- Execution order: 0 → 1 → 2 → 4 → 3 → 5
+- Removed VIP implementation details (separate project)
+
+#### Commits:
+- `dc96bef` - docs: replace apex design with vip bridge approach
+- `23ce85a` - docs: update vip bridge plans for pre-VIP waitlist mode
+
+#### Files Modified:
+- docs/plans/2026-01-20-vip-bridge-design.md (v6.0)
+- docs/plans/2026-01-20-vip-bridge-implementation.md (v3.0)
+- task_plan.md, findings.md, progress.md (state saved)
+
+## 5-Question Reboot Check (2026-01-20)
+| Question | Answer |
+|----------|--------|
+| Where am I? | VIP Bridge - Design complete, implementation pending |
+| Where am I going? | Implement waitlist CTA + expand free data sources |
+| What's the goal? | Funnel free users to VIP waitlist + enrich free tier |
+| What have I learned? | See findings.md - waitlist-first, expanded sources |
+| What have I done? | Design docs v6.0, planning files updated |
+

@@ -4,30 +4,70 @@
 Build a complete market signal broadcast site with automated daily signals for Crypto, Forex, and Stocks.
 
 ## Current Phase
-**Growth Plan: Phase 1 Complete, Phase 2 In Progress**
+**VIP Bridge: Waitlist Funnel + Expanded Free Sources**
 
 - Pages: https://everinvests.com
 - Worker: https://everinvests-worker.duyuefeng0708.workers.dev
 
-### Status (2026-01-19)
-- D1 binding: Working
-- APIs: All returning correct JSON
-- Frontend: All pages rendering with data
-- SEO: Sitemap and meta tags in place
-- **Signal Generation: FULLY OPERATIONAL**
-  - Crypto: ✅ CoinGecko API (BTC, ETH)
-  - Forex: ✅ TwelveData API (USD/JPY, EUR/USD)
-  - Stocks: ✅ TwelveData API (25 tickers)
-  - Telegram: ✅ Notifications working
-- **Signal Accuracy: ✅ TRACKING ENABLED** (commit `caa7eff`)
-  - signal_outcomes table
-  - Accuracy checking at 01:00 UTC
-  - /api/accuracy/[category] endpoint
-  - /api/stats endpoint
-  - Cloudflare Analytics integrated
+### Status (2026-01-20)
+- **Free Tier: FULLY OPERATIONAL**
+  - Signal Generation: ✅ Crypto, Forex, Stocks
+  - Telegram Channel: ✅ Free notifications working
+  - Website: ✅ All pages live
+- **VIP Bridge: IN PROGRESS**
+  - Design docs: ✅ Complete (v6.0)
+  - Waitlist funnel: 🔄 Ready to implement
+  - Expanded free sources: 🔄 Research phase
 
-See: `docs/plans/2026-01-15-frontend-ui-implementation.md` for frontend details.
-See: `implementation-plan-2026-01-16.md` for growth plan details.
+### Funnel States
+| State | CTA Points To | Status |
+|-------|---------------|--------|
+| **Pre-Launch** | Waitlist (collect interest) | ← CURRENT |
+| Soft Launch | Edge bot (beta testers) | Pending |
+| Live | Edge bot (open subscriptions) | Pending |
+
+See: `docs/plans/2026-01-20-vip-bridge-design.md` for architecture
+See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
+
+---
+
+## VIP Bridge Progress (2026-01-20)
+
+**Goal:** Prepare free tier for VIP funnel + expand free data sources
+
+### Phase 0: CTA Configuration - PENDING
+- [ ] Add VIP_CTA_MODE env var to wrangler.toml
+- [ ] Create config.ts with waitlist/live/none modes
+- [ ] Test mode switching
+
+### Phase 1: TG Message CTA - PENDING
+- [ ] Update notifyTelegram.ts with configurable CTA
+- [ ] Change "Signal:" to "Bias:"
+- [ ] Add "Watch:" line with key risk
+- [ ] Deploy and verify
+
+### Phase 2: Website CTA - PENDING
+- [ ] Create VIPCTA.astro component (waitlist mode)
+- [ ] Add CTA to /crypto, /forex, /stocks pages
+- [ ] Add CTA to homepage
+- [ ] Style to match site theme
+
+### Phase 3: SEO Updates - PENDING
+- [ ] Update meta descriptions
+- [ ] Add structured data
+
+### Phase 4: Expand Free Sources - PENDING (HIGH PRIORITY)
+- [ ] Research: Test OpenBB Platform API
+- [ ] Research: Evaluate FRED API for macro
+- [ ] Research: Check CoinGecko for BTC dominance
+- [ ] Implement: BTC Fear & Greed (Alternative.me)
+- [ ] Implement: Gold price (TwelveData)
+- [ ] Implement: 2Y-10Y Spread (FRED)
+- [ ] Update computeBias.ts with new indicators
+
+### Phase 5: Analytics - PENDING
+- [ ] Add UTM parameters to CTA links
+- [ ] Track CTA clicks
 
 ---
 
