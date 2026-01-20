@@ -471,3 +471,31 @@
 - src/pages/forex/index.astro
 - src/pages/stocks/index.astro
 
+## Session: 2026-01-20
+
+### VIP Bridge Design Update
+- **Status:** complete
+- **Started:** 2026-01-20
+
+#### Scope Clarification:
+- **This repo (everinvests):** Free site + Free TG channel only
+- **Separate project:** EverInvests VIP (paid TG group, edge bot, premium signals)
+- **"VIP Bridge":** CTAs in free tier that funnel users to paid VIP
+
+#### Changes Made:
+1. **Renamed "Apex Premium" → "EverInvests VIP"** throughout design docs
+2. **Renamed files to "vip-bridge"** to clarify scope (changes to free tier only)
+3. **Updated payment flow documentation:**
+   - VIP group is private (no public t.me link)
+   - User subscribes via edge bot (powered by MemberPaywall.org)
+   - Edge bot generates per-user private invite links
+   - Bot setup pending (placeholder: `t.me/EverInvestsVIPBot`)
+4. **Updated component/CSS naming in plans:**
+   - `ApexCTA.astro` → `VIPCTA.astro`
+   - CSS classes: `apex-*` → `vip-*`
+   - Analytics event: `vip_cta_click`
+
+#### Files Renamed:
+- `2026-01-20-apex-design.md` → `2026-01-20-vip-bridge-design.md`
+- `2026-01-20-apex-implementation.md` → `2026-01-20-vip-bridge-implementation.md`
+

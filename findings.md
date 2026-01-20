@@ -98,5 +98,38 @@ CREATE TABLE signals (
 ## Visual/Browser Findings
 - N/A (no browser operations yet)
 
+## VIP Bridge (2026-01-20)
+
+### Scope Clarification
+- **This repo (everinvests):** Free site + Free TG channel only
+- **Separate project:** EverInvests VIP (paid TG group, edge bot, premium signals)
+- **"VIP Bridge":** CTAs added to free tier that funnel users to paid VIP
+
+### Product Tiers
+| Tier | Channel | Model | Repo |
+|------|---------|-------|------|
+| EverInvests (Free) | Website + Free TG Channel | Free | this repo |
+| EverInvests VIP | Private TG Group | $49-399/mo | separate |
+
+### Payment Flow (VIP - separate project)
+1. CTA links to **edge bot** (e.g., `t.me/EverInvestsVIPBot` - TBD)
+2. User subscribes via edge bot (powered by **MemberPaywall.org**)
+3. Edge bot generates **private invite link** to VIP group
+4. User joins VIP group
+
+**Key:** VIP group is private - no public t.me link. All invites generated per-user by edge bot.
+
+### CTA = Call To Action
+Marketing element in FREE tier prompting users to upgrade:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━
+Want regime + confidence + directives?
+👉 Join EverInvests VIP: [bot link TBD]
+```
+
+### Design Files
+- `docs/plans/2026-01-20-vip-bridge-design.md` - Full architecture
+- `docs/plans/2026-01-20-vip-bridge-implementation.md` - Implementation tasks
+
 ---
 *Update this file after every 2 view/browser/search operations*
