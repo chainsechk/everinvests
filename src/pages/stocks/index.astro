@@ -13,7 +13,7 @@ import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } fr
 
 const category = "stocks" as const;
 const categoryTitle = "Stocks";
-const categoryDescription = "Daily stock signals for semiconductors, AI infrastructure, and energy sectors.";
+const categoryDescription = "Free daily stock signals for semiconductors (NVDA, AMD), AI infrastructure (MSFT, GOOGL), and energy. Upgrade to VIP for regime analysis.";
 
 const db = Astro.locals.runtime?.env?.DB;
 
@@ -46,9 +46,35 @@ if (db) {
     }
   }
 }
+
+// Structured data for SEO
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://everinvests.com" },
+    { "@type": "ListItem", position: 2, name: "Stock Signals", item: "https://everinvests.com/stocks" },
+  ],
+};
+
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "EverInvests Stock Signals",
+  description: "Free daily stock signals for semiconductors, AI infrastructure, and energy sectors",
+  provider: { "@type": "Organization", name: "EverInvests" },
+  serviceType: "Market Analysis",
+  areaServed: "Worldwide",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free daily stock signals",
+  },
+};
 ---
 
-<BaseLayout title={categoryTitle} description={categoryDescription}>
+<BaseLayout title={categoryTitle} description={categoryDescription} jsonLd={[breadcrumbSchema, serviceSchema]}>
   <Header slot="header" />
 
   <div class="space-y-8">

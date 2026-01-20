@@ -13,7 +13,7 @@ import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } fr
 
 const category = "forex" as const;
 const categoryTitle = "Forex";
-const categoryDescription = "Daily forex signals for USD/JPY, EUR/USD, USD/CAD, AUD/USD with RSI and MA analysis.";
+const categoryDescription = "Free daily forex signals for major pairs (USD/JPY, EUR/USD, USD/CAD, AUD/USD) with RSI and macro analysis. Upgrade to VIP for trade directives.";
 
 const db = Astro.locals.runtime?.env?.DB;
 
@@ -46,9 +46,35 @@ if (db) {
     }
   }
 }
+
+// Structured data for SEO
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://everinvests.com" },
+    { "@type": "ListItem", position: 2, name: "Forex Signals", item: "https://everinvests.com/forex" },
+  ],
+};
+
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "EverInvests Forex Signals",
+  description: "Free daily forex signals for major currency pairs with RSI and macro analysis",
+  provider: { "@type": "Organization", name: "EverInvests" },
+  serviceType: "Market Analysis",
+  areaServed: "Worldwide",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free daily forex signals",
+  },
+};
 ---
 
-<BaseLayout title={categoryTitle} description={categoryDescription}>
+<BaseLayout title={categoryTitle} description={categoryDescription} jsonLd={[breadcrumbSchema, serviceSchema]}>
   <Header slot="header" />
 
   <div class="space-y-8">

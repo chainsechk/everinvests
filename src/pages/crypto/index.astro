@@ -13,7 +13,7 @@ import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } fr
 
 const category = "crypto" as const;
 const categoryTitle = "Crypto";
-const categoryDescription = "Daily Bitcoin and Ethereum market signals with bias, key levels, and risk analysis.";
+const categoryDescription = "Free daily BTC & ETH signals with market bias, Fear & Greed index, and macro context. Upgrade to VIP for regime analysis and trade directives.";
 
 const db = Astro.locals.runtime?.env?.DB;
 
@@ -46,9 +46,35 @@ if (db) {
     }
   }
 }
+
+// Structured data for SEO
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://everinvests.com" },
+    { "@type": "ListItem", position: 2, name: "Crypto Signals", item: "https://everinvests.com/crypto" },
+  ],
+};
+
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "EverInvests Crypto Signals",
+  description: "Free daily Bitcoin and Ethereum market signals with bias analysis and macro context",
+  provider: { "@type": "Organization", name: "EverInvests" },
+  serviceType: "Market Analysis",
+  areaServed: "Worldwide",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free daily crypto signals",
+  },
+};
 ---
 
-<BaseLayout title={categoryTitle} description={categoryDescription}>
+<BaseLayout title={categoryTitle} description={categoryDescription} jsonLd={[breadcrumbSchema, serviceSchema]}>
   <Header slot="header" />
 
   <div class="space-y-8">

@@ -52,9 +52,9 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 - [x] Add CTA to homepage
 - [x] Style matches site theme with vip color
 
-### Phase 3: SEO Updates - PENDING
-- [ ] Update meta descriptions
-- [ ] Add structured data
+### Phase 3: SEO Updates - COMPLETE
+- [x] Update meta descriptions (homepage + category pages)
+- [x] Add structured data (BreadcrumbList + Service schemas)
 
 ### Phase 4: Expand Free Sources - COMPLETE
 - [x] Implement: BTC Fear & Greed (Alternative.me)
@@ -65,9 +65,9 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
 - [x] Update fetchMacroDataSkill to v3 with new sources
 - [x] Update MacroBar UI to display expanded indicators
 
-### Phase 5: Analytics - PENDING
-- [ ] Add UTM parameters to CTA links
-- [ ] Track CTA clicks
+### Phase 5: Analytics - COMPLETE
+- [x] UTM parameters via Telegram start param (already in place)
+- [x] Click tracking script in VIPCTA component
 
 ---
 
