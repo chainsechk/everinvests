@@ -1,0 +1,159 @@
+---
+// src/pages/blog/index.astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import BiasIndicator from "../../components/BiasIndicator.astro";
+
+interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+  category: string;
+  published_at: string;
+  views: number;
+}
+
+const db = Astro.locals.runtime.env.DB;
+
+// Fetch all blog posts, newest first
+const result = await db.prepare(
+  `SELECT id, slug, title, content, category, published_at, views
+   FROM blog_posts
+   ORDER BY published_at DESC
+   LIMIT 50`
+).all<BlogPost>();
+
+const posts = result.results || [];
+
+// Group posts by date
+const postsByDate = posts.reduce((acc, post) => {
+  const date = post.published_at.split('T')[0];
+  if (!acc[date]) acc[date] = [];
+  acc[date].push(post);
+  return acc;
+}, {} as Record<string, BlogPost[]>);
+
+const categoryColors: Record<string, string> = {
+  crypto: "bg-cyber/10 text-cyber border-cyber/20",
+  forex: "bg-bullish/10 text-bullish border-bullish/20",
+  stocks: "bg-bearish/10 text-bearish border-bearish/20"
+};
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function getExcerpt(content: string, length: number = 150): string {
+  if (content.length <= length) return content;
+  return content.slice(0, length).trim() + "...";
+}
+---
+
+<BaseLayout
+  title="Blog"
+  description="Daily market analysis and insights for Crypto, Forex, and Stocks. Auto-generated signal breakdowns and market commentary."
+>
+  <Header slot="header" />
+
+  <div class="max-w-4xl mx-auto">
+    <!-- Page Header -->
+    <div class="text-center py-8 mb-8" data-animate>
+      <h1 class="font-display font-bold text-4xl sm:text-5xl text-txt-primary mb-4">Weekly Market Recaps</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">
+        Weekly summaries of market signals and trends, automatically generated every Sunday.
+      </p>
+    </div>
+
+    <!-- Category Filter (optional future enhancement) -->
+    <div class="flex items-center justify-center gap-2 mb-8" data-animate>
+      <a href="/blog" class="px-4 py-2 rounded-lg bg-cyber/10 text-cyber text-sm font-medium">
+        All
+      </a>
+      <a href="/blog?category=crypto" class="px-4 py-2 rounded-lg hover:bg-void-100/50 text-txt-muted text-sm transition-colors">
+        Crypto
+      </a>
+      <a href="/blog?category=forex" class="px-4 py-2 rounded-lg hover:bg-void-100/50 text-txt-muted text-sm transition-colors">
+        Forex
+      </a>
+      <a href="/blog?category=stocks" class="px-4 py-2 rounded-lg hover:bg-void-100/50 text-txt-muted text-sm transition-colors">
+        Stocks
+      </a>
+    </div>
+
+    {posts.length === 0 ? (
+      <div class="card text-center py-12" data-animate>
+        <div class="text-4xl mb-4">📝</div>
+        <p class="text-txt-secondary mb-2">No blog posts yet</p>
+        <p class="text-sm text-txt-muted">
+          Posts are automatically generated with each signal. Check back after the next signal update.
+        </p>
+      </div>
+    ) : (
+      <div class="space-y-8">
+        {Object.entries(postsByDate).map(([date, datePosts]) => (
+          <section data-animate>
+            <h2 class="font-mono text-sm text-txt-muted mb-4 sticky top-0 bg-void py-2">
+              {formatDate(date)}
+            </h2>
+            <div class="space-y-4">
+              {datePosts.map((post) => (
+                <a
+                  href={`/blog/${post.slug}`}
+                  class="card block hover:border-cyber/30 transition-colors group"
+                >
+                  <div class="flex items-start gap-4">
+                    <div class="flex-grow min-w-0">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class={`px-2 py-0.5 rounded text-xs font-mono uppercase ${categoryColors[post.category] || 'bg-void-100 text-txt-muted'} border`}>
+                          {post.category}
+                        </span>
+                        <span class="text-xs text-txt-muted">
+                          {post.views} views
+                        </span>
+                      </div>
+                      <h3 class="font-display font-bold text-lg text-txt-primary group-hover:text-cyber transition-colors mb-2 truncate">
+                        {post.title}
+                      </h3>
+                      <p class="text-sm text-txt-secondary line-clamp-2">
+                        {getExcerpt(post.content)}
+                      </p>
+                    </div>
+                    <div class="hidden sm:block text-txt-muted group-hover:text-cyber transition-colors">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
+
+    <!-- CTA -->
+    <div class="mt-12" data-animate>
+      <TelegramCTA variant="full" />
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

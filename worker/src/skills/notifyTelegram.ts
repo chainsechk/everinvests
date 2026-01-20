@@ -1,5 +1,6 @@
 import { notifySignal } from "../notify";
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
+import type { SignalDelta } from "../signals";
 import type { SkillSpec } from "./types";
 
 export interface NotifyTelegramInput {
@@ -10,6 +11,7 @@ export interface NotifyTelegramInput {
   macro: MacroSignal;
   date: string;
   timeSlot: string;
+  delta?: SignalDelta | null;
 }
 
 export interface NotifyTelegramOutput {
@@ -18,7 +20,7 @@ export interface NotifyTelegramOutput {
 
 export const notifyTelegramSkill: SkillSpec<NotifyTelegramInput, NotifyTelegramOutput> = {
   id: "notify_telegram",
-  version: "1",
+  version: "2",
   async run({ env, input }) {
     const notified = await notifySignal(
       env.TELEGRAM_BOT_TOKEN,
@@ -30,7 +32,8 @@ export const notifyTelegramSkill: SkillSpec<NotifyTelegramInput, NotifyTelegramO
       input.assets,
       input.macro,
       input.date,
-      input.timeSlot
+      input.timeSlot,
+      input.delta
     );
 
     return { notified };

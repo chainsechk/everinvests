@@ -4,6 +4,9 @@ import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
 import { logRun } from "./storage/d1";
+import { checkSignalAccuracy } from "./accuracy";
+import { generateWeeklyBlogPosts } from "./blog";
+import { sendDailyDigest } from "./digest";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -40,6 +43,37 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<void> {
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+
+    // Run accuracy check at 01:00 UTC (checks yesterday's signals)
+    if (utcHour === 1) {
+      ctx.waitUntil(
+        checkSignalAccuracy(env).catch((err) =>
+          console.error("[Accuracy] Check failed:", err)
+        )
+      );
+    }
+
+    // Run daily digest at 23:00 UTC
+    const dayOfWeek = now.getUTCDay();
+    if (utcHour === 23) {
+      ctx.waitUntil(
+        sendDailyDigest(env).catch((err) =>
+          console.error("[DailyDigest] Send failed:", err)
+        )
+      );
+    }
+
+    // Run weekly blog generation on Sundays at 23:00 UTC
+    if (dayOfWeek === 0 && utcHour === 23) {
+      ctx.waitUntil(
+        generateWeeklyBlogPosts(env).catch((err) =>
+          console.error("[WeeklyBlog] Generation failed:", err)
+        )
+      );
+    }
+
     ctx.waitUntil(runScheduledJob(env, event.cron));
   },
 
@@ -54,6 +88,21 @@ export default {
       const category = url.searchParams.get("category") as Category | null;
       await runScheduledJob(env, "manual", category ? [category] : undefined);
       return Response.json({ triggered: true, category: category ?? "all scheduled" });
+    }
+
+    if (url.pathname === "/check-accuracy") {
+      await checkSignalAccuracy(env);
+      return Response.json({ checked: true });
+    }
+
+    if (url.pathname === "/generate-weekly-blog") {
+      await generateWeeklyBlogPosts(env);
+      return Response.json({ generated: true });
+    }
+
+    if (url.pathname === "/send-daily-digest") {
+      const sent = await sendDailyDigest(env);
+      return Response.json({ sent });
     }
 
     return new Response("everinvests-worker", { status: 200 });

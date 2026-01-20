@@ -10,6 +10,7 @@ export interface CacheConfig {
   ALPHAVANTAGE_TREASURY: number;
   YAHOO_FINANCE: number;
   MACRO: number;
+  COINGECKO_OHLC: number;
 }
 
 // Default TTL configuration
@@ -21,6 +22,7 @@ export const DEFAULT_TTL: CacheConfig = {
   ALPHAVANTAGE_TREASURY: 60 * 60, // 1 hour for treasury yields
   YAHOO_FINANCE: 30 * 60, // 30 minutes for Yahoo Finance (DXY, VIX)
   MACRO: 60 * 60, // 1 hour for macro data (Treasury yields)
+  COINGECKO_OHLC: 15 * 60, // 15 minutes for OHLC data
 };
 
 // Cache key prefix to avoid collisions
@@ -65,11 +67,35 @@ function isApiErrorResponse(data: unknown): boolean {
   return false;
 }
 
+// Default fetch timeout in milliseconds (20 seconds)
+const DEFAULT_FETCH_TIMEOUT_MS = 20000;
+
+// Fetch with timeout using AbortController
+async function fetchWithTimeout(
+  url: string,
+  options?: RequestInit,
+  timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // Fetch with TTL caching
 export async function cachedFetch<T>(
   url: string,
   ttlSeconds: number,
-  options?: RequestInit
+  options?: RequestInit,
+  timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS
 ): Promise<{ data: T; cached: boolean; cachedAt?: string }> {
   const cache = getDefaultCache();
   const cacheKey = getCacheKey(url);
@@ -88,8 +114,8 @@ export async function cachedFetch<T>(
     }
   }
 
-  // Fetch fresh data
-  const response = await fetch(url, options);
+  // Fetch fresh data with timeout
+  const response = await fetchWithTimeout(url, options, timeoutMs);
   if (!response.ok) {
     throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
   }

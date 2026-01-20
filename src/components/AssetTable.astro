@@ -80,6 +80,11 @@ function getMaClass(value: string | null): string {
   if (value === "below") return "text-bearish bg-bearish/10 border-bearish/20";
   return "text-txt-muted bg-void-100/50 border-void-200/30";
 }
+
+function getAssetUrl(ticker: string, cat: string): string {
+  // For forex, use "pair" param; for others use "ticker"
+  return `/${cat}/${ticker.toLowerCase()}`;
+}
 ---
 
 <div class="overflow-x-auto -mx-5 px-5">
@@ -102,7 +107,9 @@ function getMaClass(value: string | null): string {
           <tr class:list={[hasIssue && "bg-mixed/5"]}>
             <td>
               <div class="flex items-center gap-1.5">
-                <span class="font-mono font-semibold text-txt-primary">{asset.ticker}</span>
+                <a href={getAssetUrl(asset.ticker, category)} class="font-mono font-semibold text-txt-primary hover:text-cyber transition-colors">
+                  {asset.ticker}
+                </a>
                 {status.isStale && (
                   <span class="inline-flex items-center text-mixed" title="Stale data">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

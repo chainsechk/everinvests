@@ -1,0 +1,112 @@
+---
+// src/components/DeltaBadge.astro
+// Shows delta changes vs previous signal
+
+interface AssetDelta {
+  ticker: string;
+  priceDelta: number;
+  biasChanged: boolean;
+  previousBias: string | null;
+  currentBias: string;
+}
+
+interface Delta {
+  biasChanged: boolean;
+  previousBias: string | null;
+  currentBias: string;
+  assetDeltas: AssetDelta[];
+  priceMovers: {
+    biggest_gainer: { ticker: string; delta: number } | null;
+    biggest_loser: { ticker: string; delta: number } | null;
+  };
+  changedAssets: number;
+  totalAssets: number;
+}
+
+interface Props {
+  delta: Delta | null;
+  variant?: "compact" | "full";
+}
+
+const { delta, variant = "compact" } = Astro.props;
+
+if (!delta || !delta.previousBias) {
+  return null;
+}
+
+const biasChangeArrow = delta.currentBias === "Bullish" ? "trending-up" : delta.currentBias === "Bearish" ? "trending-down" : "minus";
+const biasChangeColor = delta.currentBias === "Bullish" ? "text-bullish" : delta.currentBias === "Bearish" ? "text-bearish" : "text-txt-muted";
+---
+
+{variant === "compact" ? (
+  <div class="flex flex-wrap items-center gap-2 text-xs">
+    {delta.biasChanged && (
+      <span class:list={["flex items-center gap-1 font-medium", biasChangeColor]}>
+        {biasChangeArrow === "trending-up" && (
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+        )}
+        {biasChangeArrow === "trending-down" && (
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+          </svg>
+        )}
+        {biasChangeArrow === "minus" && (
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+          </svg>
+        )}
+        <span>{delta.previousBias} &rarr; {delta.currentBias}</span>
+      </span>
+    )}
+    {delta.priceMovers.biggest_gainer && (
+      <span class="text-bullish">
+        {delta.priceMovers.biggest_gainer.ticker} +{delta.priceMovers.biggest_gainer.delta.toFixed(1)}%
+      </span>
+    )}
+    {delta.priceMovers.biggest_loser && (
+      <span class="text-bearish">
+        {delta.priceMovers.biggest_loser.ticker} {delta.priceMovers.biggest_loser.delta.toFixed(1)}%
+      </span>
+    )}
+  </div>
+) : (
+  <div class="card-glass p-4 space-y-3">
+    <h3 class="font-display font-semibold text-txt-primary text-sm uppercase tracking-wide">Changes vs Previous</h3>
+
+    {delta.biasChanged && (
+      <div class="flex items-center gap-2">
+        <span class="text-txt-muted text-sm">Overall Bias:</span>
+        <span class:list={["font-medium", biasChangeColor]}>
+          {delta.previousBias} &rarr; {delta.currentBias}
+        </span>
+      </div>
+    )}
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      {delta.priceMovers.biggest_gainer && (
+        <div>
+          <span class="text-txt-muted">Top Gainer:</span>
+          <div class="font-mono text-bullish">
+            {delta.priceMovers.biggest_gainer.ticker} +{delta.priceMovers.biggest_gainer.delta.toFixed(1)}%
+          </div>
+        </div>
+      )}
+      {delta.priceMovers.biggest_loser && (
+        <div>
+          <span class="text-txt-muted">Top Loser:</span>
+          <div class="font-mono text-bearish">
+            {delta.priceMovers.biggest_loser.ticker} {delta.priceMovers.biggest_loser.delta.toFixed(1)}%
+          </div>
+        </div>
+      )}
+    </div>
+
+    {delta.changedAssets > 0 && (
+      <div class="text-xs text-txt-muted pt-2 border-t border-void-100">
+        {delta.changedAssets} of {delta.totalAssets} assets changed bias
+      </div>
+    )}
+  </div>
+)}

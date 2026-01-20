@@ -1,0 +1,1 @@
+export { generateWeeklyBlogPosts } from "./weekly";

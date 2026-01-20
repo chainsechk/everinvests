@@ -1,0 +1,56 @@
+---
+// src/components/RelatedSignals.astro
+// Shows signals from other categories at the same time slot
+import BiasIndicator from "./BiasIndicator.astro";
+import type { Category } from "../lib/db";
+
+interface RelatedSignal {
+  category: Category;
+  bias: string;
+  date: string;
+  time_slot: string;
+}
+
+interface Props {
+  currentCategory: Category;
+  date: string;
+  timeSlot: string;
+  relatedSignals: RelatedSignal[];
+}
+
+const { currentCategory, date, timeSlot, relatedSignals } = Astro.props;
+
+const categoryMeta: Record<Category, { title: string; icon: string }> = {
+  crypto: { title: "Crypto", icon: "₿" },
+  forex: { title: "Forex", icon: "$" },
+  stocks: { title: "Stocks", icon: "📈" },
+};
+
+// Filter out current category
+const otherSignals = relatedSignals.filter(s => s.category !== currentCategory);
+---
+
+{otherSignals.length > 0 && (
+  <div class="card" data-animate>
+    <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Related Signals</h2>
+    <p class="text-sm text-txt-muted mb-4">Other markets at the same time</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {otherSignals.map((signal) => {
+        const meta = categoryMeta[signal.category];
+        return (
+          <a
+            href={`/${signal.category}/${signal.date}/${signal.time_slot}`}
+            class="flex items-center gap-3 p-3 rounded-lg bg-void-100/30 border border-void-200/30 hover:border-cyber/30 transition-colors"
+          >
+            <span class="text-xl">{meta.icon}</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-txt-primary">{meta.title}</div>
+              <div class="text-xs text-txt-muted">{signal.date} {signal.time_slot}</div>
+            </div>
+            <BiasIndicator bias={signal.bias} size="sm" />
+          </a>
+        );
+      })}
+    </div>
+  </div>
+)}

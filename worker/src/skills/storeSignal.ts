@@ -1,4 +1,5 @@
-import { saveAssetSignals, saveSignal } from "../storage/d1";
+import { saveAssetSignals, saveSignal, getPreviousSignalForDelta } from "../storage/d1";
+import { computeDelta, type SignalDelta } from "../signals";
 import type { AssetData, AssetSignal, Bias, Category } from "../types";
 import type { QualityFlags } from "../quality/checks";
 import type { SkillSpec } from "./types";
@@ -19,17 +20,30 @@ export interface StoreSignalInput {
 
 export interface StoreSignalOutput {
   signalId: number;
+  delta: SignalDelta | null;
 }
 
 export const storeSignalSkill: SkillSpec<StoreSignalInput, StoreSignalOutput> = {
   id: "store_signal",
-  version: "1",
+  version: "2",
   async run({ env, input }) {
+    // Fetch previous signal for delta computation
+    const previousData = await getPreviousSignalForDelta({
+      db: env.DB,
+      category: input.category,
+      date: input.date,
+      timeSlot: input.timeSlot,
+    });
+
+    // Compute delta vs previous signal
+    const delta = computeDelta(input.bias, input.assetSignals, previousData);
+
     const output = {
       summary: input.summary,
       levels: input.levels,
       risks: input.risks,
       quality_flags: input.qualityFlags,
+      delta,
     };
 
     const signalId = await saveSignal({
@@ -49,6 +63,6 @@ export const storeSignalSkill: SkillSpec<StoreSignalInput, StoreSignalOutput> = 
       assets: input.assetSignals,
     });
 
-    return { signalId };
+    return { signalId, delta };
   },
 };

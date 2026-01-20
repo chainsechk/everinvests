@@ -1,10 +1,18 @@
-// LLM summary generation
+// LLM summary generation with provenance tracking
 // Crypto/Forex: Workers AI (Llama 3.1 8B)
 // Stocks: DeepSeek V3 via OpenRouter
 
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
+import {
+  buildPromptFromRegistry,
+  DEFAULT_PROMPT_NAME,
+  DEFAULT_PROMPT_VERSION,
+  type PromptInput,
+  type PromptVersion,
+} from "./prompts";
+import { validateSummary, sanitizeSummary, type ValidationResult } from "./validation";
 
-interface SummaryInput {
+export interface SummaryInput {
   category: Category;
   bias: Bias;
   macro: MacroSignal;
@@ -13,36 +21,36 @@ interface SummaryInput {
   risks: string[];
 }
 
-// Build prompt for LLM
-function buildPrompt(input: SummaryInput): string {
-  const secondaryLabel = input.category === "crypto" ? "Funding" : "RSI(14)";
-  const assetSummary = input.assets
-    .map(a => `${a.ticker}: ${a.bias} (${a.vsMA20} 20D MA, ${secondaryLabel}: ${a.secondaryInd})`)
-    .join(", ");
-
-  return `You are a professional market analyst. Generate a 1-2 sentence summary for today's ${input.category} signal.
-
-Macro context: ${input.macro.overall} (DXY: ${input.macro.dxyBias}, VIX: ${input.macro.vixLevel})
-Overall bias: ${input.bias}
-Assets: ${assetSummary}
-Key risks: ${input.risks.join(", ")}
-
-Write a concise, professional summary that a trader would find useful.
-- Use only the data provided above; do not invent indicators (e.g., Fibonacci levels).
-- If macro context is "Unavailable", do not make macro claims.
-- Do not use emojis or markdown.`;
+export interface LLMRunResult {
+  summary: string;
+  promptName: string;
+  promptVersion: string;
+  model: string;
+  tokensIn: number | null;
+  tokensOut: number | null;
+  latencyMs: number;
+  status: "success" | "error" | "fallback";
+  errorMsg?: string;
+  fallbackReason?: string;
+  validation?: ValidationResult;
+  sanitized?: boolean;
 }
 
+// Model identifiers
+const WORKERS_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+const OPENROUTER_MODEL = "deepseek/deepseek-chat";
+
 // Generate summary using Workers AI
-export async function generateSummaryWorkersAI(
+async function generateSummaryWorkersAI(
   ai: Ai,
-  input: SummaryInput
-): Promise<string> {
-  const prompt = buildPrompt(input);
+  prompt: string,
+  promptVersion: PromptVersion
+): Promise<LLMRunResult> {
+  const startTime = Date.now();
 
   try {
     const response = await ai.run(
-      "@cf/meta/llama-3.1-8b-instruct" as any,
+      WORKERS_AI_MODEL as any,
       {
         prompt,
         max_tokens: 100,
@@ -50,21 +58,44 @@ export async function generateSummaryWorkersAI(
       }
     );
 
-    // Workers AI returns { response: string }
     const text = (response as { response: string }).response;
-    return text.trim();
+    const latencyMs = Date.now() - startTime;
+
+    return {
+      summary: text.trim(),
+      promptName: promptVersion.name,
+      promptVersion: promptVersion.version,
+      model: WORKERS_AI_MODEL,
+      tokensIn: null, // Workers AI doesn't return token counts
+      tokensOut: null,
+      latencyMs,
+      status: "success",
+    };
   } catch (error) {
-    console.error("Workers AI failed:", error);
-    return generateFallbackSummary(input);
+    const latencyMs = Date.now() - startTime;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+
+    return {
+      summary: "",
+      promptName: promptVersion.name,
+      promptVersion: promptVersion.version,
+      model: WORKERS_AI_MODEL,
+      tokensIn: null,
+      tokensOut: null,
+      latencyMs,
+      status: "error",
+      errorMsg,
+    };
   }
 }
 
 // Generate summary using OpenRouter (DeepSeek V3)
-export async function generateSummaryOpenRouter(
+async function generateSummaryOpenRouter(
   apiKey: string,
-  input: SummaryInput
-): Promise<string> {
-  const prompt = buildPrompt(input);
+  prompt: string,
+  promptVersion: PromptVersion
+): Promise<LLMRunResult> {
+  const startTime = Date.now();
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -76,7 +107,7 @@ export async function generateSummaryOpenRouter(
         "X-Title": "EverInvests Signal Generator",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat",
+        model: OPENROUTER_MODEL,
         messages: [
           { role: "user", content: prompt }
         ],
@@ -85,23 +116,63 @@ export async function generateSummaryOpenRouter(
       }),
     });
 
+    const latencyMs = Date.now() - startTime;
+
     if (!response.ok) {
-      throw new Error(`OpenRouter failed: ${response.status}`);
+      return {
+        summary: "",
+        promptName: promptVersion.name,
+        promptVersion: promptVersion.version,
+        model: OPENROUTER_MODEL,
+        tokensIn: null,
+        tokensOut: null,
+        latencyMs,
+        status: "error",
+        errorMsg: `OpenRouter HTTP ${response.status}`,
+      };
     }
 
     const data = await response.json() as {
       choices: Array<{ message: { content: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
 
-    return data.choices[0]?.message?.content?.trim() || generateFallbackSummary(input);
+    const summary = data.choices[0]?.message?.content?.trim() || "";
+
+    return {
+      summary,
+      promptName: promptVersion.name,
+      promptVersion: promptVersion.version,
+      model: OPENROUTER_MODEL,
+      tokensIn: data.usage?.prompt_tokens ?? null,
+      tokensOut: data.usage?.completion_tokens ?? null,
+      latencyMs,
+      status: summary ? "success" : "error",
+      errorMsg: summary ? undefined : "Empty response from OpenRouter",
+    };
   } catch (error) {
-    console.error("OpenRouter failed:", error);
-    return generateFallbackSummary(input);
+    const latencyMs = Date.now() - startTime;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+
+    return {
+      summary: "",
+      promptName: promptVersion.name,
+      promptVersion: promptVersion.version,
+      model: OPENROUTER_MODEL,
+      tokensIn: null,
+      tokensOut: null,
+      latencyMs,
+      status: "error",
+      errorMsg,
+    };
   }
 }
 
 // Fallback summary if LLM fails
-function generateFallbackSummary(input: SummaryInput): string {
+function generateFallbackSummary(
+  input: SummaryInput,
+  fallbackReason: string
+): LLMRunResult {
   const bullishCount = input.assets.filter(a => a.bias === "Bullish").length;
   const bearishCount = input.assets.filter(a => a.bias === "Bearish").length;
   const total = input.assets.length;
@@ -120,21 +191,107 @@ function generateFallbackSummary(input: SummaryInput): string {
 
   summary += `Macro environment is ${input.macro.overall.toLowerCase()}.`;
 
-  return summary;
+  return {
+    summary,
+    promptName: DEFAULT_PROMPT_NAME,
+    promptVersion: DEFAULT_PROMPT_VERSION,
+    model: "fallback",
+    tokensIn: null,
+    tokensOut: null,
+    latencyMs: 0,
+    status: "fallback",
+    fallbackReason,
+  };
 }
 
-// Main entry point - routes to appropriate LLM
+// Main entry point - routes to appropriate LLM with provenance tracking
 export async function generateSummary(
   input: SummaryInput,
   ai?: Ai,
-  openRouterKey?: string
-): Promise<string> {
-  // Stocks use OpenRouter (DeepSeek), crypto/forex use Workers AI
-  if (input.category === "stocks" && openRouterKey) {
-    return generateSummaryOpenRouter(openRouterKey, input);
-  } else if (ai) {
-    return generateSummaryWorkersAI(ai, input);
-  } else {
-    return generateFallbackSummary(input);
+  openRouterKey?: string,
+  promptName: string = DEFAULT_PROMPT_NAME,
+  promptVersion?: string
+): Promise<LLMRunResult> {
+  // Build prompt from registry
+  let prompt: string;
+  let version: PromptVersion;
+
+  try {
+    const result = buildPromptFromRegistry(input as PromptInput, promptName, promptVersion);
+    prompt = result.prompt;
+    version = result.promptVersion;
+  } catch (error) {
+    return generateFallbackSummary(
+      input,
+      `Prompt not found: ${promptName}@${promptVersion || "latest"}`
+    );
   }
+
+  // Route to appropriate LLM
+  let result: LLMRunResult;
+
+  if (input.category === "stocks" && openRouterKey) {
+    result = await generateSummaryOpenRouter(openRouterKey, prompt, version);
+  } else if (ai) {
+    result = await generateSummaryWorkersAI(ai, prompt, version);
+  } else {
+    return generateFallbackSummary(input, "No LLM available");
+  }
+
+  // If LLM failed, use fallback
+  if (result.status === "error" || !result.summary) {
+    const fallback = generateFallbackSummary(
+      input,
+      result.errorMsg || "LLM returned empty response"
+    );
+    // Preserve original LLM run info but mark as fallback
+    return {
+      ...fallback,
+      promptName: result.promptName,
+      promptVersion: result.promptVersion,
+      latencyMs: result.latencyMs,
+      errorMsg: result.errorMsg,
+    };
+  }
+
+  // Validate and sanitize the summary
+  const validation = validateSummary(result.summary);
+  result.validation = validation;
+
+  if (!validation.valid) {
+    // Try sanitizing first
+    const sanitized = sanitizeSummary(result.summary);
+    const revalidation = validateSummary(sanitized);
+
+    if (revalidation.valid) {
+      // Sanitization fixed the issues
+      result.summary = sanitized;
+      result.sanitized = true;
+      result.validation = revalidation;
+    } else {
+      // Sanitization didn't help - use fallback
+      const fallback = generateFallbackSummary(
+        input,
+        `Validation failed: ${validation.issues.map(i => i.code).join(", ")}`
+      );
+      return {
+        ...fallback,
+        promptName: result.promptName,
+        promptVersion: result.promptVersion,
+        latencyMs: result.latencyMs,
+        validation,
+      };
+    }
+  }
+
+  return result;
 }
+
+// Re-export types from prompts for external use
+export type { PromptInput, PromptVersion } from "./prompts";
+export {
+  DEFAULT_PROMPT_NAME,
+  DEFAULT_PROMPT_VERSION,
+  getAllPrompts,
+  getPromptsForSeeding,
+} from "./prompts";

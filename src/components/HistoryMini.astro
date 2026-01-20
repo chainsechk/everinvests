@@ -40,12 +40,15 @@ function formatDate(dateStr: string): string {
   {signals.length > 0 ? (
     <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
       {signals.slice(0, 7).map((signal) => (
-        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-void-100/30 border border-void-200/20 hover:border-void-200/40 transition-colors">
+        <a
+          href={`/${category}/${signal.date}/${signal.time_slot}`}
+          class="flex items-center justify-between px-3 py-2 rounded-lg bg-void-100/30 border border-void-200/20 hover:border-cyber/30 transition-colors"
+        >
           <div class="text-xs text-txt-muted font-mono">
             {formatDate(signal.date)} <span class="text-txt-muted/60">{signal.time_slot}</span>
           </div>
           <BiasIndicator bias={signal.bias} size="sm" />
-        </div>
+        </a>
       ))}
     </div>
   ) : (

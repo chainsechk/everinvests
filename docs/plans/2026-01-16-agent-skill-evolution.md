@@ -1,7 +1,7 @@
 # Agent and Skill Evolution Implementation Plan
 
 Date: 2026-01-16
-Status: In Progress (Phase 0-2 complete, Phase 3 next)
+Status: In Progress (Phase 0-5 complete, Phase 6 next)
 Baseline: Signal API Foundation and Frontend UI plans completed.
 
 ## Executive Summary
@@ -122,60 +122,90 @@ Acceptance:
 - [x] TTL cache reduces API calls and improves rate limit resilience.
 - [x] Outlier detection flags unusual values for review.
 
-## Phase 3: Prompt Registry and LLM Provenance (2 to 3 weeks)
+## Phase 3: Prompt Registry and LLM Provenance ✅ COMPLETE
 
 Scope: Make LLM evolution controlled and auditable.
 
 Tasks:
-- Add worker/src/llm/prompts.ts with versioned prompt templates.
-- Add D1 migration 0003_llm_provenance.sql:
+- [x] Add worker/src/llm/prompts.ts with versioned prompt templates.
+  - Prompt registry with name/version lookup
+  - Two prompt versions: v1 (original) and v2 (enhanced structure)
+  - buildPromptFromRegistry() for dynamic prompt building
+- [x] Add D1 migration 0003_llm_provenance.sql:
   - prompt_versions(id, name, version, template, created_at)
-  - llm_runs(id, signal_id, prompt_version_id, model, tokens_in, tokens_out, latency_ms, status, error_msg)
-- Update worker/src/llm/summary.ts to:
+  - llm_runs(id, signal_id, prompt_version_id, model, tokens_in, tokens_out, latency_ms, status, error_msg, fallback_reason, created_at)
+- [x] Update worker/src/llm/summary.ts to:
   - record prompt version and model
   - enforce output checks (length, tone, forbidden phrases)
   - mark fallback reason in output_json
-- Add scripts/eval-llm.ts with a small golden dataset.
+  - sanitize outputs (remove emojis, markdown)
+- [x] Add worker/src/llm/validation.ts with:
+  - Length checks (30-300 chars, 5-60 words)
+  - Forbidden patterns (fibonacci, MACD, disclaimers, NFA/DYOR)
+  - Emoji and markdown detection
+  - Sensational language warnings
+- [x] Add scripts/eval-llm.ts with golden dataset (4 test cases).
+- [x] Add tests for prompt registry (16 tests) and validation (26 tests).
+- [x] Update generateSummarySkill to version 2 with provenance tracking.
 
 Acceptance:
-- Every summary is traceable to a prompt version and model.
-- Prompt changes can be evaluated before rollout.
+- [x] Every summary is traceable to a prompt version and model.
+- [x] Prompt changes can be evaluated before rollout.
+- [x] Output validation prevents low-quality summaries.
 
-## Phase 4: Programmatic SEO Expansion (2 to 3 weeks)
+## Phase 4: Programmatic SEO Expansion ✅ COMPLETE
 
 Scope: Increase indexable pages and structured data.
 
 Tasks:
-- Add per-signal pages:
+- [x] Add per-signal pages:
   - src/pages/[category]/[date]/[time].astro
-- Add per-asset pages:
+  - Includes navigation (prev/next), breadcrumbs, and recent signals
+- [x] Add per-asset pages:
   - src/pages/stocks/[ticker].astro
   - src/pages/crypto/[ticker].astro
   - src/pages/forex/[pair].astro
-- Add JSON-LD for:
-  - WebSite, Article, and FinancialProduct
-- Expand sitemap in src/pages/sitemap.xml.ts:
-  - Include recent signal pages and asset pages.
-- Add internal linking blocks:
-  - "Related signals" and "Recent changes".
+  - Each shows current status, signal history, and links to other assets
+- [x] Add JSON-LD for:
+  - WebSite and Organization (in BaseLayout for all pages)
+  - Article (on per-signal pages)
+  - FinancialProduct (on per-asset pages)
+- [x] Expand sitemap in src/pages/sitemap.xml.ts:
+  - Include recent signal pages (up to 500)
+  - Include all asset pages (crypto, forex, stocks tickers)
+- [x] Add internal linking blocks:
+  - RelatedSignals component for cross-category linking
+  - AssetTable now links each ticker to its detail page
+  - HistoryMini and HistoryList link to signal detail pages
 
 Acceptance:
-- New page types appear in sitemap.
-- Pages render correctly for data present in D1.
+- [x] New page types appear in sitemap.
+- [x] Pages render correctly for data present in D1.
 
-## Phase 5: Distribution and Engagement Loops (2 weeks)
+## Phase 5: Distribution and Engagement Loops ✅ COMPLETE
 
-Scope: Increase retention and sharing.
+Scope: Increase retention and sharing via Telegram.
 
 Tasks:
-- Add "delta since last update" computation in worker/src/signals/.
-- Render deltas in history list and detail pages.
-- Add daily digest summary skill and optional email capture page.
-- Add UTM tags for Telegram CTA links and track them.
+- [x] Add "delta since last update" computation in worker/src/signals/delta.ts.
+  - Computes bias change, price deltas, biggest movers
+  - Integrated into storeSignal skill (v2)
+  - 8 unit tests for delta computation
+- [x] Render deltas in history list and detail pages.
+  - Added DeltaBadge component (compact and full variants)
+  - Shows bias changes, top gainers/losers in HistoryList
+  - Full delta section on signal detail pages
+- [x] Add daily digest summary skill.
+  - worker/src/digest/daily.ts aggregates daily signals
+  - Scheduled at 23:00 UTC
+  - Manual trigger via /send-daily-digest endpoint
+- [x] Add UTM tags for Telegram CTA links.
+  - Updated telegram.ts to include utm_source, utm_medium, utm_campaign
+  - Links now point to signal detail pages with tracking
 
 Acceptance:
-- Each signal shows delta vs previous signal.
-- Digest skill runs on schedule and logs results.
+- [x] Each signal shows delta vs previous signal.
+- [x] Digest skill runs on schedule and logs results.
 
 ## Phase 6: Continuous Evolution Ops (ongoing)
 

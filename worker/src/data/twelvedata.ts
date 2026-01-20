@@ -1,10 +1,14 @@
 // Twelve Data API for forex and stocks
 // Free tier: 800 requests/day, 8 requests/minute
+// Using BATCH mode to reduce API calls (comma-separated symbols)
 
 import type { AssetData, ForexTicker, StockTicker } from "../types";
 import { cachedFetch, DEFAULT_TTL, getTimestampAgeMinutes } from "../cache";
 
 const TWELVEDATA_API = "https://api.twelvedata.com";
+
+// Longer timeout for TwelveData batch API calls (45 seconds for multiple symbols)
+const TWELVEDATA_TIMEOUT_MS = 45000;
 
 export interface TwelveDataFetchResult {
   data: AssetData[];
@@ -12,16 +16,19 @@ export interface TwelveDataFetchResult {
   staleAssets: string[];
 }
 
-export const STOCK_KEY_TICKERS = ["NVDA", "MSFT", "XOM", "ORCL", "AAPL"] as const satisfies readonly StockTicker[];
+// Key stocks: 2 per sector for balanced coverage
+// Semis: NVDA, AMD | AI Infra: MSFT, AAPL | Energy: XOM, CVX | Cloud: ORCL, PLTR
+export const STOCK_KEY_TICKERS = [
+  "NVDA", "AMD",    // Semiconductors
+  "MSFT", "AAPL",   // AI Infrastructure
+  "XOM", "CVX",     // Energy
+  "ORCL", "PLTR",   // Data Centers / Cloud
+] as const satisfies readonly StockTicker[];
 
 interface TwelveDataQuote {
   symbol: string;
   close: string;
   datetime: string;
-}
-
-interface TwelveDataMA {
-  values: Array<{ datetime: string; ma: string }>;
 }
 
 // Time series response for computing MA ourselves
@@ -40,6 +47,11 @@ interface TwelveDataError {
   status: "error";
 }
 
+// Batch response is keyed by symbol
+type BatchQuoteResponse = Record<string, TwelveDataQuote | TwelveDataError>;
+type BatchTimeSeriesResponse = Record<string, TwelveDataTimeSeries | TwelveDataError>;
+type BatchRSIResponse = Record<string, TwelveDataRSI | TwelveDataError>;
+
 // Check if response is a TwelveData error
 function isTwelveDataError(data: unknown): data is TwelveDataError {
   return (
@@ -53,242 +65,255 @@ function isTwelveDataError(data: unknown): data is TwelveDataError {
 // Stale threshold in minutes (data older than this is considered stale)
 const STALE_THRESHOLD_MINUTES = 30;
 
-// Get current price with caching
-async function getPrice(
-  symbol: string,
+// ============================================================
+// BATCH API functions - fetch multiple symbols in one request
+// Reduces API calls from 24 (8 symbols × 3 endpoints) to just 3
+// ============================================================
+
+// Batch fetch quotes for multiple symbols
+async function getBatchQuotes(
+  symbols: string[],
   apiKey: string
-): Promise<{ price: number; cached: boolean; cachedAt?: string }> {
-  const url = `${TWELVEDATA_API}/quote?symbol=${symbol}&apikey=${apiKey}`;
-  const { data, cached, cachedAt } = await cachedFetch<TwelveDataQuote | TwelveDataError>(
+): Promise<{ quotes: Map<string, number>; cached: boolean; cachedAt?: string }> {
+  const symbolList = symbols.join(",");
+  const url = `${TWELVEDATA_API}/quote?symbol=${symbolList}&apikey=${apiKey}`;
+
+  const { data, cached, cachedAt } = await cachedFetch<BatchQuoteResponse | TwelveDataQuote | TwelveDataError>(
     url,
-    DEFAULT_TTL.TWELVEDATA_QUOTE
+    DEFAULT_TTL.TWELVEDATA_QUOTE,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
   );
 
-  // Check for TwelveData API error
-  if (isTwelveDataError(data)) {
-    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
-  }
+  const quotes = new Map<string, number>();
 
-  if (!data.close) {
-    throw new Error(`No price data for ${symbol}`);
-  }
-
-  const price = parseFloat(data.close);
-  if (!Number.isFinite(price) || price <= 0) {
-    throw new Error(`Invalid price data for ${symbol}`);
-  }
-  return { price, cached, cachedAt };
-}
-
-// Get 20-day SMA by fetching time series and computing locally
-// This is more reliable than the SMA endpoint for forex pairs
-async function getMA20(
-  symbol: string,
-  apiKey: string
-): Promise<{ ma20: number; cached: boolean }> {
-  // Fetch last 25 days of data to ensure we have at least 20 data points
-  const url = `${TWELVEDATA_API}/time_series?symbol=${symbol}&interval=1day&outputsize=25&apikey=${apiKey}`;
-  const { data, cached } = await cachedFetch<TwelveDataTimeSeries | TwelveDataError>(
-    url,
-    DEFAULT_TTL.TWELVEDATA_SMA
-  );
-
-  // Check for TwelveData API error
-  if (isTwelveDataError(data)) {
-    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
-  }
-
-  if (!data.values || data.values.length < 20) {
-    console.warn(`[TwelveData] Insufficient time series data for ${symbol}: ${data.values?.length || 0} values`);
-    throw new Error(`No MA data for ${symbol}`);
-  }
-
-  // Calculate 20-day SMA from the most recent 20 close prices
-  const closes = data.values.slice(0, 20).map(v => parseFloat(v.close));
-  const validCloses = closes.filter(c => Number.isFinite(c) && c > 0);
-
-  if (validCloses.length < 20) {
-    console.warn(`[TwelveData] Only ${validCloses.length} valid close prices for ${symbol}`);
-    throw new Error(`Invalid MA data for ${symbol}`);
-  }
-
-  const ma20 = validCloses.reduce((sum, c) => sum + c, 0) / validCloses.length;
-
-  if (!Number.isFinite(ma20) || ma20 <= 0) {
-    throw new Error(`Invalid MA calculation for ${symbol}`);
-  }
-
-  return { ma20, cached };
-}
-
-// Get RSI (14-period) with caching
-async function getRSI(
-  symbol: string,
-  apiKey: string
-): Promise<{ rsi: number; cached: boolean }> {
-  const url = `${TWELVEDATA_API}/rsi?symbol=${symbol}&interval=1day&time_period=14&apikey=${apiKey}`;
-  const { data, cached } = await cachedFetch<TwelveDataRSI | TwelveDataError>(
-    url,
-    DEFAULT_TTL.TWELVEDATA_RSI
-  );
-
-  // Check for TwelveData API error
-  if (isTwelveDataError(data)) {
-    throw new Error(`TwelveData error for ${symbol}: ${data.message} (code ${data.code})`);
-  }
-
-  if (!data.values || data.values.length === 0) {
-    throw new Error(`No RSI data for ${symbol}`);
-  }
-
-  const rsi = parseFloat(data.values[0].rsi);
-  if (!Number.isFinite(rsi) || rsi < 0 || rsi > 100) {
-    throw new Error(`Invalid RSI data for ${symbol}`);
-  }
-  return { rsi, cached };
-}
-
-interface FetchAssetResult {
-  data: AssetData;
-  cacheHits: number;
-  isStale: boolean;
-}
-
-// Fetch data for a single asset
-async function fetchAssetData(
-  ticker: string,
-  apiKey: string,
-  sequential: boolean = false
-): Promise<FetchAssetResult> {
-  const timestamp = new Date().toISOString();
-
-  let priceResult: { price: number; cached: boolean; cachedAt?: string };
-  let maResult: { ma20: number; cached: boolean };
-  let rsiResult: { rsi: number; cached: boolean };
-
-  if (sequential) {
-    // Sequential calls with delays for rate limiting
-    priceResult = await getPrice(ticker, apiKey);
-    // Only delay if not cached (fresh API call)
-    if (!priceResult.cached) {
-      await new Promise(r => setTimeout(r, 1000));
+  // Single symbol returns object directly, multiple returns keyed object
+  if (symbols.length === 1) {
+    const singleData = data as TwelveDataQuote | TwelveDataError;
+    if (!isTwelveDataError(singleData) && singleData.close) {
+      const price = parseFloat(singleData.close);
+      if (Number.isFinite(price) && price > 0) {
+        quotes.set(symbols[0], price);
+      }
     }
-    maResult = await getMA20(ticker, apiKey);
-    if (!maResult.cached) {
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    rsiResult = await getRSI(ticker, apiKey);
   } else {
-    // Parallel calls for faster execution
-    [priceResult, maResult, rsiResult] = await Promise.all([
-      getPrice(ticker, apiKey),
-      getMA20(ticker, apiKey),
-      getRSI(ticker, apiKey),
-    ]);
+    const batchData = data as BatchQuoteResponse;
+    for (const symbol of symbols) {
+      const quote = batchData[symbol];
+      if (quote && !isTwelveDataError(quote) && quote.close) {
+        const price = parseFloat(quote.close);
+        if (Number.isFinite(price) && price > 0) {
+          quotes.set(symbol, price);
+        }
+      }
+    }
   }
+
+  return { quotes, cached, cachedAt };
+}
+
+// Batch fetch time series for multiple symbols (to compute MA20)
+async function getBatchTimeSeries(
+  symbols: string[],
+  apiKey: string
+): Promise<{ ma20s: Map<string, number>; cached: boolean }> {
+  const symbolList = symbols.join(",");
+  const url = `${TWELVEDATA_API}/time_series?symbol=${symbolList}&interval=1day&outputsize=25&apikey=${apiKey}`;
+
+  const { data, cached } = await cachedFetch<BatchTimeSeriesResponse | TwelveDataTimeSeries | TwelveDataError>(
+    url,
+    DEFAULT_TTL.TWELVEDATA_SMA,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
+  );
+
+  const ma20s = new Map<string, number>();
+
+  // Helper to calculate MA20 from time series
+  const calcMA20 = (ts: TwelveDataTimeSeries): number | null => {
+    if (!ts.values || ts.values.length < 20) {
+      console.warn(`[TwelveData] Insufficient values: ${ts.values?.length || 0}`);
+      return null;
+    }
+    const closes = ts.values.slice(0, 20).map(v => parseFloat(v.close));
+    const validCloses = closes.filter(c => Number.isFinite(c) && c > 0);
+    if (validCloses.length < 20) {
+      console.warn(`[TwelveData] Only ${validCloses.length} valid closes`);
+      return null;
+    }
+    const ma = validCloses.reduce((sum, c) => sum + c, 0) / validCloses.length;
+    return Number.isFinite(ma) && ma > 0 ? ma : null;
+  };
+
+  // Check for top-level error (rate limit, etc.)
+  if (isTwelveDataError(data)) {
+    console.error(`[TwelveData] Batch time_series error: ${(data as TwelveDataError).message}`);
+    return { ma20s, cached };
+  }
+
+  // Single symbol returns object directly with values at top level
+  if (symbols.length === 1) {
+    const singleData = data as TwelveDataTimeSeries | TwelveDataError;
+    if (!isTwelveDataError(singleData)) {
+      const ma = calcMA20(singleData);
+      if (ma !== null) ma20s.set(symbols[0], ma);
+    }
+  } else {
+    // Multi-symbol: check response structure
+    const responseKeys = Object.keys(data);
+    console.log(`[TwelveData] time_series response keys: ${responseKeys.join(", ")}`);
+
+    const batchData = data as BatchTimeSeriesResponse;
+    for (const symbol of symbols) {
+      const ts = batchData[symbol];
+      if (!ts) {
+        console.warn(`[TwelveData] No time_series data for ${symbol}`);
+        continue;
+      }
+      if (isTwelveDataError(ts)) {
+        console.warn(`[TwelveData] Error for ${symbol}: ${(ts as TwelveDataError).message}`);
+        continue;
+      }
+      const ma = calcMA20(ts as TwelveDataTimeSeries);
+      if (ma !== null) {
+        ma20s.set(symbol, ma);
+      }
+    }
+  }
+
+  return { ma20s, cached };
+}
+
+// Batch fetch RSI for multiple symbols
+async function getBatchRSI(
+  symbols: string[],
+  apiKey: string
+): Promise<{ rsis: Map<string, number>; cached: boolean }> {
+  const symbolList = symbols.join(",");
+  const url = `${TWELVEDATA_API}/rsi?symbol=${symbolList}&interval=1day&time_period=14&apikey=${apiKey}`;
+
+  const { data, cached } = await cachedFetch<BatchRSIResponse | TwelveDataRSI | TwelveDataError>(
+    url,
+    DEFAULT_TTL.TWELVEDATA_RSI,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
+  );
+
+  const rsis = new Map<string, number>();
+
+  // Single symbol returns object directly
+  if (symbols.length === 1) {
+    const singleData = data as TwelveDataRSI | TwelveDataError;
+    if (!isTwelveDataError(singleData) && singleData.values?.length > 0) {
+      const rsi = parseFloat(singleData.values[0].rsi);
+      if (Number.isFinite(rsi) && rsi >= 0 && rsi <= 100) {
+        rsis.set(symbols[0], rsi);
+      }
+    }
+  } else {
+    const batchData = data as BatchRSIResponse;
+    for (const symbol of symbols) {
+      const rsiData = batchData[symbol];
+      if (rsiData && !isTwelveDataError(rsiData)) {
+        const rsi = rsiData as TwelveDataRSI;
+        if (rsi.values?.length > 0) {
+          const val = parseFloat(rsi.values[0].rsi);
+          if (Number.isFinite(val) && val >= 0 && val <= 100) {
+            rsis.set(symbol, val);
+          }
+        }
+      }
+    }
+  }
+
+  return { rsis, cached };
+}
+
+// Batch fetch all data for multiple symbols (3 API calls total, sequential to respect rate limit)
+async function fetchBatchData(
+  symbols: string[],
+  apiKey: string,
+  category: string
+): Promise<TwelveDataFetchResult> {
+  const timestamp = new Date().toISOString();
+  const results: AssetData[] = [];
+  const staleAssets: string[] = [];
+  let totalCacheHits = 0;
+
+  // TwelveData rate limit: 8 API credits/minute
+  // Each symbol in a batch counts as 1 credit
+  // For N symbols: need to wait (N/8)*60 seconds between batch calls
+  const creditsPerBatch = symbols.length;
+  const waitTimeMs = Math.ceil((creditsPerBatch / 8) * 60 * 1000);
+
+  console.log(`[${category}] Batch fetching ${symbols.length} symbols (${creditsPerBatch} credits/call, ${waitTimeMs/1000}s wait)`);
+
+  // Make 3 batch API calls SEQUENTIALLY with proper delays
+  const quotesResult = await getBatchQuotes(symbols, apiKey);
+  if (!quotesResult.cached) {
+    console.log(`[${category}] Waiting ${waitTimeMs/1000}s for rate limit...`);
+    await new Promise(r => setTimeout(r, waitTimeMs));
+  }
+
+  const ma20sResult = await getBatchTimeSeries(symbols, apiKey);
+  if (!ma20sResult.cached) {
+    console.log(`[${category}] Waiting ${waitTimeMs/1000}s for rate limit...`);
+    await new Promise(r => setTimeout(r, waitTimeMs));
+  }
+
+  const rsisResult = await getBatchRSI(symbols, apiKey);
 
   // Count cache hits
-  const cacheHits = [priceResult.cached, maResult.cached, rsiResult.cached]
-    .filter(Boolean).length;
+  if (quotesResult.cached) totalCacheHits++;
+  if (ma20sResult.cached) totalCacheHits++;
+  if (rsisResult.cached) totalCacheHits++;
 
-  // Check if price data is stale (older than threshold)
-  let isStale = false;
-  if (priceResult.cached && priceResult.cachedAt) {
-    const ageMinutes = getTimestampAgeMinutes(priceResult.cachedAt);
-    isStale = ageMinutes > STALE_THRESHOLD_MINUTES;
+  // Check staleness
+  if (quotesResult.cached && quotesResult.cachedAt) {
+    const ageMinutes = getTimestampAgeMinutes(quotesResult.cachedAt);
+    if (ageMinutes > STALE_THRESHOLD_MINUTES) {
+      // All symbols from this batch are stale
+      staleAssets.push(...symbols);
+    }
   }
 
-  return {
-    data: {
-      ticker,
-      price: priceResult.price,
-      ma20: maResult.ma20,
-      secondaryIndicator: rsiResult.rsi,
-      timestamp,
-    },
-    cacheHits,
-    isStale,
-  };
+  // Combine results for each symbol
+  for (const symbol of symbols) {
+    const price = quotesResult.quotes.get(symbol);
+    const ma20 = ma20sResult.ma20s.get(symbol);
+    const rsi = rsisResult.rsis.get(symbol);
+
+    if (price !== undefined && ma20 !== undefined && rsi !== undefined) {
+      results.push({
+        ticker: symbol,
+        price,
+        ma20,
+        secondaryIndicator: rsi,
+        timestamp,
+      });
+      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma20=${ma20.toFixed(2)}, rsi=${rsi.toFixed(1)}`);
+    } else {
+      console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ma20=${ma20 !== undefined}, rsi=${rsi !== undefined}`);
+    }
+  }
+
+  console.log(`[${category}] Batch complete: ${results.length}/${symbols.length} symbols, cache hits: ${totalCacheHits}/3`);
+  return { data: results, cacheHits: totalCacheHits, staleAssets };
 }
 
-// Batch fetch for forex
-// Note: TwelveData free tier has 8 req/min limit
-// 4 forex pairs × 3 calls each = 12 calls, so we use sequential mode
+// Batch fetch for forex (3 API calls instead of 12)
 export async function fetchForexData(
   tickers: readonly ForexTicker[],
   apiKey: string
 ): Promise<TwelveDataFetchResult> {
-  const results: AssetData[] = [];
-  let totalCacheHits = 0;
-  const staleAssets: string[] = [];
-
-  console.log(`[Forex] Fetching ${tickers.length} currency pairs`);
-
-  // Process sequentially to respect rate limits (8/min)
-  for (const ticker of tickers) {
-    try {
-      // Use sequential mode with built-in delays (like stocks)
-      const result = await fetchAssetData(ticker, apiKey, true);
-      results.push(result.data);
-      totalCacheHits += result.cacheHits;
-
-      if (result.isStale) {
-        staleAssets.push(ticker);
-      }
-
-      // Add delay between tickers if we made fresh API calls
-      if (result.cacheHits < 3) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      console.error(`[Forex] Failed to fetch ${ticker}: ${errMsg}`);
-      // Add delay even on error to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-  }
-
-  console.log(`[Forex] Cache hits: ${totalCacheHits}, Stale: ${staleAssets.length}`);
-  return { data: results, cacheHits: totalCacheHits, staleAssets };
+  return fetchBatchData([...tickers], apiKey, "Forex");
 }
 
-// Batch fetch for stocks
-// Note: TwelveData free tier has 8 req/min limit
-// We limit to 5 key stocks and use sequential calls per ticker
+// Batch fetch for stocks (3 API calls instead of 24)
 export async function fetchStockData(
   tickers: readonly StockTicker[],
   apiKey: string
 ): Promise<TwelveDataFetchResult> {
-  const results: AssetData[] = [];
-  let totalCacheHits = 0;
-  const staleAssets: string[] = [];
-
-  const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 5);
-  console.log(`[Stocks] Fetching ${keyStocks.length} key tickers`);
-
-  for (const ticker of keyStocks) {
-    try {
-      // Use sequential mode with built-in delays
-      const result = await fetchAssetData(ticker, apiKey, true);
-      results.push(result.data);
-      totalCacheHits += result.cacheHits;
-
-      if (result.isStale) {
-        staleAssets.push(ticker);
-      }
-
-      // Only add delay if we're making fresh API calls
-      if (result.cacheHits < 3) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      console.error(`[Stocks] Failed to fetch ${ticker}: ${errMsg}`);
-      // Add delay even on error
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-  }
-
-  console.log(`[Stocks] Cache hits: ${totalCacheHits}, Stale: ${staleAssets.length}`);
-  return { data: results, cacheHits: totalCacheHits, staleAssets };
+  const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 8);
+  return fetchBatchData([...keyStocks], apiKey, "Stocks");
 }
