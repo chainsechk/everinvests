@@ -8,6 +8,9 @@ const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const COINCAP_API = "https://api.coincap.io/v2";
 const BINANCE_FUTURES_API = "https://fapi.binance.com";
 
+// Longer timeout for crypto API calls (25 seconds)
+const CRYPTO_TIMEOUT_MS = 25000;
+
 // Map our ticker symbols to API IDs
 const COINGECKO_IDS: Record<CryptoTicker, string> = {
   BTC: "bitcoin",
@@ -39,7 +42,8 @@ async function getOHLCData(coinId: string): Promise<{ ohlc: CoinGeckoOHLC[]; cac
         "User-Agent": "EverInvests/1.0 (https://everinvests.com)",
         "Accept": "application/json",
       },
-    }
+    },
+    CRYPTO_TIMEOUT_MS
   );
 
   const ohlc = data.map(([timestamp, open, high, low, close]) => ({
@@ -109,7 +113,8 @@ async function getCoinCapPrice(assetId: string): Promise<{ price: number; cached
       headers: {
         "Accept": "application/json",
       },
-    }
+    },
+    CRYPTO_TIMEOUT_MS
   );
 
   const price = parseFloat(data.data.priceUsd);
@@ -134,7 +139,8 @@ async function getCoinCapMA20(assetId: string): Promise<{ ma20: number; cached: 
       headers: {
         "Accept": "application/json",
       },
-    }
+    },
+    CRYPTO_TIMEOUT_MS
   );
 
   if (!data.data || data.data.length < 15) {
@@ -175,30 +181,44 @@ async function fetchFromCoinCap(
   };
 }
 
+// Fetch timeout for direct API calls (15 seconds)
+const FETCH_TIMEOUT_MS = 15000;
+
 // Get funding rate from Binance (optional, returns 0 on failure)
 // Note: Binance Futures API may block cloud provider IPs (Cloudflare Workers, AWS, etc.)
 async function getFundingRate(symbol: string): Promise<number> {
   try {
     const url = `${BINANCE_FUTURES_API}/fapi/v1/fundingRate?symbol=${symbol}USDT&limit=1`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "EverInvests/1.0 (https://everinvests.com)",
-        "Accept": "application/json",
-      },
-    });
 
-    if (!res.ok) {
-      // 403 is common when Binance blocks cloud provider IPs - this is expected
-      console.warn(`Binance funding rate unavailable for ${symbol}: ${res.status}`);
-      return 0;
+    // Use AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "EverInvests/1.0 (https://everinvests.com)",
+          "Accept": "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        // 403 is common when Binance blocks cloud provider IPs - this is expected
+        console.warn(`Binance funding rate unavailable for ${symbol}: ${res.status}`);
+        return 0;
+      }
+
+      const data = await res.json() as Array<{ fundingRate: string }>;
+      if (!data || data.length === 0) return 0;
+
+      return parseFloat(data[0].fundingRate);
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await res.json() as Array<{ fundingRate: string }>;
-    if (!data || data.length === 0) return 0;
-
-    return parseFloat(data[0].fundingRate);
   } catch (error) {
-    console.warn(`Binance funding rate failed for ${symbol}:`, error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.warn(`Binance funding rate failed for ${symbol}: ${errMsg}`);
     return 0;
   }
 }

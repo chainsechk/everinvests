@@ -6,6 +6,9 @@ import { cachedFetch, DEFAULT_TTL, getTimestampAgeMinutes } from "../cache";
 
 const TWELVEDATA_API = "https://api.twelvedata.com";
 
+// Longer timeout for TwelveData API calls (25 seconds)
+const TWELVEDATA_TIMEOUT_MS = 25000;
+
 export interface TwelveDataFetchResult {
   data: AssetData[];
   cacheHits: number;
@@ -68,7 +71,9 @@ async function getPrice(
   const url = `${TWELVEDATA_API}/quote?symbol=${symbol}&apikey=${apiKey}`;
   const { data, cached, cachedAt } = await cachedFetch<TwelveDataQuote | TwelveDataError>(
     url,
-    DEFAULT_TTL.TWELVEDATA_QUOTE
+    DEFAULT_TTL.TWELVEDATA_QUOTE,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
   );
 
   // Check for TwelveData API error
@@ -97,7 +102,9 @@ async function getMA20(
   const url = `${TWELVEDATA_API}/time_series?symbol=${symbol}&interval=1day&outputsize=25&apikey=${apiKey}`;
   const { data, cached } = await cachedFetch<TwelveDataTimeSeries | TwelveDataError>(
     url,
-    DEFAULT_TTL.TWELVEDATA_SMA
+    DEFAULT_TTL.TWELVEDATA_SMA,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
   );
 
   // Check for TwelveData API error
@@ -136,7 +143,9 @@ async function getRSI(
   const url = `${TWELVEDATA_API}/rsi?symbol=${symbol}&interval=1day&time_period=14&apikey=${apiKey}`;
   const { data, cached } = await cachedFetch<TwelveDataRSI | TwelveDataError>(
     url,
-    DEFAULT_TTL.TWELVEDATA_RSI
+    DEFAULT_TTL.TWELVEDATA_RSI,
+    undefined,
+    TWELVEDATA_TIMEOUT_MS
   );
 
   // Check for TwelveData API error
