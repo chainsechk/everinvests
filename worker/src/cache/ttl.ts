@@ -8,6 +8,7 @@ export interface CacheConfig {
   TWELVEDATA_RSI: number;
   ALPHAVANTAGE_SYMBOL: number;
   ALPHAVANTAGE_TREASURY: number;
+  YAHOO_FINANCE: number;
   MACRO: number;
   COINGECKO_OHLC: number;
 }
@@ -19,7 +20,8 @@ export const DEFAULT_TTL: CacheConfig = {
   TWELVEDATA_RSI: 15 * 60, // 15 minutes for RSI (daily data)
   ALPHAVANTAGE_SYMBOL: 60 * 60, // 1 hour for daily time series
   ALPHAVANTAGE_TREASURY: 60 * 60, // 1 hour for treasury yields
-  MACRO: 60 * 60, // 1 hour for macro data (DXY, VIX, Treasury)
+  YAHOO_FINANCE: 30 * 60, // 30 minutes for Yahoo Finance (DXY, VIX)
+  MACRO: 60 * 60, // 1 hour for macro data (Treasury yields)
   COINGECKO_OHLC: 15 * 60, // 15 minutes for OHLC data
 };
 
