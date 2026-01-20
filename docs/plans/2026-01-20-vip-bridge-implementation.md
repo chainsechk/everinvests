@@ -2,33 +2,96 @@
 
 **Date:** 2026-01-20
 **Status:** Ready to Execute
-**Version:** 2.0
-**Scope:** Changes to FREE tier (site + TG channel) to add VIP CTAs
+**Version:** 3.0
+**Scope:** Changes to FREE tier (site + TG channel) to add VIP CTAs + expand free data sources
 
 **This Repo:** Free site + Free TG channel
 **Separate Project:** EverInvests VIP (paid group, edge bot via MemberPaywall.org)
+
+**Current Funnel State:** Pre-Launch (waitlist mode - VIP not built yet)
 
 ---
 
 ## Scope Clarification
 
-This plan covers **only** changes to EverInvests to support the VIP funnel:
+This plan covers changes to EverInvests free tier:
 
 | In Scope | Out of Scope |
 |----------|--------------|
-| Add CTA to free TG messages | EverInvests VIP signal generation |
+| Add CTA to free TG messages (waitlist mode) | EverInvests VIP signal generation |
 | Add CTA to website pages | Bot-worker for paid group |
-| Minor message format updates | Regime engine |
-| SEO optimization | User management / subscriptions |
+| Expand free macro data sources | Regime engine |
+| Environment-based CTA config | User management / subscriptions |
+| SEO optimization | Payment integration |
 
-**EverInvests VIP is a separate project** - see design doc Section 7 for its roadmap.
+**Key principle:** Free tier should be valuable on its own with expanded free sources. VIP differentiation comes from premium sources + regime engine + directives, not from limiting free.
+
+**EverInvests VIP is a separate project** - see design doc Section 8 for its roadmap.
+
+---
+
+## Phase 0: Environment-Based CTA Configuration
+
+**Goal:** Support waitlist mode now, switch to live mode when VIP ready
+
+### Task 0.1: Add CTA Configuration
+
+**File:** `worker/wrangler.toml`
+
+```toml
+[vars]
+VIP_CTA_MODE = "waitlist"  # Options: "waitlist", "live", "none"
+```
+
+**File:** `worker/src/config.ts`
+
+```typescript
+export type CTAMode = 'waitlist' | 'live' | 'none';
+
+export const CTA_CONFIG = {
+  waitlist: {
+    telegram: `
+━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 EverInvests VIP launching soon
+Regime analysis • Confidence scores • Directives
+👉 Join waitlist: t.me/EverInvestsBot?start=waitlist`,
+    website: {
+      title: '🚀 EverInvests VIP Launching Soon',
+      cta: 'Join VIP Waitlist →',
+      url: 'https://t.me/EverInvestsBot?start=waitlist',
+    },
+  },
+  live: {
+    telegram: `
+━━━━━━━━━━━━━━━━━━━━━━━━
+Want regime + confidence + directives?
+👉 Join EverInvests VIP: t.me/EverInvestsVIPBot`,
+    website: {
+      title: 'Want More Than Just Bias?',
+      cta: 'Join EverInvests VIP →',
+      url: 'https://t.me/EverInvestsVIPBot',
+    },
+  },
+  none: {
+    telegram: '',
+    website: null,
+  },
+};
+
+export function getCTAConfig(mode: CTAMode) {
+  return CTA_CONFIG[mode] || CTA_CONFIG.waitlist;
+}
+```
+
+**Acceptance:**
+- [ ] CTA mode configurable via environment
+- [ ] Switching modes requires only config change + redeploy
 
 ---
 
 ## Phase 1: Add VIP CTA to Telegram Messages
 
-**Duration:** 1-2 hours
-**Goal:** Every free TG message drives traffic to EverInvests VIP
+**Goal:** Every free TG message drives traffic to VIP waitlist/subscription
 
 ### Task 1.1: Update notifyTelegram Skill
 
@@ -46,7 +109,7 @@ BTC and ETH holding above 20-day moving averages...
 🔗 everinvests.com/crypto
 ```
 
-**Updated message format:**
+**Updated message format (waitlist mode):**
 ```
 📊 CRYPTO | 2026-01-20 16:00 UTC
 
@@ -59,28 +122,28 @@ Watch: VIX elevated, could reverse on macro shock.
 🔗 everinvests.com/crypto
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-Want regime + confidence + directives?
-👉 Join EverInvests VIP: t.me/EverInvestsVIPBot (TBD)
+🚀 EverInvests VIP launching soon
+Regime analysis • Confidence scores • Directives
+👉 Join waitlist: t.me/EverInvestsBot?start=waitlist
 ```
 
 **Changes:**
 1. Change "Signal:" to "Bias:" (clearer terminology)
 2. Add "Watch:" line highlighting key risk
-3. Add VIP CTA separator and link
+3. Add configurable VIP CTA based on environment
 
 **Implementation:**
 
 ```typescript
-// Add to notifyTelegram.ts
+// Update notifyTelegram.ts
 
-const APEX_CTA = `
-━━━━━━━━━━━━━━━━━━━━━━━━
-Want regime + confidence + directives?
-👉 Join EverInvests VIP: t.me/EverInvestsVIPBot (TBD)`;
+import { getCTAConfig, CTAMode } from '../config';
 
-function formatCryptoMessage(signal: CategorySignal): string {
+function formatCryptoMessage(signal: CategorySignal, env: Env): string {
   const emoji = getBiasEmoji(signal.bias);
   const output = JSON.parse(signal.output_json);
+  const ctaMode = (env.VIP_CTA_MODE || 'waitlist') as CTAMode;
+  const cta = getCTAConfig(ctaMode).telegram;
 
   // Extract key risk from risks array
   const keyRisk = output.risks?.[0] || 'Monitor macro conditions';
@@ -93,22 +156,20 @@ ${output.summary}
 Watch: ${keyRisk}
 
 ⚠️ Not financial advice.
-🔗 everinvests.com/crypto
-${APEX_CTA}`;
+🔗 everinvests.com/crypto${cta}`;
 }
 ```
 
 **Acceptance:**
 - [ ] Free TG messages include VIP CTA
-- [ ] CTA link is clickable
+- [ ] CTA reflects current mode (waitlist/live)
 - [ ] Message format is clean and readable
 
 ---
 
 ## Phase 2: Add VIP CTA to Website
 
-**Duration:** 2-3 hours
-**Goal:** Website pages drive traffic to EverInvests VIP
+**Goal:** Website pages drive traffic to VIP waitlist/subscription
 
 ### Task 2.1: Create VIP CTA Component
 
@@ -118,15 +179,35 @@ ${APEX_CTA}`;
 ---
 interface Props {
   category?: string;
+  mode?: 'waitlist' | 'live';
 }
 
-const { category = 'crypto' } = Astro.props;
+const { category = 'crypto', mode = 'waitlist' } = Astro.props;
+
+const config = {
+  waitlist: {
+    title: '🚀 EverInvests VIP Launching Soon',
+    subtitle: "We're building professional-grade signals with:",
+    cta: 'Join VIP Waitlist →',
+    url: 'https://t.me/EverInvestsBot?start=waitlist',
+    subtext: 'Be first to know when we launch',
+  },
+  live: {
+    title: 'Want More Than Just Bias?',
+    subtitle: 'Free signals show direction only. EverInvests VIP gives you:',
+    cta: 'Join EverInvests VIP →',
+    url: 'https://t.me/EverInvestsVIPBot',
+    subtext: null,
+  },
+};
+
+const c = config[mode];
 ---
 
 <div class="vip-cta">
   <div class="vip-cta-content">
-    <h3>Want More Than Just Bias?</h3>
-    <p>Free signals show direction only. EverInvests VIP gives you:</p>
+    <h3>{c.title}</h3>
+    <p>{c.subtitle}</p>
     <ul>
       <li><strong>Regime</strong> — 8-12 market states, not just bullish/bearish</li>
       <li><strong>Confidence</strong> — How much to trust this signal</li>
@@ -135,9 +216,10 @@ const { category = 'crypto' } = Astro.props;
       <li><strong>Invalidation</strong> — When to exit or distrust</li>
       <li><strong>Alerts</strong> — Real-time threshold notifications</li>
     </ul>
-    <a href="https://t.me/EverInvestsVIPBot (TBD)" class="vip-btn" target="_blank" rel="noopener">
-      Join EverInvests VIP →
+    <a href={c.url} class="vip-btn" target="_blank" rel="noopener">
+      {c.cta}
     </a>
+    {c.subtext && <p class="cta-subtext">{c.subtext}</p>}
   </div>
 </div>
 
@@ -297,12 +379,120 @@ const description = "Free daily crypto signals for BTC and ETH. See market bias 
 
 ---
 
-## Phase 4: Analytics Setup
+## Phase 4: Expand Free Data Sources
 
-**Duration:** 1 hour
+**Goal:** Enrich free tier with more free macro/market data (not paid sources)
+
+### Rationale
+
+Current free tier has limited macro indicators:
+- DXY (Dollar Index)
+- VIX (Volatility Index)
+- US 10Y Yield
+
+Free tier should be valuable standalone. VIP differentiation = premium sources + regime engine + directives, NOT artificially limiting free.
+
+### Task 4.1: Research Free Data Sources
+
+**Candidates to evaluate:**
+
+| Source | Data Available | Cost | Rate Limits |
+|--------|---------------|------|-------------|
+| **OpenBB** | Aggregator (FRED, Yahoo, etc.) | Free | Varies |
+| **FRED API** | US macro (GDP, CPI, employment) | Free | 120 req/min |
+| **Yahoo Finance** | Equities, indices, ETFs | Free | Unofficial |
+| **CoinGecko** | Crypto prices, market cap | Free | 30 req/min |
+| **Fear & Greed Index** | Crypto sentiment | Free | Public endpoint |
+| **Alternative.me** | Crypto F&G | Free | Public |
+| **Quandl/Nasdaq** | Various datasets | Free tier | Limited |
+
+**Research tasks:**
+- [ ] Test OpenBB Platform API for macro aggregation
+- [ ] Evaluate FRED API for economic indicators
+- [ ] Check CoinGecko for crypto market data
+- [ ] Find free commodity data (gold, oil)
+- [ ] Assess reliability and rate limits
+
+### Task 4.2: Prioritized Free Source Additions
+
+**Phase 4a - Quick Wins (free, reliable):**
+
+| Indicator | Source | Why Add |
+|-----------|--------|---------|
+| BTC Fear & Greed | Alternative.me | Sentiment context |
+| Gold price | TwelveData (existing) | Risk-off proxy |
+| S&P 500 | TwelveData (existing) | Equity context |
+| BTC Dominance | CoinGecko | Alt season indicator |
+
+**Phase 4b - Macro Expansion (FRED):**
+
+| Indicator | FRED Series | Why Add |
+|-----------|-------------|---------|
+| Fed Funds Rate | FEDFUNDS | Rate cycle |
+| Initial Claims | ICSA | Labor market |
+| CPI YoY | CPIAUCSL | Inflation |
+| 2Y-10Y Spread | T10Y2Y | Recession indicator |
+
+**Phase 4c - OpenBB Integration (if viable):**
+
+OpenBB Platform can aggregate multiple sources. Evaluate:
+- Installation complexity (Python SDK vs REST)
+- Worker compatibility (may need external service)
+- Data freshness and reliability
+
+### Task 4.3: Implementation Approach
+
+**Option A: Direct API calls (recommended for Workers)**
+```typescript
+// worker/src/skills/fetchMacroData.ts - expand existing
+
+async function fetchExpandedMacro(env: Env): Promise<MacroData> {
+  const [
+    existing,      // DXY, VIX, 10Y (current)
+    fearGreed,     // Alternative.me
+    btcDominance,  // CoinGecko
+    gold,          // TwelveData
+  ] = await Promise.all([
+    fetchCurrentMacro(env),
+    fetchFearGreed(),
+    fetchBTCDominance(),
+    fetchGoldPrice(env),
+  ]);
+
+  return { ...existing, fearGreed, btcDominance, gold };
+}
+```
+
+**Option B: OpenBB as external service**
+```
+┌─────────────┐     ┌─────────────────┐     ┌─────────────┐
+│   Worker    │────▶│  OpenBB Service │────▶│  FRED, etc  │
+│  (cron)     │◀────│  (self-hosted)  │◀────│             │
+└─────────────┘     └─────────────────┘     └─────────────┘
+```
+
+Adds complexity but centralizes data aggregation.
+
+### Task 4.4: Update Signal Logic for New Data
+
+After adding sources, update `computeBias.ts` to incorporate:
+- Fear & Greed as sentiment overlay
+- Gold as risk-off confirmation
+- BTC Dominance for crypto context
+
+**Acceptance:**
+- [ ] At least 3 new free data sources integrated
+- [ ] No paid API dependencies
+- [ ] Signal quality improved with richer context
+- [ ] Rate limits respected
+
+---
+
+## Phase 5: Analytics Setup
+
 **Goal:** Track funnel conversion from free to paid
 
-### Task 4.1: Add Click Tracking
+### Task 5.1: Add Click Tracking
 
 **Option A: Simple UTM tracking**
 
@@ -330,13 +520,13 @@ https://t.me/EverInvestsVIPBot (TBD)?start=everinvests_telegram
 </script>
 ```
 
-### Task 4.2: Track TG Message Engagement
+### Task 5.2: Track TG Message Engagement
 
-In the VIP bot (separate project), track `start` parameter to see which source converts best.
+Waitlist bot tracks `start` parameter to see which source converts best.
 
 **Acceptance:**
 - [ ] UTM parameters on all links
-- [ ] Can distinguish traffic source in VIP bot
+- [ ] Can distinguish traffic source (website vs TG channel)
 
 ---
 
@@ -346,54 +536,43 @@ In the VIP bot (separate project), track `start` parameter to see which source c
 - [ ] Test CTA component locally
 - [ ] Verify TG message format in dev
 - [ ] Check all links are correct
+- [ ] Verify new data sources working
 
 ### Deploy
 ```bash
 # Deploy website
 npm run deploy:prod
 
-# Deploy worker (if TG message changed)
+# Deploy worker (if TG message or data sources changed)
 npm run worker:deploy
 ```
 
 ### Post-Deploy
 - [ ] Verify website CTA renders
 - [ ] Verify TG messages include CTA
-- [ ] Click all VIP links to confirm they work
+- [ ] Verify new macro data appearing in signals
+- [ ] Click all waitlist links to confirm they work
 
 ---
 
 ## Timeline Summary
 
-| Phase | Duration | Effort |
-|-------|----------|--------|
-| Phase 1: TG CTA | 1-2 hours | Low |
-| Phase 2: Website CTA | 2-3 hours | Low |
-| Phase 3: SEO | 1 hour | Low |
-| Phase 4: Analytics | 1 hour | Low |
-| **Total** | **5-7 hours** | **Low** |
+| Phase | Effort | Priority |
+|-------|--------|----------|
+| Phase 0: CTA Config | Low | High (foundation) |
+| Phase 1: TG CTA | Low | High |
+| Phase 2: Website CTA | Low | High |
+| Phase 3: SEO | Low | Medium |
+| Phase 4: Expand Free Sources | Medium | High (value) |
+| Phase 5: Analytics | Low | Medium |
 
-This is a minimal-effort update to EverInvests. The real work is building EverInvests VIP (separate project).
+**Execution order:** 0 → 1 → 2 → 4 → 3 → 5
 
----
-
-## What's NOT in This Plan
-
-These belong in the **EverInvests VIP** project:
-
-- User registration / subscription management
-- MemberPaywall integration
-- Paid TG group bot
-- Regime engine
-- Multi-agent debate system
-- Deribit / premium data integration
-- Real-time alerts
-- Execution scaffold
-
-See `2026-01-20-vip-bridge-design.md` Section 7 for VIP roadmap.
+Phase 4 (expand free sources) is high priority - makes free tier valuable standalone.
 
 ---
 
-*Plan version: 2.0*
-*Scope: EverInvests free funnel only*
+*Plan version: 3.0*
+*Scope: EverInvests free tier improvements + VIP waitlist funnel*
+*VIP project handled separately*
 *Last updated: 2026-01-20*
