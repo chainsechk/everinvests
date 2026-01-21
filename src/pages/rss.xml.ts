@@ -50,16 +50,28 @@ export async function GET(context: APIContext) {
   const db = context.locals.runtime?.env?.DB;
   const now = new Date().toUTCString();
 
+  // Support category-specific feeds via ?category=crypto
+  const url = new URL(context.request.url);
+  const categoryParam = url.searchParams.get("category")?.toLowerCase();
+  const validCategories = ["crypto", "forex", "stocks"];
+  const category = categoryParam && validCategories.includes(categoryParam) ? categoryParam : null;
+
   let signals: SignalRow[] = [];
 
   if (db) {
     try {
-      const result = await db.prepare(`
-        SELECT id, category, date, time_slot, bias, summary, created_at
-        FROM signals
-        ORDER BY date DESC, time_slot DESC
-        LIMIT 50
-      `).all<SignalRow>();
+      const query = category
+        ? `SELECT id, category, date, time_slot, bias, summary, created_at
+           FROM signals WHERE category = ?
+           ORDER BY date DESC, time_slot DESC LIMIT 50`
+        : `SELECT id, category, date, time_slot, bias, summary, created_at
+           FROM signals
+           ORDER BY date DESC, time_slot DESC LIMIT 50`;
+
+      const result = category
+        ? await db.prepare(query).bind(category).all<SignalRow>()
+        : await db.prepare(query).all<SignalRow>();
+
       signals = result.results || [];
     } catch (e) {
       console.error("RSS feed error:", e);
@@ -85,15 +97,26 @@ export async function GET(context: APIContext) {
     </item>`;
   });
 
+  // Category-aware metadata
+  const categoryTitle = category ? category.charAt(0).toUpperCase() + category.slice(1) : null;
+  const feedTitle = categoryTitle
+    ? `EverInvests - ${categoryTitle} Signals`
+    : "EverInvests - Market Signals";
+  const feedDescription = categoryTitle
+    ? `Free daily ${category} signals with bias analysis and macro context.`
+    : "Free daily market signals for crypto, forex, and stocks. Automated bias analysis with macro context.";
+  const feedLink = category ? `${SITE_URL}/${category}` : SITE_URL;
+  const selfLink = category ? `${SITE_URL}/rss.xml?category=${category}` : `${SITE_URL}/rss.xml`;
+
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>EverInvests - Market Signals</title>
-    <link>${SITE_URL}</link>
-    <description>Free daily market signals for crypto, forex, and stocks. Automated bias analysis with macro context.</description>
+    <title>${feedTitle}</title>
+    <link>${feedLink}</link>
+    <description>${feedDescription}</description>
     <language>en-us</language>
     <lastBuildDate>${now}</lastBuildDate>
-    <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="${selfLink}" rel="self" type="application/rss+xml"/>
     <image>
       <url>${SITE_URL}/favicon.svg</url>
       <title>EverInvests</title>

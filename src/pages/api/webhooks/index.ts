@@ -11,10 +11,59 @@ interface WebhookRow {
   failure_count: number;
 }
 
-// GET /api/webhooks - List all webhooks (public, no secrets exposed)
-export async function GET(context: APIContext) {
-  const db = context.locals.runtime?.env?.DB;
+// Validate API key for webhook management
+function validateApiKey(context: APIContext): boolean {
+  const apiKey = context.locals.runtime?.env?.WEBHOOK_API_KEY;
+  if (!apiKey) return false; // Webhooks disabled if no key configured
 
+  const authHeader = context.request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+
+  const providedKey = authHeader.slice(7);
+  return providedKey === apiKey;
+}
+
+// Block internal/private IPs to prevent SSRF
+function isInternalUrl(urlStr: string): boolean {
+  try {
+    const url = new URL(urlStr);
+    const hostname = url.hostname.toLowerCase();
+
+    // Block localhost variants
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return true;
+    }
+
+    // Block private IP ranges
+    const ipMatch = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (ipMatch) {
+      const [, a, b] = ipMatch.map(Number);
+      // 10.x.x.x, 172.16-31.x.x, 192.168.x.x, 169.254.x.x
+      if (a === 10) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 0) return true;
+    }
+
+    // Block internal hostnames
+    if (hostname.endsWith(".local") || hostname.endsWith(".internal")) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return true; // Block on parse error
+  }
+}
+
+// GET /api/webhooks - List webhooks (requires API key)
+export async function GET(context: APIContext) {
+  if (!validateApiKey(context)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const db = context.locals.runtime?.env?.DB;
   if (!db) {
     return Response.json({ error: "Database not configured" }, { status: 500 });
   }
@@ -43,10 +92,13 @@ export async function GET(context: APIContext) {
   }
 }
 
-// POST /api/webhooks - Register a new webhook
+// POST /api/webhooks - Register a new webhook (requires API key)
 export async function POST(context: APIContext) {
-  const db = context.locals.runtime?.env?.DB;
+  if (!validateApiKey(context)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  const db = context.locals.runtime?.env?.DB;
   if (!db) {
     return Response.json({ error: "Database not configured" }, { status: 500 });
   }
@@ -70,9 +122,14 @@ export async function POST(context: APIContext) {
       return Response.json({ error: "Invalid URL format" }, { status: 400 });
     }
 
-    // Only allow HTTPS URLs in production
-    if (!url.startsWith("https://") && !url.includes("localhost")) {
+    // Only allow HTTPS URLs
+    if (!url.startsWith("https://")) {
       return Response.json({ error: "URL must use HTTPS" }, { status: 400 });
+    }
+
+    // Block internal/private IPs (SSRF protection)
+    if (isInternalUrl(url)) {
+      return Response.json({ error: "Internal URLs are not allowed" }, { status: 400 });
     }
 
     // Validate categories

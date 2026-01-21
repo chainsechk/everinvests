@@ -54,14 +54,21 @@ if (db) {
     generatedAt: new Date().toISOString(),
   };
 
-  // Fetch accuracy per category
+  // Fetch accuracy per category (parallelized queries)
   const fetchCategoryAccuracy = async (category: string): Promise<AccuracyData | null> => {
     const cutoff = thirtyDaysAgo;
 
-    const statsQuery = await db
-      .prepare(`SELECT predicted_bias, COUNT(*) as total, SUM(correct) as correct FROM signal_outcomes WHERE category = ? AND checked_at >= ? GROUP BY predicted_bias`)
-      .bind(category, cutoff)
-      .all<{ predicted_bias: string; total: number; correct: number }>();
+    // Run both queries in parallel
+    const [statsQuery, recentQuery] = await Promise.all([
+      db
+        .prepare(`SELECT predicted_bias, COUNT(*) as total, SUM(correct) as correct FROM signal_outcomes WHERE category = ? AND checked_at >= ? GROUP BY predicted_bias`)
+        .bind(category, cutoff)
+        .all<{ predicted_bias: string; total: number; correct: number }>(),
+      db
+        .prepare(`SELECT s.date, o.predicted_bias as bias, o.price_change_pct, o.correct FROM signal_outcomes o JOIN signals s ON o.signal_id = s.id WHERE o.category = ? ORDER BY o.checked_at DESC LIMIT 10`)
+        .bind(category)
+        .all<{ date: string; bias: string; price_change_pct: number; correct: number }>(),
+    ]);
 
     let total = 0;
     let correct = 0;
@@ -80,11 +87,6 @@ if (db) {
         rate: row.total > 0 ? Math.round((row.correct / row.total) * 100) : 0,
       };
     }
-
-    const recentQuery = await db
-      .prepare(`SELECT s.date, o.predicted_bias as bias, o.price_change_pct, o.correct FROM signal_outcomes o JOIN signals s ON o.signal_id = s.id WHERE o.category = ? ORDER BY o.checked_at DESC LIMIT 10`)
-      .bind(category)
-      .all<{ date: string; bias: string; price_change_pct: number; correct: number }>();
 
     return {
       category,

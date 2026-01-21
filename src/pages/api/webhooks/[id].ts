@@ -1,8 +1,23 @@
 // src/pages/api/webhooks/[id].ts
 import type { APIContext } from "astro";
 
-// DELETE /api/webhooks/:id - Remove a webhook
+// Validate API key for webhook management
+function validateApiKey(context: APIContext): boolean {
+  const apiKey = context.locals.runtime?.env?.WEBHOOK_API_KEY;
+  if (!apiKey) return false;
+
+  const authHeader = context.request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+
+  return authHeader.slice(7) === apiKey;
+}
+
+// DELETE /api/webhooks/:id - Remove a webhook (requires API key)
 export async function DELETE(context: APIContext) {
+  if (!validateApiKey(context)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = context.locals.runtime?.env?.DB;
   const { id } = context.params;
 
@@ -30,8 +45,12 @@ export async function DELETE(context: APIContext) {
   }
 }
 
-// PATCH /api/webhooks/:id - Update webhook (enable/disable)
+// PATCH /api/webhooks/:id - Update webhook (requires API key)
 export async function PATCH(context: APIContext) {
+  if (!validateApiKey(context)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = context.locals.runtime?.env?.DB;
   const { id } = context.params;
 

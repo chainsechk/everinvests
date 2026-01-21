@@ -11,6 +11,7 @@ interface Webhook {
 }
 
 interface WebhookPayload {
+  version: "1.0"; // Payload schema version for backwards compatibility
   event: "signal.created";
   timestamp: string;
   data: {
@@ -34,6 +35,9 @@ interface WebhookPayload {
   };
 }
 
+// Webhook delivery timeout (10 seconds)
+const WEBHOOK_TIMEOUT_MS = 10000;
+
 // Create HMAC-SHA256 signature for webhook payload
 async function createSignature(payload: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -50,7 +54,7 @@ async function createSignature(payload: string, secret: string): Promise<string>
     .join("");
 }
 
-// Deliver webhook to a single endpoint
+// Deliver webhook to a single endpoint with timeout
 async function deliverToWebhook(
   webhook: Webhook,
   payload: WebhookPayload,
@@ -59,12 +63,17 @@ async function deliverToWebhook(
   const startTime = Date.now();
   const payloadStr = JSON.stringify(payload);
 
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "User-Agent": "EverInvests-Webhook/1.0",
       "X-EverInvests-Event": payload.event,
       "X-EverInvests-Timestamp": payload.timestamp,
+      "X-EverInvests-Version": payload.version,
     };
 
     // Add signature if secret is configured
@@ -77,8 +86,10 @@ async function deliverToWebhook(
       method: "POST",
       headers,
       body: payloadStr,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
 
     return {
@@ -87,9 +98,13 @@ async function deliverToWebhook(
       responseTime,
     };
   } catch (error) {
+    clearTimeout(timeoutId);
+    const errorMsg = error instanceof Error
+      ? (error.name === "AbortError" ? "Timeout" : error.message)
+      : String(error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMsg,
       responseTime: Date.now() - startTime,
     };
   }
@@ -155,12 +170,23 @@ export async function deliverWebhooks(
   assets: AssetSignal[]
 ): Promise<void> {
   // Fetch active webhooks for this category
+  // Use exact match patterns to avoid false positives (e.g., "cryptox" matching "crypto")
   const result = await env.DB.prepare(
     `SELECT id, url, secret, categories, active
      FROM webhooks
-     WHERE active = 1 AND categories LIKE ?`
+     WHERE active = 1 AND (
+       categories = ? OR
+       categories LIKE ? OR
+       categories LIKE ? OR
+       categories LIKE ?
+     )`
   )
-    .bind(`%${category}%`)
+    .bind(
+      category,           // Exact match: "crypto"
+      `${category},%`,    // Starts with: "crypto,forex"
+      `%,${category},%`,  // Middle: "forex,crypto,stocks"
+      `%,${category}`     // Ends with: "forex,crypto"
+    )
     .all<Webhook>();
 
   const webhooks = result.results || [];
@@ -173,6 +199,7 @@ export async function deliverWebhooks(
 
   const siteUrl = env.SITE_URL || "https://everinvests.com";
   const payload: WebhookPayload = {
+    version: "1.0",
     event: "signal.created",
     timestamp: new Date().toISOString(),
     data: {
