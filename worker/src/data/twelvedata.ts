@@ -112,11 +112,12 @@ async function getBatchQuotes(
   return { quotes, cached, cachedAt };
 }
 
-// Result type for MA and volume calculations
+// Result type for MA, volume, and BBW calculations
 interface MAVolumeResult {
   ma20: number;
   volume: number;
   avgVolume: number;
+  bbWidth?: number; // Bollinger Band Width for breakout detection
 }
 
 // Batch fetch time series for multiple symbols (to compute MA20 and volume)
@@ -136,14 +137,14 @@ async function getBatchTimeSeries(
 
   const results = new Map<string, MAVolumeResult>();
 
-  // Helper to calculate MA20 and volume from time series
+  // Helper to calculate MA20, volume, and BBW from time series
   const calcMAAndVolume = (ts: TwelveDataTimeSeries): MAVolumeResult | null => {
     if (!ts.values || ts.values.length < 20) {
       console.warn(`[TwelveData] Insufficient values: ${ts.values?.length || 0}`);
       return null;
     }
 
-    // Extract closes for MA20
+    // Extract closes for MA20 and BBW
     const closes = ts.values.slice(0, 20).map(v => parseFloat(v.close));
     const validCloses = closes.filter(c => Number.isFinite(c) && c > 0);
     if (validCloses.length < 20) {
@@ -151,11 +152,19 @@ async function getBatchTimeSeries(
       return null;
     }
 
-    // Calculate MA20
+    // Calculate MA20 (middle band)
     const ma20 = validCloses.reduce((sum, c) => sum + c, 0) / 20;
     if (!Number.isFinite(ma20) || ma20 <= 0) {
       return null;
     }
+
+    // Calculate standard deviation for Bollinger Bands
+    const variance = validCloses.reduce((sum, c) => sum + Math.pow(c - ma20, 2), 0) / 20;
+    const stdDev = Math.sqrt(variance);
+
+    // BBW = (Upper Band - Lower Band) / Middle Band = (4 * stdDev) / ma20
+    // Upper = MA20 + 2*stdDev, Lower = MA20 - 2*stdDev
+    const bbWidth = (4 * stdDev) / ma20;
 
     // Extract volumes - most recent is current day (index 0)
     const volumes = ts.values.slice(0, 21).map(v => parseFloat(v.volume));
@@ -170,7 +179,7 @@ async function getBatchTimeSeries(
       ? historicalVolumes.reduce((sum, v) => sum + v, 0) / historicalVolumes.length
       : volume;
 
-    return { ma20, volume, avgVolume };
+    return { ma20, volume, avgVolume, bbWidth };
   };
 
   // Check for top-level error (rate limit, etc.)
@@ -320,9 +329,11 @@ async function fetchBatchData(
         avgVolume: tsData.avgVolume,
         secondaryIndicator: rsi,
         timestamp,
+        bbWidth: tsData.bbWidth,
       });
       const volRatio = tsData.avgVolume > 0 ? (tsData.volume / tsData.avgVolume).toFixed(2) : "N/A";
-      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma20=${tsData.ma20.toFixed(2)}, vol=${volRatio}x avg, rsi=${rsi.toFixed(1)}`);
+      const bbwStr = tsData.bbWidth ? tsData.bbWidth.toFixed(3) : "N/A";
+      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma20=${tsData.ma20.toFixed(2)}, vol=${volRatio}x avg, rsi=${rsi.toFixed(1)}, bbw=${bbwStr}`);
     } else {
       console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ts=${tsData !== undefined}, rsi=${rsi !== undefined}`);
     }

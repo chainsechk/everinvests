@@ -47,21 +47,47 @@ Replace MA10/MA20 crossover with **Volume** (zero additional API calls!)
 
 **Bias rule:** 2+ of 3 signals agree → that direction, else Neutral
 
-### Files Changed:
-- `worker/src/types.ts` - Added volume, avgVolume, volumeSignal
-- `worker/src/data/binance.ts` - Fetch from CoinGecko market_chart
-- `worker/src/data/twelvedata.ts` - Extract volume from time_series
-- `worker/src/signals/bias.ts` - Trend + Volume + Strength model
-- `worker/src/storage/d1.ts` - Store volumeSignal in data_json
-- `src/components/AssetTable.astro` - Vol column (↑/↓/—)
-- `src/pages/api/v1/signals.ts` - Volume indicators in API
-- `mcp-server/src/index.ts` - Volume in MCP output (V:C/D/N)
+---
+
+## Enhanced Macro Indicators (2026-01-21) - COMPLETE
+
+### Agent-Driven Analysis
+Spawned agents to analyze from first principles what metrics we use and miss.
+
+**Key insight:** Real blind spot was macro regime awareness - we had F&G and yield spread data but weren't using them actively to influence bias.
+
+### Top 3 Additions
+
+| Indicator | Source | Purpose |
+|-----------|--------|---------|
+| **BBW** | Calculated | Breakout/volatility detection |
+| **F&G Contrarian** | Alternative.me | Override at sentiment extremes |
+| **Yield Curve** | FRED T10Y2Y | Recession/expansion regime |
+
+### FRED Bridge for Shock Detection
+
+| Series | What It Detects |
+|--------|-----------------|
+| **DCOILWTICO** | Oil price shocks (tariffs, supply) |
+| **T5YIE** | Inflation expectation spikes |
+
+### Files Changed (Enhancement):
+- `worker/src/types.ts` - bbWidth, oilPrice, inflationExpectation, stressLevel, yieldCurve, contrarian, shockDetected
+- `worker/src/data/binance.ts` - BBW calculation for crypto
+- `worker/src/data/twelvedata.ts` - BBW calculation for forex/stocks
+- `worker/src/data/freesources.ts` - fetchOilPrice, fetchInflationExpectation
+- `worker/src/data/alphavantage.ts` - Fetch oil and inflation from FRED
+- `worker/src/signals/macro.ts` - analyzeFearGreed, analyzeYieldCurve, detectShock, calculateStressLevel
+- `worker/src/signals/bias.ts` - Contrarian override in calculateCategoryBias
+- `worker/src/skills/computeBias.ts` - v2 with macro signal support
+- `worker/src/workflows/category.ts` - Bias depends on macro for contrarian
 
 ### Verification:
 - TypeScript: ✅ All checks pass
 - Tests: ✅ 87/87 passing
 - Build: ✅ Frontend builds successfully
 - Deployed: ✅ Live on everinvests.com
+- API shows: BBW, Oil $59.39, Inflation 2.4%, F&G 24 (Fear)
 
 ---
 

@@ -46,12 +46,13 @@ async function getMarketChartData(coinId: string): Promise<{ chart: CoinGeckoMar
   return { chart: data, cached, cachedAt };
 }
 
-// Calculate price, MA20, volume, and avgVolume from market chart data
+// Calculate price, MA20, volume, avgVolume, and BBW from market chart data
 function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
   price: number;
   ma20: number;
   volume: number;
   avgVolume: number;
+  bbWidth?: number;
 } {
   if (!chart.prices || chart.prices.length === 0) {
     throw new Error("No price data available");
@@ -81,6 +82,14 @@ function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
     ? closes20.reduce((sum, c) => sum + c, 0) / closes20.length
     : price;
 
+  // Calculate Bollinger Band Width (BBW) = (Upper - Lower) / Middle = (4 * stdDev) / ma20
+  let bbWidth: number | undefined;
+  if (closes20.length >= 20 && ma20 > 0) {
+    const variance = closes20.reduce((sum, c) => sum + Math.pow(c - ma20, 2), 0) / 20;
+    const stdDev = Math.sqrt(variance);
+    bbWidth = (4 * stdDev) / ma20;
+  }
+
   // Current 24h volume is the most recent volume point
   const volume = chart.total_volumes.length > 0
     ? chart.total_volumes[chart.total_volumes.length - 1][1]
@@ -103,7 +112,7 @@ function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
     ? recentVolumes.reduce((sum, v) => sum + v, 0) / recentVolumes.length
     : volume;
 
-  return { price, ma20, volume, avgVolume };
+  return { price, ma20, volume, avgVolume, bbWidth };
 }
 
 // ============================================================
@@ -155,8 +164,8 @@ async function getCoinCapPriceAndVolume(assetId: string): Promise<{
   };
 }
 
-// Get 20-day MA from CoinCap history (no volume history available)
-async function getCoinCapMA(assetId: string): Promise<{ ma20: number; cached: boolean }> {
+// Get 20-day MA and BBW from CoinCap history (no volume history available)
+async function getCoinCapMA(assetId: string): Promise<{ ma20: number; bbWidth?: number; cached: boolean }> {
   // Get last 25 days of daily data
   const end = Date.now();
   const start = end - 25 * 24 * 60 * 60 * 1000;
@@ -188,10 +197,18 @@ async function getCoinCapMA(assetId: string): Promise<{ ma20: number; cached: bo
   const prices20 = validPrices.slice(-20);
   const ma20 = prices20.reduce((sum, p) => sum + p, 0) / prices20.length;
 
-  return { ma20, cached };
+  // Calculate Bollinger Band Width (BBW) = (4 * stdDev) / ma20
+  let bbWidth: number | undefined;
+  if (prices20.length >= 20 && ma20 > 0) {
+    const variance = prices20.reduce((sum, p) => sum + Math.pow(p - ma20, 2), 0) / 20;
+    const stdDev = Math.sqrt(variance);
+    bbWidth = (4 * stdDev) / ma20;
+  }
+
+  return { ma20, bbWidth, cached };
 }
 
-// Fetch price, MA, and volume from CoinCap (fallback)
+// Fetch price, MA, volume, and BBW from CoinCap (fallback)
 // Note: CoinCap doesn't provide historical volume, so avgVolume = current volume
 async function fetchFromCoinCap(
   ticker: CryptoTicker
@@ -200,6 +217,7 @@ async function fetchFromCoinCap(
   ma20: number;
   volume: number;
   avgVolume: number;
+  bbWidth?: number;
   cached: boolean;
   cachedAt?: string;
 }> {
@@ -218,6 +236,7 @@ async function fetchFromCoinCap(
     ma20: maResult.ma20,
     volume: priceResult.volume,
     avgVolume: priceResult.volume, // CoinCap doesn't have historical volume
+    bbWidth: maResult.bbWidth,
     cached: priceResult.cached && maResult.cached,
     cachedAt: priceResult.cachedAt,
   };
@@ -321,6 +340,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
           avgVolume,
           secondaryIndicator: fundingRate,
           timestamp,
+          bbWidth: priceData.bbWidth,
         });
       } catch (geckoError) {
         // CoinGecko failed, try CoinCap fallback
@@ -349,6 +369,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
             avgVolume,
             secondaryIndicator: fundingRate,
             timestamp,
+            bbWidth: capResult.bbWidth,
           });
 
           console.log(`[Crypto] CoinCap fallback succeeded for ${ticker}`);

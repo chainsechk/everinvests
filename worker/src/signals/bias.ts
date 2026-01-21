@@ -4,8 +4,9 @@
 //   1. Trend: Price vs MA20 (position in trend)
 //   2. Volume: Current vs Avg volume (confirms or diverges from trend)
 //   3. Strength: RSI (forex/stocks) or Funding Rate (crypto)
+// Enhanced: Contrarian override from macro signals (F&G extremes)
 
-import type { AssetData, AssetSignal, Bias, Category } from "../types";
+import type { AssetData, AssetSignal, Bias, Category, MacroSignal } from "../types";
 
 type SignalDirection = "bullish" | "bearish" | "neutral";
 type VolumeSignal = "high" | "low" | "normal";
@@ -152,17 +153,41 @@ export function calculateAssetBias(data: AssetData, category: Category): AssetSi
 }
 
 // Calculate overall category bias from asset signals
-export function calculateCategoryBias(assetSignals: AssetSignal[]): Bias {
+// Optional macro signal for contrarian override at sentiment extremes
+export function calculateCategoryBias(
+  assetSignals: AssetSignal[],
+  macroSignal?: MacroSignal
+): Bias {
   if (assetSignals.length === 0) return "Neutral";
 
   const bullishCount = assetSignals.filter(s => s.bias === "Bullish").length;
   const bearishCount = assetSignals.filter(s => s.bias === "Bearish").length;
   const total = assetSignals.length;
 
-  // Majority vote
-  if (bullishCount > total / 2) return "Bullish";
-  if (bearishCount > total / 2) return "Bearish";
-  return "Neutral";
+  // Base bias from majority vote
+  let baseBias: Bias = "Neutral";
+  if (bullishCount > total / 2) baseBias = "Bullish";
+  else if (bearishCount > total / 2) baseBias = "Bearish";
+
+  // Apply contrarian override from F&G extremes
+  // Only override when technical and sentiment conflict (creates edge)
+  if (macroSignal?.contrarian) {
+    const contrarianBias = macroSignal.contrarian === "bullish" ? "Bullish" : "Bearish";
+
+    // Override if technical is neutral or opposite to contrarian
+    if (baseBias === "Neutral") {
+      console.log(`[Bias] Contrarian override: Neutral → ${contrarianBias} (F&G extreme)`);
+      return contrarianBias;
+    }
+
+    // If base is opposite to contrarian, move to Neutral (conflicting signals)
+    if (baseBias !== contrarianBias) {
+      console.log(`[Bias] Contrarian conflict: ${baseBias} + ${contrarianBias} → Neutral`);
+      return "Neutral";
+    }
+  }
+
+  return baseBias;
 }
 
 // Extract key price levels for the category

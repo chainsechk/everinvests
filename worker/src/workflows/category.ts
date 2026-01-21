@@ -23,11 +23,16 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "bias",
-        skill: { id: "compute_bias", version: "1" },
-        dependsOn: ["assets"],
+        skill: { id: "compute_bias", version: "2" },
+        dependsOn: ["macro", "assets"],
         input: ({ ctx, state }) => {
+          const macro = state["macro"] as FetchMacroOutput;
           const assets = state["assets"] as FetchAssetDataOutput;
-          return { category: ctx.category as Category, assetData: assets.assetData };
+          return {
+            category: ctx.category as Category,
+            assetData: assets.assetData,
+            macroSignal: macro.macroSignal, // For contrarian override
+          };
         },
       },
       {

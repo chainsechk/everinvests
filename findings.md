@@ -208,6 +208,82 @@ Volume interpretation:
 
 ---
 
+## Enhanced Independent Metrics (2026-01-21)
+
+### Additions Based on First-Principles Analysis
+
+An agent was spawned to argue from first principles what metrics we use and miss.
+
+**Key finding:** Real blind spot was **macro regime awareness** - we had signals but weren't using them actively.
+
+### Top 3 Implemented
+
+| Indicator | What It Measures | Source | Impact |
+|-----------|-----------------|--------|--------|
+| **BBW** | Bollinger Band Width | Calculated from prices | Breakout/volatility detection |
+| **F&G Contrarian** | Sentiment extremes | Alternative.me | Override bias at extremes |
+| **Yield Curve** | Treasury 2Y-10Y spread | FRED | Recession/expansion regime |
+
+### FRED Bridge for Tariff/News Shock Detection
+
+Added FRED API data to detect policy shocks (tariffs, etc.) that don't show in price data immediately:
+
+| Series | What It Detects | Shock Threshold |
+|--------|-----------------|-----------------|
+| **DCOILWTICO** | WTI Oil price | >5% daily change |
+| **T5YIE** | 5Y Inflation Expectation | >3% elevated |
+
+### Implementation Details
+
+**Bollinger Band Width (BBW):**
+```
+BBW = (Upper Band - Lower Band) / Middle Band = (4 * stdDev) / MA20
+- Low BBW (<0.05): Squeeze, breakout imminent
+- High BBW (>0.15): High volatility, mean reversion possible
+```
+
+**Fear & Greed Contrarian Override:**
+```
+F&G ≤ 20 (Extreme Fear): contrarian = bullish
+F&G ≥ 80 (Extreme Greed): contrarian = bearish
+Otherwise: no override
+
+Logic:
+- If technicals are neutral → Use contrarian as bias
+- If technicals conflict with contrarian → Move to Neutral
+- If technicals agree with contrarian → Reinforce
+```
+
+**Yield Curve Regime:**
+```
+Spread < -0.2: Inverted (recession warning) → Risk-off
+Spread -0.2 to 0.3: Flat (transition)
+Spread > 0.3: Normal (healthy expansion) → Risk-on
+```
+
+**Macro Stress Level (0-10):**
+```
+Composite score from:
+- VIX level (+/- 2)
+- Yield curve (+/- 1.5)
+- F&G extremes (+/- 1)
+- Shock detection (+1.5)
+```
+
+### Files Changed
+
+- `worker/src/types.ts` - Added bbWidth, oilPrice, oilChange, inflationExpectation, stressLevel, yieldCurve, fearGreedSignal, contrarian, shockDetected
+- `worker/src/data/binance.ts` - BBW calculation for crypto
+- `worker/src/data/twelvedata.ts` - BBW calculation for forex/stocks
+- `worker/src/data/freesources.ts` - fetchOilPrice, fetchInflationExpectation
+- `worker/src/data/alphavantage.ts` - Fetch oil and inflation data
+- `worker/src/signals/macro.ts` - Enhanced macro signal with all new indicators
+- `worker/src/signals/bias.ts` - Contrarian override in calculateCategoryBias
+- `worker/src/skills/computeBias.ts` - Pass macro signal to bias calculation
+- `worker/src/workflows/category.ts` - Bias now depends on macro
+
+---
+
 ## Previous Analysis (Superseded)
 
 The MA10 vs MA20 crossover implementation was a step forward but not truly independent.

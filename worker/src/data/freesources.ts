@@ -176,6 +176,97 @@ export async function fetchTreasurySpread(fredApiKey: string): Promise<TreasuryS
 }
 
 // ============================================================================
+// FRED: WTI Crude Oil Price (DCOILWTICO) - Tariff shock detection
+// https://fred.stlouisfed.org/series/DCOILWTICO
+// ============================================================================
+
+export interface OilPriceData {
+  price: number;
+  priceYesterday: number;
+  changePercent: number;
+  cached: boolean;
+}
+
+export async function fetchOilPrice(fredApiKey: string): Promise<OilPriceData> {
+  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=DCOILWTICO&sort_order=desc&limit=5&api_key=${fredApiKey}&file_type=json`;
+
+  try {
+    const { data, cached } = await cachedFetch<FREDObservationsResponse>(
+      url,
+      DEFAULT_TTL.MACRO // 60 min cache
+    );
+
+    if (!data.observations || data.observations.length < 2) {
+      console.warn("[FRED] No WTI oil data returned");
+      return { price: 70, priceYesterday: 70, changePercent: 0, cached };
+    }
+
+    // Get latest non-"." value (FRED uses "." for missing data)
+    const validObs = data.observations.filter(o => o.value !== ".");
+    if (validObs.length < 2) {
+      console.warn("[FRED] Insufficient WTI oil data");
+      return { price: 70, priceYesterday: 70, changePercent: 0, cached };
+    }
+
+    const price = parseFloat(validObs[0].value);
+    const priceYesterday = parseFloat(validObs[1].value);
+
+    if (!Number.isFinite(price) || !Number.isFinite(priceYesterday)) {
+      console.warn("[FRED] Invalid oil prices");
+      return { price: 70, priceYesterday: 70, changePercent: 0, cached };
+    }
+
+    const changePercent = ((price - priceYesterday) / priceYesterday) * 100;
+    console.log(`[FRED] WTI Oil: $${price.toFixed(2)} (${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%)`);
+
+    return { price, priceYesterday, changePercent, cached };
+  } catch (error) {
+    console.error("[FRED] Oil fetch error:", error);
+    return { price: 70, priceYesterday: 70, changePercent: 0, cached: false };
+  }
+}
+
+// ============================================================================
+// FRED: 5-Year Breakeven Inflation (T5YIE) - Tariff inflation expectations
+// https://fred.stlouisfed.org/series/T5YIE
+// ============================================================================
+
+export interface InflationExpectationData {
+  rate: number; // percentage, e.g., 2.3
+  cached: boolean;
+}
+
+export async function fetchInflationExpectation(fredApiKey: string): Promise<InflationExpectationData> {
+  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=T5YIE&sort_order=desc&limit=1&api_key=${fredApiKey}&file_type=json`;
+
+  try {
+    const { data, cached } = await cachedFetch<FREDObservationsResponse>(
+      url,
+      DEFAULT_TTL.MACRO // 60 min cache
+    );
+
+    if (!data.observations || data.observations.length === 0) {
+      console.warn("[FRED] No T5YIE data returned");
+      return { rate: 2.0, cached };
+    }
+
+    const latest = data.observations[0];
+    const rate = parseFloat(latest.value);
+
+    if (!Number.isFinite(rate)) {
+      console.warn("[FRED] Invalid inflation expectation:", latest.value);
+      return { rate: 2.0, cached };
+    }
+
+    console.log(`[FRED] 5Y Inflation Expectation: ${rate.toFixed(2)}%`);
+    return { rate, cached };
+  } catch (error) {
+    console.error("[FRED] Inflation expectation fetch error:", error);
+    return { rate: 2.0, cached: false };
+  }
+}
+
+// ============================================================================
 // Gold Price (via TwelveData - XAU/USD)
 // Reuses existing TwelveData infrastructure
 // ============================================================================

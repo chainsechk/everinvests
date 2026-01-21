@@ -31,6 +31,8 @@ export interface AssetData {
   avgVolume: number;  // Average volume (7d for crypto, 20d for stocks)
   secondaryIndicator: number; // funding rate for crypto, RSI for forex/stocks
   timestamp: string;
+  // Bollinger Band Width for breakout detection
+  bbWidth?: number;  // (Upper - Lower) / Middle, typically 0.01-0.20
 }
 
 export interface MacroData {
@@ -46,6 +48,10 @@ export interface MacroData {
   goldPrice?: number; // XAU/USD
   goldChange?: number; // daily change percentage
   yieldSpread?: number; // 2Y-10Y spread, negative = inverted
+  // FRED bridge for tariff/news shock detection
+  oilPrice?: number; // WTI crude (DCOILWTICO)
+  oilChange?: number; // daily change percentage
+  inflationExpectation?: number; // 5Y breakeven (T5YIE)
 }
 
 // Calculated signals
@@ -71,6 +77,12 @@ export interface MacroSignal {
   vixLevel: "risk_on" | "risk_off" | "neutral";
   yieldsBias: "rising" | "falling" | "stable";
   overall: MacroOverall;
+  // Enhanced macro indicators
+  stressLevel?: number; // 0-10, composite stress score
+  yieldCurve?: "normal" | "flat" | "inverted"; // Yield curve status
+  fearGreedSignal?: "extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed";
+  contrarian?: "bullish" | "bearish" | null; // Override signal from sentiment extremes
+  shockDetected?: boolean; // Tariff/policy shock detected
 }
 
 export interface CategorySignal {

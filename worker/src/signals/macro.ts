@@ -1,5 +1,6 @@
 // Macro context calculation
 // DXY, VIX, 10Y yields → Risk-on / Risk-off / Mixed
+// Enhanced with: Fear & Greed contrarian, Yield curve, Shock detection
 
 import type { MacroData, MacroSignal, MacroOverall } from "../types";
 
@@ -38,14 +39,97 @@ function analyzeYields(us10y: number): "rising" | "falling" | "stable" {
   return "stable";
 }
 
+// Fear & Greed analysis (contrarian at extremes)
+type FearGreedSignal = "extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed";
+
+function analyzeFearGreed(value: number | undefined): {
+  signal: FearGreedSignal;
+  contrarian: "bullish" | "bearish" | null;
+} {
+  if (value === undefined) {
+    return { signal: "neutral", contrarian: null };
+  }
+
+  // Extreme readings are contrarian signals
+  if (value <= 20) {
+    return { signal: "extreme_fear", contrarian: "bullish" }; // Buy when others are fearful
+  }
+  if (value <= 35) {
+    return { signal: "fear", contrarian: null };
+  }
+  if (value >= 80) {
+    return { signal: "extreme_greed", contrarian: "bearish" }; // Sell when others are greedy
+  }
+  if (value >= 65) {
+    return { signal: "greed", contrarian: null };
+  }
+  return { signal: "neutral", contrarian: null };
+}
+
+// Yield curve analysis from 2Y-10Y spread
+type YieldCurveState = "normal" | "flat" | "inverted";
+
+function analyzeYieldCurve(spread: number | undefined): YieldCurveState {
+  if (spread === undefined) return "normal";
+
+  // Spread < -0.2 = clearly inverted (recession warning)
+  // Spread -0.2 to 0.3 = flat (transition zone)
+  // Spread > 0.3 = normal (healthy expansion)
+  if (spread < -0.2) return "inverted";
+  if (spread < 0.3) return "flat";
+  return "normal";
+}
+
+// Shock detection from oil and inflation movements
+function detectShock(
+  oilChange: number | undefined,
+  inflationExpectation: number | undefined
+): boolean {
+  // Shock = sudden large moves suggesting policy/tariff impact
+  // Oil spike > 5% in a day OR inflation expectation > 3% (elevated)
+  const oilShock = oilChange !== undefined && Math.abs(oilChange) > 5;
+  const inflationShock = inflationExpectation !== undefined && inflationExpectation > 3;
+
+  return oilShock || inflationShock;
+}
+
+// Calculate composite stress level (0-10)
+function calculateStressLevel(
+  vixLevel: "risk_on" | "risk_off" | "neutral",
+  yieldCurve: YieldCurveState,
+  fearGreedSignal: FearGreedSignal,
+  shockDetected: boolean
+): number {
+  let stress = 5; // baseline
+
+  // VIX contribution (+/- 2)
+  if (vixLevel === "risk_off") stress += 2;
+  if (vixLevel === "risk_on") stress -= 2;
+
+  // Yield curve contribution (+/- 1.5)
+  if (yieldCurve === "inverted") stress += 1.5;
+  if (yieldCurve === "normal") stress -= 0.5;
+
+  // Fear & Greed contribution (+/- 1)
+  if (fearGreedSignal === "extreme_fear") stress += 1;
+  if (fearGreedSignal === "extreme_greed") stress -= 0.5;
+
+  // Shock contribution (+1.5)
+  if (shockDetected) stress += 1.5;
+
+  // Clamp to 0-10
+  return Math.max(0, Math.min(10, Math.round(stress * 10) / 10));
+}
+
 // Combine into overall macro assessment
 function calculateOverall(
   dxyBias: "strong" | "weak" | "neutral",
   vixLevel: "risk_on" | "risk_off" | "neutral",
-  yieldsBias: "rising" | "falling" | "stable"
+  yieldsBias: "rising" | "falling" | "stable",
+  yieldCurve: YieldCurveState
 ): MacroOverall {
-  // Risk-on signals: weak dollar, low VIX, falling yields
-  // Risk-off signals: strong dollar, high VIX, rising yields
+  // Risk-on signals: weak dollar, low VIX, falling yields, normal curve
+  // Risk-off signals: strong dollar, high VIX, rising yields, inverted curve
 
   let riskOnScore = 0;
   let riskOffScore = 0;
@@ -59,6 +143,10 @@ function calculateOverall(
   if (yieldsBias === "falling") riskOnScore++;
   if (yieldsBias === "rising") riskOffScore++;
 
+  // Yield curve is a strong signal
+  if (yieldCurve === "inverted") riskOffScore += 0.5;
+  if (yieldCurve === "normal") riskOnScore += 0.5;
+
   if (riskOnScore >= 2) return "Risk-on";
   if (riskOffScore >= 2) return "Risk-off";
   return "Mixed";
@@ -68,13 +156,26 @@ export function calculateMacroSignal(data: MacroData): MacroSignal {
   const dxyBias = analyzeDXY(data.dxy, data.dxyMa20);
   const vixLevel = analyzeVIX(data.vix);
   const yieldsBias = analyzeYields(data.us10y);
-  const overall = calculateOverall(dxyBias, vixLevel, yieldsBias);
+
+  // New enhanced indicators
+  const { signal: fearGreedSignal, contrarian } = analyzeFearGreed(data.fearGreed);
+  const yieldCurve = analyzeYieldCurve(data.yieldSpread);
+  const shockDetected = detectShock(data.oilChange, data.inflationExpectation);
+
+  const overall = calculateOverall(dxyBias, vixLevel, yieldsBias, yieldCurve);
+  const stressLevel = calculateStressLevel(vixLevel, yieldCurve, fearGreedSignal, shockDetected);
 
   return {
     dxyBias,
     vixLevel,
     yieldsBias,
     overall,
+    // Enhanced fields
+    stressLevel,
+    yieldCurve,
+    fearGreedSignal,
+    contrarian,
+    shockDetected,
   };
 }
 
