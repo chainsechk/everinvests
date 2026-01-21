@@ -106,8 +106,14 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
   - Recent outcomes timeline with visual indicators
   - Added to navigation and sitemap
 
-### Phase 4: Distribution Expansion - PENDING
-- [ ] Task 8: Telegram Channel Enhancement
+### Phase 4: Distribution Expansion - IN PROGRESS
+- [x] Task 8: Telegram Channel Enhancement (2026-01-21)
+  - Added inline keyboard buttons to TG messages
+  - "View Full Analysis" - links to signal detail page
+  - "Join VIP Waitlist" - CTA based on mode
+  - "Performance" - links to stats page
+  - Replaced text CTA with interactive buttons
+  - Updated notifyTelegramSkill to v4
 - [ ] Task 9: RSS Feed
 - [ ] Task 10: Webhook System
 
