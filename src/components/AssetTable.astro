@@ -1,6 +1,8 @@
 ---
 // src/components/AssetTable.astro
 import BiasIndicator from "./BiasIndicator.astro";
+import InfoTip from "./InfoTip.astro";
+import ScaleBar from "./ScaleBar.astro";
 
 interface Asset {
   id: number;
@@ -94,6 +96,23 @@ function formatPrice(price: number | null, cat: string): string {
   return price.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+// Extract numeric value from secondary indicator (for scale bar)
+function extractNumericValue(value: string | null, cat: string): number | null {
+  if (value === null) return null;
+
+  if (cat === "crypto" && value.startsWith("F&G:")) {
+    const num = parseInt(value.substring(4), 10);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  if (cat === "stocks") {
+    const num = parseFloat(value);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  return null;
+}
+
 // Format secondary indicator values to be human-readable
 function formatSecondary(value: string | null, cat: string): string {
   if (value === null) return "--";
@@ -173,10 +192,30 @@ function getAssetUrl(ticker: string, cat: string): string {
       <tr>
         <th>Asset</th>
         <th>Price</th>
-        <th title="Price compared to 20-day average. Above = uptrend, Below = downtrend">Trend</th>
-        <th title="Trading volume compared to 20-day average. High = strong interest">Volume</th>
-        <th title={secondaryConfig[category].tooltip}>{secondaryConfig[category].label}</th>
-        <th>Signal</th>
+        <th>
+          <span class="inline-flex items-center gap-1">
+            Trend
+            <InfoTip text="Price compared to the moving average. Above = upward momentum, Below = downward pressure." />
+          </span>
+        </th>
+        <th>
+          <span class="inline-flex items-center gap-1">
+            Volume
+            <InfoTip text="Trading activity compared to average. High volume confirms the trend, low volume suggests weakness." />
+          </span>
+        </th>
+        <th>
+          <span class="inline-flex items-center gap-1">
+            {secondaryConfig[category].label}
+            <InfoTip text={secondaryConfig[category].tooltip} />
+          </span>
+        </th>
+        <th>
+          <span class="inline-flex items-center gap-1">
+            Signal
+            <InfoTip text="Our overall recommendation based on trend, volume, and market sentiment. Bullish = consider buying, Bearish = consider selling, Neutral = wait." />
+          </span>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -234,7 +273,21 @@ function getAssetUrl(ticker: string, cat: string): string {
               </span>
             </td>
             <td>
-              <span class="font-mono text-sm text-txt-secondary">{formatSecondary(asset.secondary_ind, category)}</span>
+              {(() => {
+                const numValue = extractNumericValue(asset.secondary_ind, category);
+                if (numValue !== null && (category === "crypto" || category === "stocks")) {
+                  return (
+                    <ScaleBar
+                      value={numValue}
+                      type={category === "crypto" ? "fear-greed" : "rsi"}
+                      compact
+                    />
+                  );
+                }
+                return (
+                  <span class="font-mono text-sm text-txt-secondary">{formatSecondary(asset.secondary_ind, category)}</span>
+                );
+              })()}
             </td>
             <td>
               <BiasIndicator bias={asset.bias} size="sm" />

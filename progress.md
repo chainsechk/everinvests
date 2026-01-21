@@ -882,3 +882,49 @@ Volume data was ALREADY available in API responses:
 | What have I learned? | Price-derived indicators are highly correlated; volume is truly independent |
 | What have I done? | Full stack deployed with volume-based model |
 
+
+## Session: 2026-01-21 (UX Improvements)
+
+### Task: Make metrics understandable for normal investors
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Problem
+User feedback: "F&G:24" is cryptic jargon that normal investors cannot understand. Need standard UX practices (info buttons, visual scales) to attract more traffic.
+
+#### Solution Implemented
+
+**1. Created InfoTip Component**
+- Small info icon (ℹ) with hover tooltip
+- Explains each metric in plain English
+- File: `src/components/InfoTip.astro`
+
+**2. Created ScaleBar Component**
+- Visual 0-100 progress bar for F&G and RSI
+- Color-coded zones (fear/greed, oversold/overbought)
+- Tick marks at key thresholds
+- File: `src/components/ScaleBar.astro`
+
+**3. Updated AssetTable**
+- Added InfoTip to all column headers (Trend, Volume, Sentiment, Signal)
+- Replaced numeric values with visual ScaleBar for 0-100 metrics
+- Crypto: Fear & Greed shown as visual gauge
+- Stocks: RSI shown as visual gauge
+
+**4. Updated MacroBar**
+- Added InfoTip to all macro indicators
+- Sentiment section now shows visual ScaleBar
+- Each indicator has explanatory tooltip in plain English
+
+#### Files Created/Modified
+- `src/components/InfoTip.astro` (created)
+- `src/components/ScaleBar.astro` (created)
+- `src/components/AssetTable.astro` (modified - added InfoTip, ScaleBar)
+- `src/components/MacroBar.astro` (modified - added InfoTip, ScaleBar)
+- `src/styles/global.css` (modified - added .macro-chip-wide)
+
+#### Verification
+- Build: ✅ Passes
+- Deploy: ✅ Deployed to https://everinvests.com
+- Live check: ✅ Scale bars and info icons visible on crypto page

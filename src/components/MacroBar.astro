@@ -1,5 +1,8 @@
 ---
 // src/components/MacroBar.astro
+import InfoTip from "./InfoTip.astro";
+import ScaleBar from "./ScaleBar.astro";
+
 interface Props {
   overall: string | null;
   dxyBias: string | null;
@@ -105,17 +108,20 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 <div class="card-glass" data-animate>
   <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-0">
     <!-- Overall Macro Sentiment -->
-    <div
-      class="flex items-center gap-3 sm:pr-6 sm:border-r border-void-200/30"
-      title={overall?.toLowerCase().includes("risk-on")
-        ? "Risk-On: Markets favor growth assets (stocks, crypto). Good time for higher-risk investments."
-        : overall?.toLowerCase().includes("risk-off")
-        ? "Risk-Off: Markets favor safety (bonds, gold). Caution advised for risky assets."
-        : "Mixed: Conflicting signals. Consider smaller positions or wait for clarity."}
-    >
+    <div class="flex items-center gap-3 sm:pr-6 sm:border-r border-void-200/30">
       <div class="flex items-center gap-2">
         <span class="pulse-dot"></span>
-        <span class="font-mono text-xs text-txt-muted uppercase tracking-wider">Market</span>
+        <span class="font-mono text-xs text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
+          Market
+          <InfoTip
+            text={overall?.toLowerCase().includes("risk-on")
+              ? "Risk-On: Markets favor growth assets (stocks, crypto). Generally a good environment for higher-risk investments."
+              : overall?.toLowerCase().includes("risk-off")
+              ? "Risk-Off: Investors prefer safety (bonds, gold, cash). Caution advised for risky assets."
+              : "Mixed signals from the market. Consider smaller positions or wait for clearer direction."}
+            position="top"
+          />
+        </span>
       </div>
       <span class:list={[
         "font-display font-bold text-lg tracking-tight",
@@ -125,40 +131,55 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       </span>
     </div>
 
-    <!-- Indicators Grid - human-readable labels with tooltips -->
+    <!-- Indicators Grid - human-readable labels with info tips -->
     <div class="flex items-center gap-4 sm:gap-6 sm:pl-6 flex-wrap justify-center">
       <!-- US Dollar Index -->
-      <div class="macro-chip" title="US Dollar Index. Strong = dollar gaining, Weak = dollar falling">
-        <span class="text-txt-muted">USD</span>
+      <div class="macro-chip">
+        <span class="text-txt-muted inline-flex items-center gap-1">
+          USD
+          <InfoTip text="US Dollar strength. When the dollar is Strong, it typically hurts assets priced in USD (like crypto and commodities). Weak dollar often means risk-on." position="top" />
+        </span>
         <span class="text-txt-primary font-medium">{dxy.label}</span>
         <span class="font-mono text-cyber">{dxy.icon}</span>
       </div>
 
       <!-- Market Volatility -->
-      <div class="macro-chip" title="Market Volatility (VIX). Low = calm markets, High = fearful markets">
-        <span class="text-txt-muted">Volatility</span>
+      <div class="macro-chip">
+        <span class="text-txt-muted inline-flex items-center gap-1">
+          Volatility
+          <InfoTip text="Market fear gauge (VIX). Low volatility = calm markets, good for investing. High volatility = fearful markets, prices may swing wildly." position="top" />
+        </span>
         <span class:list={["font-medium", vix.color]}>{vix.label}</span>
       </div>
 
       <!-- 10Y Treasury Yield -->
-      <div class="macro-chip" title="10-Year Treasury Yield direction. Rising = higher rates expected">
-        <span class="text-txt-muted">10Y Rate</span>
+      <div class="macro-chip">
+        <span class="text-txt-muted inline-flex items-center gap-1">
+          10Y Rate
+          <InfoTip text="US Treasury bond yields. Rising rates compete with stocks for investor money. Falling rates are generally bullish for risk assets." position="top" />
+        </span>
         <span class="text-txt-primary font-medium">{yields.label}</span>
         <span class="font-mono text-cyber">{yields.icon}</span>
       </div>
 
-      {/* Fear & Greed - only show if data available */}
+      {/* Fear & Greed - only show if data available, with visual scale */}
       {expanded.fearGreed !== undefined && (
-        <div class="macro-chip" title="Fear & Greed Index (0-100). Low = market fear, High = market greed">
-          <span class="text-txt-muted">Sentiment</span>
-          <span class:list={["font-medium", fearGreed.color]}>{fearGreed.label}</span>
+        <div class="macro-chip">
+          <span class="text-txt-muted inline-flex items-center gap-1">
+            Sentiment
+            <InfoTip text="Fear & Greed Index (0-100). When everyone is fearful (low), it may be a buying opportunity. When everyone is greedy (high), prices may be overheated." position="top" />
+          </span>
+          <ScaleBar value={expanded.fearGreed} type="fear-greed" compact />
         </div>
       )}
 
       {/* Yield Curve Spread */}
       {expanded.yieldSpread !== undefined && (
-        <div class="macro-chip" title="2Y vs 10Y Treasury spread. Negative (inverted) = recession warning signal">
-          <span class="text-txt-muted">Rate Spread</span>
+        <div class="macro-chip">
+          <span class="text-txt-muted inline-flex items-center gap-1">
+            Rate Spread
+            <InfoTip text="Difference between 10-year and 2-year Treasury yields. When negative (inverted), it historically warns of recession. Positive is normal and healthy." position="top" />
+          </span>
           <span class:list={["font-medium font-mono", spread.color]}>{spread.label}</span>
         </div>
       )}

@@ -1,0 +1,91 @@
+---
+// src/components/ScaleBar.astro
+// Visual 0-100 scale bar with color gradient - helps users understand metric values
+interface Props {
+  value: number;
+  min?: number;
+  max?: number;
+  type?: "fear-greed" | "rsi" | "default";
+  compact?: boolean; // Compact mode: single line with value, bar, and label
+}
+
+const { value, min = 0, max = 100, type = "default", compact = false } = Astro.props;
+
+// Calculate percentage position
+const percentage = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+
+// Color logic based on type
+function getColor(val: number, t: string): string {
+  if (t === "fear-greed") {
+    if (val <= 25) return "bg-bearish";
+    if (val <= 45) return "bg-mixed";
+    if (val <= 55) return "bg-txt-muted";
+    if (val <= 75) return "bg-mixed";
+    return "bg-bullish";
+  }
+  if (t === "rsi") {
+    if (val <= 30) return "bg-bullish";
+    if (val >= 70) return "bg-bearish";
+    return "bg-txt-muted";
+  }
+  return "bg-cyber";
+}
+
+function getLabel(val: number, t: string): string {
+  if (t === "fear-greed") {
+    if (val <= 25) return "Fear";
+    if (val <= 45) return "Fear";
+    if (val <= 55) return "Neutral";
+    if (val <= 75) return "Greed";
+    return "Greed";
+  }
+  if (t === "rsi") {
+    if (val <= 30) return "Oversold";
+    if (val >= 70) return "Overbought";
+    return "";
+  }
+  return "";
+}
+
+const barColor = getColor(value, type);
+const label = getLabel(value, type);
+---
+
+{compact ? (
+  <!-- Compact: single row with value, bar, label -->
+  <div class="flex items-center gap-2 min-w-[90px]">
+    <span class="font-mono text-xs font-medium text-txt-primary w-5">{value}</span>
+    <div class="flex-1 h-1.5 bg-void-200/50 rounded-full overflow-hidden relative">
+      <div class:list={["absolute left-0 top-0 h-full rounded-full", barColor]} style={`width: ${percentage}%`}></div>
+    </div>
+    {label && <span class="text-[10px] text-txt-muted whitespace-nowrap">{label}</span>}
+  </div>
+) : (
+  <!-- Full: stacked layout with 0-100 scale -->
+  <div class="w-full min-w-[70px]">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="font-mono text-xs font-medium text-txt-primary">{value}</span>
+      {label && <span class="text-[10px] text-txt-muted">{label}</span>}
+    </div>
+    <div class="relative h-1.5 bg-void-200/50 rounded-full overflow-hidden">
+      <div class:list={["absolute left-0 top-0 h-full rounded-full transition-all duration-300", barColor]} style={`width: ${percentage}%`}></div>
+      {type === "fear-greed" && (
+        <>
+          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 25%"></div>
+          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 50%"></div>
+          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 75%"></div>
+        </>
+      )}
+      {type === "rsi" && (
+        <>
+          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 30%"></div>
+          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 70%"></div>
+        </>
+      )}
+    </div>
+    <div class="flex justify-between text-[9px] text-txt-muted/60 mt-0.5">
+      <span>{min}</span>
+      <span>{max}</span>
+    </div>
+  </div>
+)}
