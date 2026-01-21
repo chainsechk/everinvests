@@ -321,12 +321,19 @@ An agent analyzed indicators from first principles. Key finding: **We're using w
 | Crypto: F&G per-asset override | Crypto | +10-15% | 5 min |
 | Crypto: Use 7D MA instead of 20D | Crypto | +5-10% | 5 min |
 
-### Tier 2 Fixes (1-2 API calls)
+### Tier 2 Fixes (1-2 API calls) - IMPLEMENTED BUT BLOCKED
 
-| Fix | Target | IC Gain | Effort |
+| Fix | Target | IC Gain | Status |
 |-----|--------|---------|--------|
-| Stocks: Sector ETF comparison (XLK/XLE/XLV) | Stocks | +15-20% | 1-2 hrs |
-| Stocks: Relative strength vs SPY | Stocks | +10-15% | 1 hr |
+| Stocks: Sector ETF comparison (XLK/XLE) | Stocks | +15-20% | ⚠️ Code ready, fetch blocked |
+| Stocks: Relative strength vs SPY | Stocks | +10-15% | ⚠️ Code ready, fetch blocked |
+
+**Constraint discovered:** TwelveData rate limit (8 credits/min) with 11 symbols exceeds Cloudflare Worker's 30s execution limit. Code is complete but benchmark fetch is disabled.
+
+**Workaround options:**
+1. Separate hourly cron for benchmarks with longer cache
+2. Use Alpha Vantage for ETF data (separate quota)
+3. Reduce to 5 stocks + 3 benchmarks = 8 symbols total
 
 ### Key Insight: What Each Asset Class Needs
 
