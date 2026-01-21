@@ -78,11 +78,12 @@ function formatYields(bias: string | null): { label: string; icon: string } {
 
 function formatFearGreed(value: number | undefined): { label: string; color: string } {
   if (value === undefined) return { label: "--", color: "text-txt-muted" };
-  if (value <= 25) return { label: `${value} Fear`, color: "text-bearish" };
-  if (value <= 45) return { label: `${value}`, color: "text-mixed" };
-  if (value <= 55) return { label: `${value}`, color: "text-txt-primary" };
-  if (value <= 75) return { label: `${value}`, color: "text-mixed" };
-  return { label: `${value} Greed`, color: "text-bullish" };
+  // More descriptive labels that explain what the number means
+  if (value <= 25) return { label: `${value} (Extreme Fear)`, color: "text-bearish" };
+  if (value <= 45) return { label: `${value} (Fear)`, color: "text-mixed" };
+  if (value <= 55) return { label: `${value} (Neutral)`, color: "text-txt-primary" };
+  if (value <= 75) return { label: `${value} (Greed)`, color: "text-mixed" };
+  return { label: `${value} (Extreme Greed)`, color: "text-bullish" };
 }
 
 function formatSpread(value: number | undefined): { label: string; color: string } {
@@ -104,10 +105,17 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 <div class="card-glass" data-animate>
   <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-0">
     <!-- Overall Macro Sentiment -->
-    <div class="flex items-center gap-3 sm:pr-6 sm:border-r border-void-200/30">
+    <div
+      class="flex items-center gap-3 sm:pr-6 sm:border-r border-void-200/30"
+      title={overall?.toLowerCase().includes("risk-on")
+        ? "Risk-On: Markets favor growth assets (stocks, crypto). Good time for higher-risk investments."
+        : overall?.toLowerCase().includes("risk-off")
+        ? "Risk-Off: Markets favor safety (bonds, gold). Caution advised for risky assets."
+        : "Mixed: Conflicting signals. Consider smaller positions or wait for clarity."}
+    >
       <div class="flex items-center gap-2">
         <span class="pulse-dot"></span>
-        <span class="font-mono text-xs text-txt-muted uppercase tracking-wider">Macro</span>
+        <span class="font-mono text-xs text-txt-muted uppercase tracking-wider">Market</span>
       </div>
       <span class:list={[
         "font-display font-bold text-lg tracking-tight",
@@ -117,39 +125,40 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       </span>
     </div>
 
-    <!-- Indicators Grid -->
+    <!-- Indicators Grid - human-readable labels with tooltips -->
     <div class="flex items-center gap-4 sm:gap-6 sm:pl-6 flex-wrap justify-center">
-      <!-- DXY -->
-      <div class="macro-chip">
-        <span class="text-txt-muted">DXY</span>
+      <!-- US Dollar Index -->
+      <div class="macro-chip" title="US Dollar Index. Strong = dollar gaining, Weak = dollar falling">
+        <span class="text-txt-muted">USD</span>
         <span class="text-txt-primary font-medium">{dxy.label}</span>
         <span class="font-mono text-cyber">{dxy.icon}</span>
       </div>
 
-      <!-- VIX -->
-      <div class="macro-chip">
-        <span class="text-txt-muted">VIX</span>
+      <!-- Market Volatility -->
+      <div class="macro-chip" title="Market Volatility (VIX). Low = calm markets, High = fearful markets">
+        <span class="text-txt-muted">Volatility</span>
         <span class:list={["font-medium", vix.color]}>{vix.label}</span>
       </div>
 
-      <!-- Yields -->
-      <div class="macro-chip">
-        <span class="text-txt-muted">10Y</span>
+      <!-- 10Y Treasury Yield -->
+      <div class="macro-chip" title="10-Year Treasury Yield direction. Rising = higher rates expected">
+        <span class="text-txt-muted">10Y Rate</span>
         <span class="text-txt-primary font-medium">{yields.label}</span>
         <span class="font-mono text-cyber">{yields.icon}</span>
       </div>
 
-      {/* Expanded indicators - only show if data available */}
+      {/* Fear & Greed - only show if data available */}
       {expanded.fearGreed !== undefined && (
-        <div class="macro-chip">
-          <span class="text-txt-muted">F&G</span>
+        <div class="macro-chip" title="Fear & Greed Index (0-100). Low = market fear, High = market greed">
+          <span class="text-txt-muted">Sentiment</span>
           <span class:list={["font-medium", fearGreed.color]}>{fearGreed.label}</span>
         </div>
       )}
 
+      {/* Yield Curve Spread */}
       {expanded.yieldSpread !== undefined && (
-        <div class="macro-chip">
-          <span class="text-txt-muted">2Y-10Y</span>
+        <div class="macro-chip" title="2Y vs 10Y Treasury spread. Negative (inverted) = recession warning signal">
+          <span class="text-txt-muted">Rate Spread</span>
           <span class:list={["font-medium font-mono", spread.color]}>{spread.label}</span>
         </div>
       )}

@@ -45,10 +45,20 @@ interface Props {
 
 const { assets, category, qualityFlags } = Astro.props;
 
-const secondaryLabel: Record<string, string> = {
-  crypto: "F&G",       // Fear & Greed Index
-  forex: "Curve",      // Yield Curve status
-  stocks: "RSI(14)",   // RSI momentum
+// Human-readable labels with tooltips for each category
+const secondaryConfig: Record<string, { label: string; tooltip: string }> = {
+  crypto: {
+    label: "Sentiment",
+    tooltip: "Fear & Greed Index (0-100). Low = Fear (buy signal), High = Greed (sell signal)"
+  },
+  forex: {
+    label: "Rates",
+    tooltip: "Yield curve status. Normal = healthy economy, Inverted = recession warning"
+  },
+  stocks: {
+    label: "Momentum",
+    tooltip: "RSI momentum (0-100). Below 30 = oversold, Above 70 = overbought"
+  },
 };
 
 // Parse data_json to get indicator data
@@ -84,15 +94,52 @@ function formatPrice(price: number | null, cat: string): string {
   return price.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+// Format secondary indicator values to be human-readable
 function formatSecondary(value: string | null, cat: string): string {
   if (value === null) return "--";
+
   if (cat === "crypto") {
+    // "F&G:24" → "24 (Fear)" or just extract the number
+    if (value.startsWith("F&G:")) {
+      const num = parseInt(value.substring(4), 10);
+      if (Number.isFinite(num)) {
+        if (num <= 25) return `${num} (Extreme Fear)`;
+        if (num <= 45) return `${num} (Fear)`;
+        if (num <= 55) return `${num} (Neutral)`;
+        if (num <= 75) return `${num} (Greed)`;
+        return `${num} (Extreme Greed)`;
+      }
+    }
+    // Legacy format: funding rate percentage
     const trimmed = value.trim();
     if (trimmed.endsWith("%")) return trimmed;
     const num = parseFloat(trimmed);
     if (!Number.isFinite(num)) return value;
     return (num * 100).toFixed(4) + "%";
   }
+
+  if (cat === "forex") {
+    // "YC:normal" → "Normal", "YC:inverted" → "Inverted ⚠️"
+    if (value.startsWith("YC:")) {
+      const status = value.substring(3);
+      if (status === "normal") return "Normal";
+      if (status === "inverted") return "Inverted ⚠️";
+      if (status === "flat") return "Flat";
+      return status;
+    }
+    return value;
+  }
+
+  // Stocks: RSI value - add context
+  if (cat === "stocks") {
+    const num = parseFloat(value);
+    if (Number.isFinite(num)) {
+      if (num <= 30) return `${num.toFixed(0)} (Oversold)`;
+      if (num >= 70) return `${num.toFixed(0)} (Overbought)`;
+      return num.toFixed(0);
+    }
+  }
+
   return value;
 }
 
@@ -109,9 +156,9 @@ function getVolumeClass(value: string | null | undefined): string {
 }
 
 function formatVolume(value: string | null | undefined): string {
-  if (value === "high") return "↑";
-  if (value === "low") return "↓";
-  return "—";
+  if (value === "high") return "High";
+  if (value === "low") return "Low";
+  return "Avg";
 }
 
 function getAssetUrl(ticker: string, cat: string): string {
@@ -124,12 +171,12 @@ function getAssetUrl(ticker: string, cat: string): string {
   <table class="data-table">
     <thead>
       <tr>
-        <th>Ticker</th>
+        <th>Asset</th>
         <th>Price</th>
-        <th>vs MA20</th>
-        <th title="Volume vs 20d average">Vol</th>
-        <th>{secondaryLabel[category]}</th>
-        <th>Bias</th>
+        <th title="Price compared to 20-day average. Above = uptrend, Below = downtrend">Trend</th>
+        <th title="Trading volume compared to 20-day average. High = strong interest">Volume</th>
+        <th title={secondaryConfig[category].tooltip}>{secondaryConfig[category].label}</th>
+        <th>Signal</th>
       </tr>
     </thead>
     <tbody>
@@ -165,11 +212,14 @@ function getAssetUrl(ticker: string, cat: string): string {
               <span class="font-mono text-txt-secondary">{formatPrice(asset.price, category)}</span>
             </td>
             <td>
-              <span class:list={[
-                "inline-flex px-2 py-0.5 rounded text-xs font-medium border",
-                getMaClass(asset.vs_20d_ma)
-              ]}>
-                {asset.vs_20d_ma || "--"}
+              <span
+                class:list={[
+                  "inline-flex px-2 py-0.5 rounded text-xs font-medium border",
+                  getMaClass(asset.vs_20d_ma)
+                ]}
+                title={asset.vs_20d_ma === "above" ? "Price is above 20-day average (uptrend)" : asset.vs_20d_ma === "below" ? "Price is below 20-day average (downtrend)" : ""}
+              >
+                {asset.vs_20d_ma === "above" ? "↑ Up" : asset.vs_20d_ma === "below" ? "↓ Down" : "--"}
               </span>
             </td>
             <td>
@@ -178,7 +228,7 @@ function getAssetUrl(ticker: string, cat: string): string {
                   "inline-flex px-2 py-0.5 rounded text-xs font-medium border",
                   getVolumeClass(indicatorData.volumeSignal)
                 ]}
-                title={indicatorData.volumeSignal ? `Volume vs avg: ${indicatorData.volumeSignal}` : "Volume signal"}
+                title={indicatorData.volumeSignal === "high" ? "Trading volume is higher than average (strong interest)" : indicatorData.volumeSignal === "low" ? "Trading volume is lower than average (weak interest)" : "Trading volume is near average"}
               >
                 {formatVolume(indicatorData.volumeSignal)}
               </span>
