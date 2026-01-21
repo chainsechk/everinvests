@@ -90,6 +90,32 @@ CREATE TABLE signals (
 | Worker secrets vs Pages secrets | Must deploy secrets to both separately |
 | Binance funding rate wrong domain | Fixed: `fapi.binance.com` not `api.binance.com` |
 
+## Signal Indicator Confluence (First Principles)
+
+**Problem:** Raw values like `vsMA20: "above"` are not actionable.
+- Is "above MA20" significant? Depends on how far above
+- What about momentum? Need multiple indicators
+
+**Solution:** Expose **interpreted signals** showing confluence:
+```json
+{
+  "indicators": {
+    "trend": { "signal": "bullish", "position": "above" },
+    "momentum": { "signal": "neutral", "value": "54.8", "type": "rsi" }
+  },
+  "confluence": "1/2 bullish"
+}
+```
+
+**Signal Derivation (from bias.ts):**
+- **Trend:** Price vs 20D MA with 1% threshold
+  - `> +1%` → bullish, `< -1%` → bearish, else neutral
+- **Momentum:** RSI (forex/stocks) or Funding Rate (crypto)
+  - RSI: `< 30` → bullish (oversold), `> 70` → bearish (overbought)
+  - Funding: `< 0.01%` → bullish, `> 0.05%` → bearish
+
+**Bias Rule:** 2/2 bullish = Bullish, 2/2 bearish = Bearish, else Neutral
+
 ## IMPORTANT: Rate Limit Distinction
 **External APIs (worker/src/data/*.ts) - RATE LIMITED, MUST BE SEQUENTIAL:**
 - TwelveData: 8 req/min - forex/stocks price, SMA, RSI
