@@ -120,7 +120,16 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
   - Added RSS autodiscovery link in HTML head
   - Added RSS link with icon in footer
   - Added Performance and Blog links to footer
-- [ ] Task 10: Webhook System
+- [x] Task 10: Webhook System (2026-01-21)
+  - Created webhooks and webhook_logs D1 tables
+  - POST /api/webhooks - Register webhook with URL, secret, categories
+  - GET /api/webhooks - List all registered webhooks
+  - DELETE/PATCH /api/webhooks/:id - Manage webhooks
+  - Webhook delivery with HMAC-SHA256 signing
+  - Auto-disable after 10 consecutive failures
+  - Integrated into signal workflow
+
+### Phase 4: Distribution Expansion - COMPLETE
 
 ### Phase 5: Agent-Native Features - PENDING
 - [ ] Task 11: MCP Server
