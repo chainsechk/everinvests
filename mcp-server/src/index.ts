@@ -85,26 +85,29 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
 
           // Use structured indicators if available, else parse reasoning
           let trendSignal = "?";
-          let momentumSignal = "?";
+          let volumeSignal = "?";
           let strengthSignal = "?";
 
           if (assetData.indicators) {
             trendSignal = assetData.indicators.trend || "?";
-            momentumSignal = assetData.indicators.momentum || "?";
+            volumeSignal = assetData.indicators.volume || "?";
             strengthSignal = assetData.indicators.strength || "?";
           } else if (assetData.reasoning) {
-            // Try new format: "Trend: bullish, Momentum: neutral, Strength: bearish"
+            // Try new format: "Trend: bullish, Volume: confirms, Strength: bearish"
             const trendMatch = assetData.reasoning.match(/Trend:\s*(\w+)/);
-            const momentumMatch = assetData.reasoning.match(/Momentum:\s*(\w+)/);
+            const volumeMatch = assetData.reasoning.match(/Volume:\s*(\w+)/);
             const strengthMatch = assetData.reasoning.match(/Strength:\s*(\w+)/);
             if (trendMatch) trendSignal = trendMatch[1];
-            if (momentumMatch) momentumSignal = momentumMatch[1];
+            if (volumeMatch) volumeSignal = volumeMatch[1];
             if (strengthMatch) strengthSignal = strengthMatch[1];
           }
 
-          const confluence = assetData.confluence || `${[trendSignal, momentumSignal, strengthSignal].filter(s => s === "bullish").length}/3`;
+          const confluence = assetData.confluence || `${[trendSignal, volumeSignal, strengthSignal].filter(s => s === "bullish" || s === "confirms").length}/3`;
 
-          return `  - ${a.ticker}: ${a.bias} [T:${trendSignal[0].toUpperCase()} M:${momentumSignal[0].toUpperCase()} S:${strengthSignal[0].toUpperCase()}] (${confluence}) $${a.price?.toLocaleString() || "N/A"}`;
+          // V indicator: C=confirms, D=diverges, N=neutral
+          const volIndicator = volumeSignal === "confirms" ? "C" : volumeSignal === "diverges" ? "D" : "N";
+
+          return `  - ${a.ticker}: ${a.bias} [T:${trendSignal[0].toUpperCase()} V:${volIndicator} S:${strengthSignal[0].toUpperCase()}] (${confluence}) $${a.price?.toLocaleString() || "N/A"}`;
         }).join("\n");
 
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};

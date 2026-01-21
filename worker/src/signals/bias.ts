@@ -2,12 +2,14 @@
 // Rule: 2+ bullish signals = Bullish, 2+ bearish = Bearish, else Neutral
 // Indicators:
 //   1. Trend: Price vs MA20 (position in trend)
-//   2. Momentum: MA10 vs MA20 (trend acceleration/deceleration)
+//   2. Volume: Current vs Avg volume (confirms or diverges from trend)
 //   3. Strength: RSI (forex/stocks) or Funding Rate (crypto)
 
 import type { AssetData, AssetSignal, Bias, Category } from "../types";
 
 type SignalDirection = "bullish" | "bearish" | "neutral";
+type VolumeSignal = "high" | "low" | "normal";
+type VolumeConfirmation = "confirms" | "diverges" | "neutral";
 
 // Indicator 1: Price vs 20-day MA (Trend Position)
 function calculateTrendSignal(price: number, ma20: number): SignalDirection {
@@ -18,14 +20,39 @@ function calculateTrendSignal(price: number, ma20: number): SignalDirection {
   return "neutral";
 }
 
-// Indicator 2: MA10 vs MA20 (Momentum/Crossover)
-function calculateMomentumSignal(ma10: number, ma20: number): SignalDirection {
-  const diff = (ma10 - ma20) / ma20;
-  // MA10 above MA20 by >0.5% = bullish momentum (golden cross forming)
-  // MA10 below MA20 by >0.5% = bearish momentum (death cross forming)
-  if (diff > 0.005) return "bullish";
-  if (diff < -0.005) return "bearish";
-  return "neutral";
+// Indicator 2: Volume vs Average Volume
+// High volume confirms the trend, low volume suggests weak conviction
+function calculateVolumeSignal(volume: number, avgVolume: number): VolumeSignal {
+  if (avgVolume <= 0) return "normal";
+  const ratio = volume / avgVolume;
+  // Volume > 1.2x average = high (strong conviction)
+  // Volume < 0.8x average = low (weak conviction)
+  if (ratio > 1.2) return "high";
+  if (ratio < 0.8) return "low";
+  return "normal";
+}
+
+// Convert volume to directional signal based on trend
+// High volume confirms trend direction, low volume suggests possible reversal
+function volumeToDirectionalSignal(
+  volumeSignal: VolumeSignal,
+  trendSignal: SignalDirection
+): { direction: SignalDirection; confirmation: VolumeConfirmation } {
+  if (volumeSignal === "high") {
+    // High volume confirms the trend
+    return {
+      direction: trendSignal === "neutral" ? "neutral" : trendSignal,
+      confirmation: "confirms",
+    };
+  }
+  if (volumeSignal === "low") {
+    // Low volume suggests weak move, possible reversal
+    return {
+      direction: "neutral",
+      confirmation: "diverges",
+    };
+  }
+  return { direction: "neutral", confirmation: "neutral" };
 }
 
 // Indicator 3: Strength indicator (RSI or Funding Rate)
@@ -57,10 +84,10 @@ function calculateStrengthSignal(
 // Combine 3 signals into final bias
 function combineBias(
   trendSignal: SignalDirection,
-  momentumSignal: SignalDirection,
+  volumeDirectionSignal: SignalDirection,
   strengthSignal: SignalDirection
 ): Bias {
-  const signals = [trendSignal, momentumSignal, strengthSignal];
+  const signals = [trendSignal, volumeDirectionSignal, strengthSignal];
   const bullishCount = signals.filter(s => s === "bullish").length;
   const bearishCount = signals.filter(s => s === "bearish").length;
 
@@ -73,10 +100,10 @@ function combineBias(
 // Calculate confluence string for display
 function formatConfluence(
   trendSignal: SignalDirection,
-  momentumSignal: SignalDirection,
+  volumeDirectionSignal: SignalDirection,
   strengthSignal: SignalDirection
 ): string {
-  const signals = [trendSignal, momentumSignal, strengthSignal];
+  const signals = [trendSignal, volumeDirectionSignal, strengthSignal];
   const bullishCount = signals.filter(s => s === "bullish").length;
   const bearishCount = signals.filter(s => s === "bearish").length;
 
@@ -91,9 +118,11 @@ function formatConfluence(
 // Calculate bias for a single asset
 export function calculateAssetBias(data: AssetData, category: Category): AssetSignal {
   const trendSignal = calculateTrendSignal(data.price, data.ma20);
-  const momentumSignal = calculateMomentumSignal(data.ma10, data.ma20);
+  const volumeSignal = calculateVolumeSignal(data.volume, data.avgVolume);
+  const { direction: volumeDirectionSignal, confirmation: volumeConfirmation } =
+    volumeToDirectionalSignal(volumeSignal, trendSignal);
   const strengthSignal = calculateStrengthSignal(data.secondaryIndicator, category);
-  const bias = combineBias(trendSignal, momentumSignal, strengthSignal);
+  const bias = combineBias(trendSignal, volumeDirectionSignal, strengthSignal);
 
   // Format secondary indicator for display
   let secondaryDisplay: string;
@@ -105,23 +134,20 @@ export function calculateAssetBias(data: AssetData, category: Category): AssetSi
     secondaryDisplay = data.secondaryIndicator.toFixed(1);
   }
 
-  // Determine MA crossover state for display
-  const maCrossover: "bullish" | "bearish" | "neutral" = momentumSignal;
-
   return {
     ticker: data.ticker,
     price: data.price,
     bias,
     vsMA20: data.price > data.ma20 ? "above" : "below",
-    maCrossover,
+    volumeSignal,
     secondaryInd: secondaryDisplay,
-    reasoning: `Trend: ${trendSignal}, Momentum: ${momentumSignal}, Strength: ${strengthSignal}`,
+    reasoning: `Trend: ${trendSignal}, Volume: ${volumeConfirmation}, Strength: ${strengthSignal}`,
     indicators: {
       trend: trendSignal,
-      momentum: momentumSignal,
+      volume: volumeConfirmation,
       strength: strengthSignal,
     },
-    confluence: formatConfluence(trendSignal, momentumSignal, strengthSignal),
+    confluence: formatConfluence(trendSignal, volumeDirectionSignal, strengthSignal),
   };
 }
 
@@ -170,6 +196,12 @@ export function identifyRisks(
   }
   if (extremeBearish === assetSignals.length) {
     risks.push("All assets bearish - potential bounce risk");
+  }
+
+  // Check for volume divergence (weak conviction)
+  const lowVolumeCount = assetSignals.filter(s => s.volumeSignal === "low").length;
+  if (lowVolumeCount > assetSignals.length / 2) {
+    risks.push("Low volume across assets - weak conviction");
   }
 
   // Category-specific risks

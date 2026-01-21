@@ -1,273 +1,219 @@
 # Findings & Decisions
 
-## Indicator Confluence Analysis (2026-01-21)
+## First Principles: Truly Independent Metrics (2026-01-21)
 
-### First Principles: What Problem Are We Solving?
+### The Problem with Current Implementation
 
-**The core question:** "vs_20d alone would not say much, need a combo of similar indicators"
+```
+Current "3 indicators" - ALL DERIVED FROM PRICE:
+├── Price vs MA20    → f(price history)
+├── MA10 vs MA20     → f(price history)  ← CORRELATED!
+└── RSI              → f(price history)  ← CORRELATED!
 
-This is fundamentally about **signal confidence**. A single indicator (price above MA20) tells you:
-- The trend direction (above = uptrend tendency)
-- Nothing about strength, momentum, or sustainability
+Correlation: ~0.7-0.9 between these indicators
+When price moves up, ALL THREE tend to go bullish together.
+```
 
-**First principles breakdown:**
-1. **What is vs_20d measuring?** → Trend position (lagging)
-2. **What does it miss?** → Momentum, strength, acceleration
-3. **What would give confluence?** → Indicators measuring *different* aspects of price action
+**This is NOT true independence.** It's pseudo-diversification.
 
 ---
 
-### Current System Analysis
+### First Principles: What Information Sources Exist?
 
-```
-Current Indicators:
-┌─────────────────┬────────────────────┬──────────────────┐
-│ Category        │ Indicator 1        │ Indicator 2      │
-├─────────────────┼────────────────────┼──────────────────┤
-│ Crypto          │ Price vs MA20      │ Funding Rate     │
-│ Forex/Stocks    │ Price vs MA20      │ RSI (14)         │
-└─────────────────┴────────────────────┴──────────────────┘
-
-Bias Rule: 2/2 bullish = Bullish, 2/2 bearish = Bearish, else Neutral
-```
-
-**What's good:**
-- 2 independent signals (trend + momentum/sentiment)
-- Reduces false positives vs single indicator
-
-**What's missing:**
-- No measure of trend *strength* (is it accelerating or fading?)
-- No shorter-term confirmation (MA20 is 4 weeks of data)
-- RSI can stay overbought for extended periods in strong trends
+| Source | What It Measures | Independence | Free Data? |
+|--------|-----------------|--------------|------------|
+| **Price** | Historical movement | Baseline | ✅ |
+| **Volume** | Market participation/conviction | HIGH | ✅ CoinGecko, TwelveData |
+| **Sentiment** | Crowd psychology | HIGH | ✅ Fear&Greed, Funding |
+| **Flow** | Money movement | HIGH | ❌ Expensive (Glassnode) |
+| **Positioning** | Who owns what | HIGH | ❌ Expensive (COT paid) |
+| **Cross-Market** | Relative strength | MEDIUM | ✅ BTC Dominance |
 
 ---
 
-### Candidate Indicators: Fetch vs Calculate
+### Volume: The Missing Independent Signal
 
-#### Available from TwelveData (Already Using)
-| Indicator | API Endpoint | Credits/Call | Notes |
-|-----------|--------------|--------------|-------|
-| Price | `/quote` | 1 | Already batched |
-| RSI (14) | `/rsi` | 1 | Already using |
-| SMA (any period) | `/sma` | 1 | **Extra call needed** |
-| EMA (any period) | `/ema` | 1 | **Extra call needed** |
-| MACD | `/macd` | 1 | **Extra call needed** |
-| ADX | `/adx` | 1 | Trend strength |
-| Stochastic | `/stoch` | 1 | Mean reversion |
+**Why volume matters:**
+- Price up + High volume = Strong conviction (bullish confirmation)
+- Price up + Low volume = Weak move (likely to reverse)
+- Price down + High volume = Capitulation (potential bottom)
+- Price down + Low volume = Drift (trend continuation)
 
-**TwelveData rate limit: 8 credits/minute**
+**Volume is TRULY independent:**
+- Measures **participation**, not price direction
+- Can confirm OR contradict price moves
+- Low correlation with price-derived indicators
 
-#### Can Calculate Locally (No API Cost)
-| Indicator | Required Data | Calculation |
-|-----------|---------------|-------------|
-| MA10 | 10 daily closes | `sum(closes) / 10` |
-| MA50 | 50 daily closes | `sum(closes) / 50` |
-| EMA | Price history | `EMA_today = (Price * k) + (EMA_yesterday * (1-k))` |
-| Price Change % | Current + previous | `(current - previous) / previous` |
-| Trend Slope | MA values over time | Linear regression |
-| Volatility (ATR-like) | High/Low/Close | `avg(high - low)` over N days |
-
-**Key insight:** We already fetch 25 days of price history for MA20 calculation via `/time_series`. This data can be reused for:
-- MA10 (shorter MA for crossover)
-- Price momentum (5-day ROC)
-- Simple volatility measure
+**Available sources:**
+- Crypto: CoinGecko `/coins/{id}` has `total_volume.usd`
+- Stocks: TwelveData `time_series` includes volume
+- Forex: Volume less meaningful (OTC market), use tick volume
 
 ---
 
-### Rate Limit Budget Analysis
+### Sentiment: Another Independent Signal
 
-**Current API calls per signal run:**
-```
-TwelveData (forex + stocks):
-- Batch quote:      1 call × 2 categories = 2 credits
-- Batch time_series: 1 call × 2 categories = 2 credits (includes 25 days data)
-- Batch RSI:        1 call × 2 categories = 2 credits
-Total: 6 credits per run
+**Fear & Greed Index (Crypto):**
+- 0-25: Extreme Fear → Contrarian bullish
+- 25-45: Fear → Cautious
+- 45-55: Neutral
+- 55-75: Greed → Cautious
+- 75-100: Extreme Greed → Contrarian bearish
 
-Runs per day: ~6 (crypto 3x, forex 3x weekdays, stocks 2x weekdays)
-Estimated: 6 × 6 = 36 credits/day (well under 800 limit)
-```
+**Funding Rate (Crypto):**
+- Negative: Shorts paying longs → Bullish (market bearish, contrarian)
+- 0-0.01%: Neutral
+- 0.01%+: Longs paying shorts → Bearish (overcrowded long)
 
-**If we add more TwelveData indicators:**
-- Adding MACD: +2 credits/run → 48 credits/day
-- Adding ADX: +2 credits/run → 60 credits/day
-- Still well under limit, but increases rate limit risk (8/min)
+**Key insight:** We already HAVE Fear & Greed but only use it at macro level, not per-asset.
 
 ---
 
-### First Principles: What Makes Good Confluence?
+### Proposed: 3 TRULY Independent Signals
 
-**Principle 1: Indicators should measure DIFFERENT things**
-Bad confluence: MA10 + MA20 + MA50 (all measure trend, high correlation)
-Good confluence: MA20 (trend) + RSI (momentum) + ADX (strength)
-
-**Principle 2: Fast + Slow confirmation**
-- Slow indicator (MA20): Shows established trend
-- Fast indicator (MA10, 5-day ROC): Shows recent momentum
-- Confirmation: When fast and slow agree
-
-**Principle 3: Avoid indicator redundancy**
-- RSI and Stochastic measure similar things (momentum oscillators)
-- Pick one, not both
-
-**Principle 4: Keep it simple**
-- More indicators ≠ better signals
-- 2-3 well-chosen indicators > 5 correlated ones
-- Diminishing returns after 3 indicators
-
----
-
-### Recommended Approach: Calculate Locally
-
-**Why calculate instead of fetch:**
-1. **Zero additional API calls** - use existing time_series data
-2. **No rate limit risk** - local computation is instant
-3. **Same data quality** - we already have the closes
-4. **More flexible** - can experiment with parameters
-
-**Proposed confluence model (3 indicators):**
-
-| Signal | Source | Interpretation |
-|--------|--------|----------------|
-| **Trend** | Price vs MA20 | Position in trend (above/below) |
-| **Momentum** | MA10 vs MA20 | Trend acceleration (golden/death cross forming) |
-| **Strength** | RSI (14) | Overbought/oversold, momentum confirmation |
-
-**Why this combination:**
-- MA20: Current trend direction (already have)
-- MA10 vs MA20: Crossover signal - when MA10 > MA20, trend is strengthening
-- RSI: Momentum confirmation + extreme readings warning
-
-**Confluence scoring:**
 ```
-Bullish:
-  - Price > MA20 (+1)
-  - MA10 > MA20 (+1)
-  - RSI < 70 and rising OR RSI < 30 oversold (+1)
+NEW MODEL - Truly Independent:
+├── TREND:     Price vs MA20 (price-based baseline)
+├── VOLUME:    Volume vs avg volume (participation)
+└── SENTIMENT: Fear&Greed / Funding (psychology)
 
-Bearish:
-  - Price < MA20 (+1)
-  - MA10 < MA20 (+1)
-  - RSI > 30 and falling OR RSI > 70 overbought (+1)
-
-Score: 3/3 = Strong signal, 2/3 = Moderate, 1/3 or less = Weak/Neutral
+These measure DIFFERENT phenomena:
+- Trend: Where price IS
+- Volume: How much CONVICTION behind the move
+- Sentiment: What CROWD is thinking (contrarian signal)
 ```
 
 ---
 
-### Implementation Plan
+### Data Availability Analysis
 
-**Option A: Minimal change (recommended)**
-Calculate MA10 from existing time_series data:
-```typescript
-// Already have 25 days of closes from time_series
-const ma10 = closes.slice(0, 10).reduce((a,b) => a+b) / 10;
-const ma20 = closes.slice(0, 20).reduce((a,b) => a+b) / 20;
+#### Crypto (BTC, ETH)
 
-// New signal: MA10 vs MA20
-const maSignal = ma10 > ma20 ? "bullish" : ma10 < ma20 ? "bearish" : "neutral";
+| Metric | Source | API Call | Currently Used? |
+|--------|--------|----------|-----------------|
+| Price | CoinGecko OHLC | `/coins/{id}/ohlc` | ✅ Yes |
+| MA20 | Calculated | - | ✅ Yes |
+| 24h Volume | CoinGecko | `/coins/{id}` | ❌ **NO** |
+| Avg Volume | Need historical | `/coins/{id}/market_chart` | ❌ **NO** |
+| Funding Rate | Binance | `/fapi/v1/fundingRate` | ✅ Yes |
+| Fear & Greed | Alternative.me | `/fng` | ✅ Macro only |
+
+**Action:** Add volume from CoinGecko, use Fear & Greed for crypto signals
+
+#### Forex (USD/JPY, EUR/USD, etc.)
+
+| Metric | Source | API Call | Currently Used? |
+|--------|--------|----------|-----------------|
+| Price | TwelveData | `/quote` | ✅ Yes |
+| MA20 | TwelveData | `/time_series` | ✅ Yes |
+| RSI | TwelveData | `/rsi` | ✅ Yes |
+| Volume | N/A | Forex is OTC | ❌ Not meaningful |
+
+**Challenge:** Forex has no centralized volume. Alternatives:
+- Tick volume (less reliable)
+- DXY as sentiment proxy
+- Interest rate differentials
+
+#### Stocks (NVDA, AMD, etc.)
+
+| Metric | Source | API Call | Currently Used? |
+|--------|--------|----------|-----------------|
+| Price | TwelveData | `/quote` | ✅ Yes |
+| MA20 | TwelveData | `/time_series` | ✅ Yes |
+| Volume | TwelveData | `/time_series` includes volume | ❌ **NO** |
+| Avg Volume | Calculate from history | - | ❌ **NO** |
+| RSI | TwelveData | `/rsi` | ✅ Yes |
+
+**Action:** Extract volume from time_series response, calculate volume ratio
+
+---
+
+### Implementation Decision
+
+**For Crypto:**
+```
+Indicators:
+1. TREND:     Price vs MA20 (position)
+2. VOLUME:    24h Volume vs 7d Avg Volume (ratio > 1.2 = high)
+3. SENTIMENT: Fear & Greed Index (< 30 = bullish, > 70 = bearish)
+
+Scoring:
+- 3/3 agree: Strong signal
+- 2/3 agree: Moderate signal
+- 1/3 or mixed: Neutral
 ```
 
-**Changes required:**
-1. `twelvedata.ts`: Return MA10 alongside MA20 from time_series
-2. `types.ts`: Add `ma10` to `AssetData`
-3. `bias.ts`: Add MA crossover as third indicator
-4. Update confluence scoring to 3 indicators
-
-**Option B: Add TwelveData MACD (more API calls)**
+**For Stocks:**
 ```
-Pros:
-- MACD histogram is a leading indicator
-- Well-known signal
+Indicators:
+1. TREND:     Price vs MA20 (position)
+2. VOLUME:    Today Volume vs 20d Avg Volume (ratio)
+3. RSI:       Keep as momentum proxy (no better free option)
 
-Cons:
-- Extra API call per category
-- MACD can be calculated from EMAs locally
+Note: RSI is price-derived but serves as momentum proxy.
+Volume provides true independence.
 ```
 
-**Recommendation: Option A**
-- Zero additional API cost
-- Data already available
-- Covers trend + momentum + strength dimensions
+**For Forex:**
+```
+Indicators:
+1. TREND:     Price vs MA20 (position)
+2. DXY:       Dollar strength (for USD pairs)
+3. RSI:       Momentum proxy
+
+Note: Forex lacks volume. DXY provides cross-market context.
+```
 
 ---
 
-### Summary Decision
+### Rate Limit Impact
 
-**Question:** Should we fetch more indicators or calculate locally?
+**Current calls:** ~6 per run
+**With volume addition:**
+- Crypto: CoinGecko `/coins/{id}` already called, extract volume = +0 calls
+- Stocks: Volume in `/time_series` response, extract = +0 calls
 
-**Answer:** **Calculate locally** using existing data.
-
-**Rationale:**
-1. We already fetch 25 days of closes via `/time_series`
-2. MA10 can be computed from first 10 closes (no extra API call)
-3. This gives us 3 independent signals:
-   - Trend position (Price vs MA20)
-   - Trend momentum (MA10 vs MA20)
-   - Strength (RSI)
-4. Rate limit risk = 0 increase
-5. Implementation is ~20 lines of code change
+**Conclusion:** Zero additional API calls needed for volume!
 
 ---
 
-## Implementation Complete (2026-01-21)
+### Implementation Complete (2026-01-21)
 
-### Changes Made
+All steps implemented:
+1. [x] Extract volume from CoinGecko market_chart for crypto
+2. [x] Extract volume from TwelveData time_series for stocks
+3. [x] Calculate volume ratio (current / average)
+4. [x] Update bias calculation with Trend + Volume + Strength model
+5. [x] Update UI to show volume confirmation (↑ high, ↓ low, — normal)
 
-**1. Types (worker/src/types.ts)**
-- Added `ma10: number` to `AssetData` interface
-- Added `maCrossover: "bullish" | "bearish" | "neutral"` to `AssetSignal`
-- Added `indicators` object and `confluence` string to `AssetSignal`
+**Files Changed:**
+- `worker/src/types.ts` - Added volume, avgVolume, volumeSignal fields
+- `worker/src/data/binance.ts` - Fetch from CoinGecko market_chart
+- `worker/src/data/twelvedata.ts` - Extract volume from time_series
+- `worker/src/signals/bias.ts` - 3-indicator confluence: Trend + Volume + Strength
+- `worker/src/storage/d1.ts` - Store volumeSignal in data_json
+- `src/components/AssetTable.astro` - Vol column in UI
+- `src/pages/api/v1/signals.ts` - Volume indicators in API
+- `mcp-server/src/index.ts` - Volume in MCP output
 
-**2. Data Fetchers**
-- `worker/src/data/twelvedata.ts`: Now calculates both MA10 and MA20 from time_series data (no extra API calls)
-- `worker/src/data/binance.ts`: Updated CoinGecko and CoinCap functions to calculate both MA10 and MA20
+**New Confluence Model:**
+- **Trend**: Price vs MA20 (baseline)
+- **Volume**: Confirms or diverges from trend (truly independent!)
+- **Strength**: RSI/Funding rate
 
-**3. Bias Calculation (worker/src/signals/bias.ts)**
-- New 3-indicator confluence model:
-  - **Trend**: Price vs MA20 (±1% threshold)
-  - **Momentum**: MA10 vs MA20 (±0.5% threshold for crossover)
-  - **Strength**: RSI (45/55 thresholds in middle range) or Funding Rate
-- Bias rule: 2+ of 3 signals agree → that direction, else Neutral
-- Added confluence scoring (e.g., "3/3 bullish", "2/3 bearish", "mixed")
-
-**4. Storage (worker/src/storage/d1.ts)**
-- Updated `saveAssetSignals` to store full indicator breakdown in `data_json`
-
-**5. UI (src/components/AssetTable.astro)**
-- Added "MA X" (MA crossover) column with up/down arrows
-- Parses `data_json` to display crossover signal
-
-**6. APIs**
-- `src/pages/api/v1/signals.ts`: Updated to parse new indicator format with backwards compat
-- `mcp-server/src/index.ts`: Updated to show T:B/M:N/S:B format in get_signal output
-
-### Verification
-- TypeScript: All checks pass (worker, frontend, mcp-server)
-- Tests: All 87 tests pass
-- Build: Frontend builds successfully
-
-### No Database Migration Needed
-The new indicator data is stored in the existing `data_json` column - no schema changes required.
+Volume interpretation:
+- High volume (>1.2x avg) = confirms trend direction
+- Low volume (<0.8x avg) = diverges (weak conviction, potential reversal)
+- Normal volume = neutral
 
 ---
 
-## Previous Findings (Reference)
+## Previous Analysis (Superseded)
 
-### Signal Indicator Confluence (Previous Note)
-**Problem:** Raw values like `vsMA20: "above"` are not actionable.
-**Solution:** Expose **interpreted signals** showing confluence.
+The MA10 vs MA20 crossover implementation was a step forward but not truly independent.
+The new model focuses on:
+- **Price action** (what the market is doing)
+- **Volume** (conviction behind the move)
+- **Sentiment** (crowd psychology)
 
-### IMPORTANT: Rate Limit Distinction
-**External APIs (worker/src/data/*.ts) - RATE LIMITED, MUST BE SEQUENTIAL**
-**D1 Database (src/pages/*.astro) - NO RATE LIMITS, CAN PARALLELIZE**
-
-### Issues Encountered
-| Issue | Resolution |
-|-------|------------|
-| Binance API blocked by CF Workers | Migrated to CoinGecko API for crypto data |
-| CoinGecko requires User-Agent header | Added `User-Agent: EverInvests/1.0` to fetch |
-| TwelveData 8 req/min rate limit | Batch API, sequential calls with delays |
-
----
-*Update this file after every 2 view/browser/search operations*
+These three measure fundamentally different market phenomena.

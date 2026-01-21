@@ -806,12 +806,79 @@ Bias rule: 2+ of 3 signals agree → that direction, else Neutral
 - ✅ v1 API returns full indicator breakdown
 - ✅ BTC example: `{"confluence": "2/3 bullish", "indicators": {...}}`
 
+## Session: 2026-01-21 (Volume-Based Independent Metrics)
+
+### Volume-Based Confluence Model - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Problem Statement
+User feedback: "i need more independent metrics, think from first principle"
+
+MA10 vs MA20 crossover was NOT truly independent - all price-derived indicators have ~0.7-0.9 correlation (trend, momentum, RSI all move together when price moves).
+
+#### First Principles Analysis
+Identified truly independent information sources:
+- **Price action** (baseline) - what we have
+- **Volume** (HIGH independence) - measures participation/conviction, NOT price direction
+- **Sentiment** (HIGH independence) - Fear & Greed, Funding rates
+
+Volume data was ALREADY available in API responses:
+- CoinGecko `market_chart` includes `total_volumes`
+- TwelveData `time_series` includes `volume`
+
+#### Solution: Replace MA10/MA20 with Volume (zero extra API calls!)
+
+**New 3-Indicator Confluence Model:**
+| Indicator | Source | Interpretation |
+|-----------|--------|----------------|
+| **Trend** | Price vs MA20 | Position in trend (above/below) |
+| **Volume** | Vol vs Avg Vol | Confirms or diverges from trend |
+| **Strength** | RSI/Funding | Overbought/oversold |
+
+**Volume interpretation:**
+- High (>1.2x avg) → confirms trend direction (↑ in UI)
+- Low (<0.8x avg) → diverges, weak conviction (↓ in UI)
+- Normal → neutral (— in UI)
+
+**Bias rule:** 2+ of 3 signals agree → that direction, else Neutral
+
+#### Files Modified:
+- `worker/src/types.ts` - Replace ma10 with volume, avgVolume, volumeSignal
+- `worker/src/data/binance.ts` - Fetch from CoinGecko market_chart (prices + volumes)
+- `worker/src/data/twelvedata.ts` - Extract volume from time_series response
+- `worker/src/signals/bias.ts` - New confluence logic: Trend + Volume + Strength
+- `worker/src/storage/d1.ts` - Store volumeSignal in data_json
+- `src/components/AssetTable.astro` - Vol column with ↑/↓/— display
+- `src/pages/api/v1/signals.ts` - Volume indicators in API response
+- `mcp-server/src/index.ts` - Volume in MCP output (V:C/D/N)
+
+#### Verification:
+- TypeScript: ✅ All checks pass
+- Tests: ✅ 87/87 passing
+- Build: ✅ Frontend builds successfully
+- Deploy: ✅ Worker + Frontend deployed
+- Site: ✅ Vol column showing correctly on all pages
+
+#### API Response Example:
+```json
+{
+  "indicators": {
+    "trend": { "signal": "bearish", "position": "below" },
+    "volume": { "signal": "high", "confirmation": "confirms" },
+    "strength": { "signal": "bullish", "value": "0.0000%", "type": "fundingRate" }
+  },
+  "confluence": "2/3 bearish"
+}
+```
+
 ## 5-Question Reboot Check (2026-01-21)
 | Question | Answer |
 |----------|--------|
-| Where am I? | 3-Indicator Confluence DEPLOYED |
+| Where am I? | Volume-Based Confluence DEPLOYED |
 | Where am I going? | Monitor production, next feature |
-| What's the goal? | Better signal quality via confluence |
-| What have I learned? | Skill version mismatches break workflows |
-| What have I done? | Full stack deployed and verified |
+| What's the goal? | Truly independent metrics for better signals |
+| What have I learned? | Price-derived indicators are highly correlated; volume is truly independent |
+| What have I done? | Full stack deployed with volume-based model |
 

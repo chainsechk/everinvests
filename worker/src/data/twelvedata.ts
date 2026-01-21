@@ -31,9 +31,9 @@ interface TwelveDataQuote {
   datetime: string;
 }
 
-// Time series response for computing MA ourselves
+// Time series response for computing MA and volume
 interface TwelveDataTimeSeries {
-  values: Array<{ datetime: string; close: string }>;
+  values: Array<{ datetime: string; close: string; volume: string }>;
 }
 
 interface TwelveDataRSI {
@@ -112,17 +112,18 @@ async function getBatchQuotes(
   return { quotes, cached, cachedAt };
 }
 
-// Result type for MA calculations
-interface MAResult {
-  ma10: number;
+// Result type for MA and volume calculations
+interface MAVolumeResult {
   ma20: number;
+  volume: number;
+  avgVolume: number;
 }
 
-// Batch fetch time series for multiple symbols (to compute MA10 and MA20)
+// Batch fetch time series for multiple symbols (to compute MA20 and volume)
 async function getBatchTimeSeries(
   symbols: string[],
   apiKey: string
-): Promise<{ mas: Map<string, MAResult>; cached: boolean }> {
+): Promise<{ results: Map<string, MAVolumeResult>; cached: boolean }> {
   const symbolList = symbols.join(",");
   const url = `${TWELVEDATA_API}/time_series?symbol=${symbolList}&interval=1day&outputsize=25&apikey=${apiKey}`;
 
@@ -133,14 +134,16 @@ async function getBatchTimeSeries(
     TWELVEDATA_TIMEOUT_MS
   );
 
-  const mas = new Map<string, MAResult>();
+  const results = new Map<string, MAVolumeResult>();
 
-  // Helper to calculate MA10 and MA20 from time series
-  const calcMAs = (ts: TwelveDataTimeSeries): MAResult | null => {
+  // Helper to calculate MA20 and volume from time series
+  const calcMAAndVolume = (ts: TwelveDataTimeSeries): MAVolumeResult | null => {
     if (!ts.values || ts.values.length < 20) {
       console.warn(`[TwelveData] Insufficient values: ${ts.values?.length || 0}`);
       return null;
     }
+
+    // Extract closes for MA20
     const closes = ts.values.slice(0, 20).map(v => parseFloat(v.close));
     const validCloses = closes.filter(c => Number.isFinite(c) && c > 0);
     if (validCloses.length < 20) {
@@ -148,28 +151,40 @@ async function getBatchTimeSeries(
       return null;
     }
 
-    // Calculate MA10 from first 10 closes, MA20 from all 20
-    const ma10 = validCloses.slice(0, 10).reduce((sum, c) => sum + c, 0) / 10;
+    // Calculate MA20
     const ma20 = validCloses.reduce((sum, c) => sum + c, 0) / 20;
-
-    if (!Number.isFinite(ma10) || !Number.isFinite(ma20) || ma10 <= 0 || ma20 <= 0) {
+    if (!Number.isFinite(ma20) || ma20 <= 0) {
       return null;
     }
-    return { ma10, ma20 };
+
+    // Extract volumes - most recent is current day (index 0)
+    const volumes = ts.values.slice(0, 21).map(v => parseFloat(v.volume));
+    const validVolumes = volumes.filter(v => Number.isFinite(v) && v >= 0);
+
+    // Current volume is today's (most recent)
+    const volume = validVolumes.length > 0 ? validVolumes[0] : 0;
+
+    // Average volume from last 20 days (excluding today)
+    const historicalVolumes = validVolumes.slice(1, 21);
+    const avgVolume = historicalVolumes.length > 0
+      ? historicalVolumes.reduce((sum, v) => sum + v, 0) / historicalVolumes.length
+      : volume;
+
+    return { ma20, volume, avgVolume };
   };
 
   // Check for top-level error (rate limit, etc.)
   if (isTwelveDataError(data)) {
     console.error(`[TwelveData] Batch time_series error: ${(data as TwelveDataError).message}`);
-    return { mas, cached };
+    return { results, cached };
   }
 
   // Single symbol returns object directly with values at top level
   if (symbols.length === 1) {
     const singleData = data as TwelveDataTimeSeries | TwelveDataError;
     if (!isTwelveDataError(singleData)) {
-      const result = calcMAs(singleData);
-      if (result !== null) mas.set(symbols[0], result);
+      const result = calcMAAndVolume(singleData);
+      if (result !== null) results.set(symbols[0], result);
     }
   } else {
     // Multi-symbol: check response structure
@@ -187,14 +202,14 @@ async function getBatchTimeSeries(
         console.warn(`[TwelveData] Error for ${symbol}: ${(ts as TwelveDataError).message}`);
         continue;
       }
-      const result = calcMAs(ts as TwelveDataTimeSeries);
+      const result = calcMAAndVolume(ts as TwelveDataTimeSeries);
       if (result !== null) {
-        mas.set(symbol, result);
+        results.set(symbol, result);
       }
     }
   }
 
-  return { mas, cached };
+  return { results, cached };
 }
 
 // Batch fetch RSI for multiple symbols
@@ -268,8 +283,8 @@ async function fetchBatchData(
     await new Promise(r => setTimeout(r, waitTimeMs));
   }
 
-  const masResult = await getBatchTimeSeries(symbols, apiKey);
-  if (!masResult.cached) {
+  const timeSeriesResult = await getBatchTimeSeries(symbols, apiKey);
+  if (!timeSeriesResult.cached) {
     console.log(`[${category}] Waiting ${waitTimeMs/1000}s for rate limit...`);
     await new Promise(r => setTimeout(r, waitTimeMs));
   }
@@ -278,7 +293,7 @@ async function fetchBatchData(
 
   // Count cache hits
   if (quotesResult.cached) totalCacheHits++;
-  if (masResult.cached) totalCacheHits++;
+  if (timeSeriesResult.cached) totalCacheHits++;
   if (rsisResult.cached) totalCacheHits++;
 
   // Check staleness
@@ -293,21 +308,23 @@ async function fetchBatchData(
   // Combine results for each symbol
   for (const symbol of symbols) {
     const price = quotesResult.quotes.get(symbol);
-    const maData = masResult.mas.get(symbol);
+    const tsData = timeSeriesResult.results.get(symbol);
     const rsi = rsisResult.rsis.get(symbol);
 
-    if (price !== undefined && maData !== undefined && rsi !== undefined) {
+    if (price !== undefined && tsData !== undefined && rsi !== undefined) {
       results.push({
         ticker: symbol,
         price,
-        ma10: maData.ma10,
-        ma20: maData.ma20,
+        ma20: tsData.ma20,
+        volume: tsData.volume,
+        avgVolume: tsData.avgVolume,
         secondaryIndicator: rsi,
         timestamp,
       });
-      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma10=${maData.ma10.toFixed(2)}, ma20=${maData.ma20.toFixed(2)}, rsi=${rsi.toFixed(1)}`);
+      const volRatio = tsData.avgVolume > 0 ? (tsData.volume / tsData.avgVolume).toFixed(2) : "N/A";
+      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma20=${tsData.ma20.toFixed(2)}, vol=${volRatio}x avg, rsi=${rsi.toFixed(1)}`);
     } else {
-      console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ma=${maData !== undefined}, rsi=${rsi !== undefined}`);
+      console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ts=${tsData !== undefined}, rsi=${rsi !== undefined}`);
     }
   }
 

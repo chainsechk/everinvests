@@ -28,10 +28,10 @@ interface QualityFlags {
 }
 
 interface IndicatorData {
-  maCrossover?: "bullish" | "bearish" | "neutral";
+  volumeSignal?: "high" | "low" | "normal";
   indicators?: {
     trend: "bullish" | "bearish" | "neutral";
-    momentum: "bullish" | "bearish" | "neutral";
+    volume: "confirms" | "diverges" | "neutral";
     strength: "bullish" | "bearish" | "neutral";
   };
   confluence?: string;
@@ -102,15 +102,15 @@ function getMaClass(value: string | null): string {
   return "text-txt-muted bg-void-100/50 border-void-200/30";
 }
 
-function getCrossoverClass(value: string | null | undefined): string {
-  if (value === "bullish") return "text-bullish bg-bullish/10 border-bullish/20";
-  if (value === "bearish") return "text-bearish bg-bearish/10 border-bearish/20";
+function getVolumeClass(value: string | null | undefined): string {
+  if (value === "high") return "text-bullish bg-bullish/10 border-bullish/20";
+  if (value === "low") return "text-mixed bg-mixed/10 border-mixed/20";
   return "text-txt-muted bg-void-100/50 border-void-200/30";
 }
 
-function formatCrossover(value: string | null | undefined): string {
-  if (value === "bullish") return "↑";
-  if (value === "bearish") return "↓";
+function formatVolume(value: string | null | undefined): string {
+  if (value === "high") return "↑";
+  if (value === "low") return "↓";
   return "—";
 }
 
@@ -127,7 +127,7 @@ function getAssetUrl(ticker: string, cat: string): string {
         <th>Ticker</th>
         <th>Price</th>
         <th>vs MA20</th>
-        <th title="MA10 vs MA20 crossover">MA X</th>
+        <th title="Volume vs 20d average">Vol</th>
         <th>{secondaryLabel[category]}</th>
         <th>Bias</th>
       </tr>
@@ -176,11 +176,11 @@ function getAssetUrl(ticker: string, cat: string): string {
               <span
                 class:list={[
                   "inline-flex px-2 py-0.5 rounded text-xs font-medium border",
-                  getCrossoverClass(indicatorData.maCrossover)
+                  getVolumeClass(indicatorData.volumeSignal)
                 ]}
-                title={indicatorData.maCrossover ? `MA10 vs MA20: ${indicatorData.maCrossover}` : "MA crossover"}
+                title={indicatorData.volumeSignal ? `Volume vs avg: ${indicatorData.volumeSignal}` : "Volume signal"}
               >
-                {formatCrossover(indicatorData.maCrossover)}
+                {formatVolume(indicatorData.volumeSignal)}
               </span>
             </td>
             <td>

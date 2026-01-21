@@ -113,22 +113,22 @@ export async function GET(context: APIContext) {
           // Use structured indicator data if available, fall back to parsing reasoning
           const indicators = assetData.indicators || null;
           const confluence = assetData.confluence || null;
-          const maCrossover = assetData.maCrossover || null;
+          const volumeSignal = assetData.volumeSignal || null;
 
           // If indicators not available, try parsing old format for backwards compat
           let trendSignal = indicators?.trend || null;
-          let momentumSignal = indicators?.momentum || null;
+          let volumeConfirmation = indicators?.volume || null;
           let strengthSignal = indicators?.strength || null;
 
           if (!indicators && assetData.reasoning) {
             const reasoning = assetData.reasoning;
-            // Try new format first: "Trend: bullish, Momentum: neutral, Strength: bearish"
+            // New format: "Trend: bullish, Volume: confirms, Strength: bearish"
             const trendMatch = reasoning.match(/Trend:\s*(\w+)/);
-            const momentumMatch = reasoning.match(/Momentum:\s*(\w+)/);
+            const volumeMatch = reasoning.match(/Volume:\s*(\w+)/);
             const strengthMatch = reasoning.match(/Strength:\s*(\w+)/);
 
             if (trendMatch) trendSignal = trendMatch[1];
-            if (momentumMatch) momentumSignal = momentumMatch[1];
+            if (volumeMatch) volumeConfirmation = volumeMatch[1];
             if (strengthMatch) strengthSignal = strengthMatch[1];
 
             // Fall back to old format: "MA20: bullish, Secondary: neutral"
@@ -145,9 +145,9 @@ export async function GET(context: APIContext) {
           // Count signals for confluence if not already provided
           let computedConfluence = confluence;
           if (!computedConfluence) {
-            const signals = [trendSignal, momentumSignal, strengthSignal].filter(Boolean);
-            const bullish = signals.filter(s => s === "bullish").length;
-            const bearish = signals.filter(s => s === "bearish").length;
+            const signals = [trendSignal, volumeConfirmation, strengthSignal].filter(Boolean);
+            const bullish = signals.filter(s => s === "bullish" || s === "confirms").length;
+            const bearish = signals.filter(s => s === "bearish" || s === "diverges").length;
             if (bullish > bearish) {
               computedConfluence = `${bullish}/${signals.length} bullish`;
             } else if (bearish > bullish) {
@@ -166,9 +166,9 @@ export async function GET(context: APIContext) {
                 signal: trendSignal,
                 position: a.vs_20d_ma, // "above" or "below"
               },
-              momentum: {
-                signal: momentumSignal,
-                maCrossover: maCrossover, // "bullish", "bearish", or "neutral"
+              volume: {
+                signal: volumeSignal, // "high", "low", or "normal"
+                confirmation: volumeConfirmation, // "confirms", "diverges", or "neutral"
               },
               strength: {
                 signal: strengthSignal,
