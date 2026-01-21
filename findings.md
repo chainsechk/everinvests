@@ -90,6 +90,20 @@ CREATE TABLE signals (
 | Worker secrets vs Pages secrets | Must deploy secrets to both separately |
 | Binance funding rate wrong domain | Fixed: `fapi.binance.com` not `api.binance.com` |
 
+## IMPORTANT: Rate Limit Distinction
+**External APIs (worker/src/data/*.ts) - RATE LIMITED, MUST BE SEQUENTIAL:**
+- TwelveData: 8 req/min - forex/stocks price, SMA, RSI
+- Alpha Vantage: 25 req/day - DXY, VIX, yields
+- CoinGecko: Soft limits - crypto price/MA
+- These calls in worker MUST remain sequential with delays!
+
+**D1 Database (src/pages/*.astro) - NO RATE LIMITS, CAN PARALLELIZE:**
+- All queries to `Astro.locals.runtime?.env?.DB` are local SQLite
+- Safe to use Promise.all() for D1 queries
+- Example: performance.astro parallelizes D1 queries safely
+
+**Don't confuse these two!** Future agents: check if code is calling D1 or external APIs before deciding on parallelization.
+
 ## Resources
 - Implementation plan: `docs/plans/2026-01-14-signal-api-foundation.md`
 - Design doc: `docs/plans/2026-01-14-everinvests-design.md`

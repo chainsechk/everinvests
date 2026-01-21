@@ -33,7 +33,9 @@ if (db) {
   const today = new Date().toISOString().split("T")[0];
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  // Fetch stats
+  // NOTE: These are D1 (Cloudflare SQLite) queries - NO rate limits, safe to parallelize.
+  // This is different from worker/src/data/*.ts which call external APIs (TwelveData, Alpha Vantage)
+  // that ARE rate-limited and MUST remain sequential. Don't confuse the two!
   const [signals, accuracy, signalsToday, categories] = await Promise.all([
     db.prepare("SELECT COUNT(*) as count FROM signals").first<{ count: number }>(),
     db.prepare(`SELECT AVG(correct) * 100 as rate FROM signal_outcomes WHERE checked_at >= ?`).bind(thirtyDaysAgo).first<{ rate: number | null }>(),
