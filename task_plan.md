@@ -142,9 +142,21 @@ Security and performance improvements identified and fixed:
 - [x] **FEATURE:** Added category-specific RSS feeds via ?category=crypto|forex|stocks
 - Commit: `cd4582d fix: security and performance improvements from critique review`
 
-### Phase 5: Agent-Native Features - PENDING
-- [ ] Task 11: MCP Server
-- [ ] Task 12: Structured API
+### Phase 5: Agent-Native Features - COMPLETE (2026-01-21)
+- [x] Task 11: MCP Server
+  - Created mcp-server/ with Cloudflare Workers deployment
+  - Tools: get_signal, get_macro, get_history, get_accuracy
+  - Resources: categories listing with update schedules
+  - Durable Object for persistent MCP agent state
+  - Deployed: https://everinvests-mcp.duyuefeng0708.workers.dev
+  - Connect via: `/mcp` endpoint (Streamable HTTP transport)
+- [x] Task 12: Structured API
+  - GET /api/v1/ - API documentation with all endpoints
+  - GET /api/v1/signals - Consolidated signals endpoint
+    - Supports ?category=crypto,forex,stocks filtering
+    - Returns macro context + signal data + assets
+    - 5-min cache, CORS enabled
+  - Commits: `169fbbe`, `d946172`
 
 ### Phase 6: Social Distribution - LOW PRIORITY (LAST)
 - [ ] Task 4: X/Twitter Auto-Posting (via Zapier free tier)

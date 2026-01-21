@@ -701,12 +701,60 @@
 - Pages: https://3a1f516e.everinvests.pages.dev
 - Worker: version 3f6b4de7-9e6a-41ec-9c3e-9bcd33e0db3c
 
+## Session: 2026-01-21 (Phase 5)
+
+### Phase 5: Agent-Native Features - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Task 11: MCP Server
+- Created `mcp-server/` directory with full Cloudflare Workers MCP implementation
+- Uses `agents/mcp` package with `McpAgent` class
+- Uses `@modelcontextprotocol/sdk` for MCP protocol
+- Durable Object `EverInvestsMCP` for persistent state
+- **Tools implemented:**
+  - `get_signal` - Get latest signal for crypto/forex/stocks
+  - `get_macro` - Get current macro market context
+  - `get_history` - Get recent signal history with outcomes
+  - `get_accuracy` - Get 30-day accuracy statistics
+- **Resources:**
+  - `categories` - List available categories with update schedules
+- Deployed: https://everinvests-mcp.duyuefeng0708.workers.dev/mcp
+
+#### Task 12: Structured API v1
+- Created `src/pages/api/v1/index.ts` - API documentation
+- Created `src/pages/api/v1/signals.ts` - Consolidated signals endpoint
+- Features:
+  - Category filtering via `?category=crypto,forex,stocks`
+  - Returns macro context + all signal data
+  - 5-minute cache, CORS enabled
+  - Links to MCP, RSS, Telegram, website
+
+#### Bug Fix During Implementation
+- Initial code used wrong column names
+- `signals` table has no `summary` column (stored in `output_json`)
+- `asset_signals` uses `vs_20d_ma` not `ma20`
+- Fixed both MCP server and v1 API
+
+#### Files Created:
+- mcp-server/package.json
+- mcp-server/wrangler.toml
+- mcp-server/tsconfig.json
+- mcp-server/src/index.ts
+- src/pages/api/v1/index.ts
+- src/pages/api/v1/signals.ts
+
+#### Commits:
+- `169fbbe` - feat: add Phase 5 agent-native features
+- `d946172` - fix: correct column names in MCP server and v1 API
+
 ## 5-Question Reboot Check (2026-01-21)
 | Question | Answer |
 |----------|--------|
-| Where am I? | Growth Plan Phase 4 COMPLETE, Critique Review COMPLETE |
-| Where am I going? | Phase 5: MCP Server + Structured API |
-| What's the goal? | Agent-native features for programmatic access |
-| What have I learned? | Security review critical before production |
-| What have I done? | Fixed security, performance, and feature gaps in Phase 1-4 |
+| Where am I? | Growth Plan Phase 5 COMPLETE |
+| Where am I going? | Phase 6: X/Twitter (low priority) or new tasks |
+| What's the goal? | Agent-native features for programmatic access - DONE |
+| What have I learned? | Schema mismatch caught during testing |
+| What have I done? | MCP Server + Structured API deployed and working |
 
