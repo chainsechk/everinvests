@@ -1,4 +1,5 @@
-import { calculateAssetBias, calculateCategoryBias, extractLevels, identifyRisks, type BiasContext } from "../signals";
+import { calculateAssetBias, calculateCategoryBias, extractLevels, identifyRisks, type BiasContext, type BenchmarkPrices } from "../signals";
+import { SECTOR_ETF_MAP } from "../data/twelvedata";
 import type { AssetData, AssetSignal, Bias, Category, MacroSignal, MacroData } from "../types";
 import type { SkillSpec } from "./types";
 
@@ -7,6 +8,8 @@ export interface ComputeBiasInput {
   assetData: AssetData[];
   macroSignal?: MacroSignal;
   macroData?: MacroData; // Raw macro data for F&G, etc.
+  // Stocks Tier 2: benchmark data for relative strength
+  benchmarks?: BenchmarkPrices;
 }
 
 export interface ComputeBiasOutput {
@@ -18,7 +21,7 @@ export interface ComputeBiasOutput {
 
 export const computeBiasSkill: SkillSpec<ComputeBiasInput, ComputeBiasOutput> = {
   id: "compute_bias",
-  version: "3", // Bumped for asset-class specific indicators
+  version: "4", // Bumped for Tier 2 relative strength
   async run({ input }) {
     // Build context for asset-class specific calculations
     const context: BiasContext = {
@@ -26,6 +29,9 @@ export const computeBiasSkill: SkillSpec<ComputeBiasInput, ComputeBiasOutput> = 
       fearGreed: input.macroData?.fearGreed,
       dxyBias: input.macroSignal?.dxyBias,
       yieldCurve: input.macroSignal?.yieldCurve,
+      // Stocks Tier 2: Include benchmark data for relative strength
+      benchmarks: input.benchmarks,
+      sectorEtfMap: SECTOR_ETF_MAP,
     };
 
     // Calculate per-asset bias with context

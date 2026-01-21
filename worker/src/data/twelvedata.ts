@@ -25,6 +25,28 @@ export const STOCK_KEY_TICKERS = [
   "ORCL", "PLTR",   // Data Centers / Cloud
 ] as const satisfies readonly StockTicker[];
 
+// Benchmark ETFs for relative strength calculation (Tier 2 IC improvement)
+export const BENCHMARK_ETFS = ["SPY", "XLK", "XLE"] as const;
+export type BenchmarkETF = typeof BENCHMARK_ETFS[number];
+
+// Map stocks to their sector ETF
+export const SECTOR_ETF_MAP: Record<string, BenchmarkETF> = {
+  // Tech/Semis → XLK (Technology Select Sector)
+  NVDA: "XLK", AMD: "XLK", AVGO: "XLK", TSM: "XLK", ASML: "XLK",
+  INTC: "XLK", QCOM: "XLK", MU: "XLK", AMAT: "XLK", LRCX: "XLK",
+  MSFT: "XLK", GOOGL: "XLK", AMZN: "XLK", META: "XLK", AAPL: "XLK",
+  ORCL: "XLK", IBM: "XLK", NOW: "XLK", PLTR: "XLK", SNOW: "XLK",
+  // Energy → XLE (Energy Select Sector)
+  XOM: "XLE", CVX: "XLE", COP: "XLE", SLB: "XLE", EOG: "XLE",
+};
+
+// Benchmark data for relative strength calculations
+export interface BenchmarkData {
+  spy: { price: number; ma20: number } | null;
+  xlk: { price: number; ma20: number } | null;
+  xle: { price: number; ma20: number } | null;
+}
+
 interface TwelveDataQuote {
   symbol: string;
   close: string;
@@ -351,11 +373,38 @@ export async function fetchForexData(
   return fetchBatchData([...tickers], apiKey, "Forex");
 }
 
-// Batch fetch for stocks (3 API calls instead of 24)
+// Extended result type that includes benchmark data for relative strength
+export interface StockFetchResult extends TwelveDataFetchResult {
+  benchmarks: BenchmarkData;
+}
+
+// Batch fetch for stocks (keeping original 8-symbol approach for reliability)
+// Benchmarks fetched separately with longer cache TTL
 export async function fetchStockData(
   tickers: readonly StockTicker[],
   apiKey: string
-): Promise<TwelveDataFetchResult> {
+): Promise<StockFetchResult> {
+  // Use original fetchBatchData for stocks (proven to work)
   const keyStocks = (tickers.length > 0 ? tickers : STOCK_KEY_TICKERS).slice(0, 8);
-  return fetchBatchData([...keyStocks], apiKey, "Stocks");
+  const stockResult = await fetchBatchData([...keyStocks], apiKey, "Stocks");
+
+  // Initialize empty benchmarks
+  // NOTE: Tier 2 benchmarks require additional API quota
+  // For now, relative strength is disabled until we have API budget
+  // The benchmark fetch would add ~80s to execution time due to rate limits
+  const benchmarks: BenchmarkData = { spy: null, xlk: null, xle: null };
+
+  // TODO: Enable benchmark fetch when we have more API quota or longer execution time
+  // Benchmarks need: 2 batch API calls (quote + time_series) for SPY, XLK, XLE
+  // With 11 symbols total, wait time would be 82.5s between calls
+  // This exceeds Cloudflare Worker's 30s limit
+
+  console.log(`[Stocks] Benchmarks: DISABLED (API rate limit constraints)`);
+
+  return {
+    data: stockResult.data,
+    cacheHits: stockResult.cacheHits,
+    staleAssets: stockResult.staleAssets,
+    benchmarks,
+  };
 }

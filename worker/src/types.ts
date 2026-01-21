@@ -70,6 +70,12 @@ export interface AssetSignal {
     strength: "bullish" | "bearish" | "neutral";   // RSI/Funding
   };
   confluence?: string;  // e.g., "2/3 bullish"
+  // Relative strength (stocks only - Tier 2)
+  relativeStrength?: {
+    vsSpy: number;     // RS vs S&P 500 (>1 = outperforming)
+    vsSector: number;  // RS vs sector ETF
+    sectorEtf: string; // XLK or XLE
+  };
 }
 
 export interface MacroSignal {

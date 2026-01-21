@@ -1,5 +1,5 @@
 import { fetchCryptoData, fetchForexData, fetchStockData } from "../data";
-import { STOCK_KEY_TICKERS } from "../data/twelvedata";
+import { STOCK_KEY_TICKERS, type BenchmarkData } from "../data/twelvedata";
 import type { AssetData, Category } from "../types";
 import { CRYPTO_ASSETS, FOREX_ASSETS } from "../types";
 import type { SkillSpec } from "./types";
@@ -10,6 +10,8 @@ export interface FetchAssetDataOutput {
   missingTickers: string[];
   staleAssets: string[];
   cacheHits: number;
+  // Stocks Tier 2: benchmark data for relative strength
+  benchmarks?: BenchmarkData;
 }
 
 export const fetchAssetDataSkill: SkillSpec<void, FetchAssetDataOutput> = {
@@ -47,6 +49,12 @@ export const fetchAssetDataSkill: SkillSpec<void, FetchAssetDataOutput> = {
       assetData = result.data;
       staleAssets = result.staleAssets;
       cacheHits = result.cacheHits;
+
+      const fetched = new Set(assetData.map((a) => a.ticker));
+      const missingTickers = expectedTickers.filter((t) => !fetched.has(t));
+
+      // Include benchmark data for stocks (Tier 2 relative strength)
+      return { assetData, expectedTickers, missingTickers, staleAssets, cacheHits, benchmarks: result.benchmarks };
     } else {
       throw new Error(`Unsupported category: ${ctx.category}`);
     }

@@ -8,7 +8,58 @@ Build a complete market signal broadcast site with automated daily signals for C
 
 ---
 
-## Tier 1 IC Fixes (2026-01-21) - COMPLETE
+## Tier 2 IC Fixes (2026-01-21) - PARTIAL
+
+### Problem Statement
+Agent critique revealed stocks could benefit from relative strength analysis:
+- Compare individual stocks to SPY (broad market)
+- Compare individual stocks to sector ETF (XLK/XLE)
+
+### Implementation Status
+
+| Task | Status | Notes |
+|------|--------|-------|
+| 1. Sector ETF mapping | ✅ complete | XLK for tech, XLE for energy |
+| 2. Relative strength calculation | ✅ complete | RS = (stock vs MA) / (benchmark vs MA) |
+| 3. 4-indicator bias model | ✅ complete | Trend + Volume + RSI + RS |
+| 4. Benchmark data fetch | ⚠️ blocked | TwelveData rate limit exceeded |
+
+### Rate Limit Constraint
+TwelveData free tier: 8 API credits/minute
+- Current stocks: 8 symbols × 3 calls = 24 credits (needs 90s total)
+- With benchmarks: 11 symbols × 3 calls = 33 credits (needs 165s total)
+- Cloudflare Worker limit: 30 seconds max execution
+
+### Workaround Options (Future)
+1. **Separate cron for benchmarks** - Fetch SPY/XLK/XLE hourly with longer cache
+2. **Different data source** - Alpha Vantage for ETFs (separate quota)
+3. **Reduce stocks** - Fetch 5 stocks + 3 benchmarks = 8 symbols
+4. **Use macro proxy** - DXY strength as RS proxy (already available)
+
+### Files Changed
+- `worker/src/data/twelvedata.ts` - Sector ETF map, benchmark types, StockFetchResult
+- `worker/src/signals/bias.ts` - BenchmarkPrices, RS calculation, 4-indicator model
+- `worker/src/types.ts` - relativeStrength field on AssetSignal
+- `worker/src/skills/computeBias.ts` - v4 with benchmark context
+- `worker/src/skills/fetchAssetData.ts` - benchmarks output
+- `worker/src/workflows/category.ts` - Pass benchmarks to bias
+
+### Current State
+- Code is complete and type-safe
+- Benchmark fetch disabled due to rate limits
+- Relative strength will be null until workaround implemented
+- Stocks workflow continues to work normally
+
+---
+
+## Tier 1 IC Fixes (2026-01-21) - COMPLETE ✓
+
+### Verification (2026-01-21)
+- Crypto page: "F&G" column ✓ (shows F&G:24)
+- Forex page: "Curve" column ✓ (shows YC:normal)
+- API v1: crypto uses `fearGreed` type ✓
+- API v1: forex uses `yieldCurve` type ✓
+- All pages render correctly ✓
 
 ### Problem Statement
 Agent critique revealed we're using wrong indicators for each asset class:

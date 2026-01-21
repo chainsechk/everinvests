@@ -17,12 +17,22 @@
 
 import type { AssetData, AssetSignal, Bias, Category, MacroSignal } from "../types";
 
+// Benchmark data for relative strength (stocks Tier 2)
+export interface BenchmarkPrices {
+  spy: { price: number; ma20: number } | null;
+  xlk: { price: number; ma20: number } | null;
+  xle: { price: number; ma20: number } | null;
+}
+
 // Context for asset-class specific calculations
 export interface BiasContext {
   macroSignal?: MacroSignal;
   fearGreed?: number;  // 0-100
   dxyBias?: "strong" | "weak" | "neutral";
   yieldCurve?: "normal" | "flat" | "inverted";
+  // Stocks Tier 2: Relative strength benchmarks
+  benchmarks?: BenchmarkPrices;
+  sectorEtfMap?: Record<string, string>;  // ticker -> ETF (XLK/XLE)
 }
 
 type SignalDirection = "bullish" | "bearish" | "neutral";
@@ -121,6 +131,32 @@ function calculateStrengthSignal(
   if (indicator > 70) return "bearish";
   if (indicator < 45) return "bearish";
   if (indicator > 55) return "bullish";
+  return "neutral";
+}
+
+// Calculate relative strength: (stock vs MA) / (benchmark vs MA)
+// RS > 1.02: outperforming, RS < 0.98: underperforming
+function calculateRelativeStrength(
+  stockPrice: number,
+  stockMA20: number,
+  benchmarkPrice: number | undefined,
+  benchmarkMA20: number | undefined
+): number | null {
+  if (!benchmarkPrice || !benchmarkMA20 || benchmarkMA20 <= 0 || stockMA20 <= 0) {
+    return null;
+  }
+  const stockRatio = stockPrice / stockMA20;
+  const benchRatio = benchmarkPrice / benchmarkMA20;
+  return stockRatio / benchRatio;
+}
+
+// Convert relative strength to directional signal
+function rsToSignal(rs: number | null): SignalDirection {
+  if (rs === null) return "neutral";
+  // RS > 1.02: stock outperforming benchmark → bullish
+  // RS < 0.98: stock underperforming benchmark → bearish
+  if (rs > 1.02) return "bullish";
+  if (rs < 0.98) return "bearish";
   return "neutral";
 }
 
@@ -241,20 +277,85 @@ export function calculateAssetBias(
     reasoningSecond = `Volume: ${secondConfirmation}`;
   }
 
+  // Calculate relative strength for stocks (Tier 2)
+  let relativeStrength: AssetSignal["relativeStrength"];
+  let rsSignal: SignalDirection = "neutral";
+
+  if (category === "stocks" && context?.benchmarks) {
+    const { benchmarks, sectorEtfMap } = context;
+    const sectorEtf = sectorEtfMap?.[data.ticker] || "XLK";
+
+    // RS vs SPY (broad market)
+    const rsSpy = calculateRelativeStrength(
+      data.price, data.ma20,
+      benchmarks.spy?.price, benchmarks.spy?.ma20
+    );
+
+    // RS vs sector ETF
+    const sectorData = sectorEtf === "XLE" ? benchmarks.xle : benchmarks.xlk;
+    const rsSector = calculateRelativeStrength(
+      data.price, data.ma20,
+      sectorData?.price, sectorData?.ma20
+    );
+
+    if (rsSpy !== null || rsSector !== null) {
+      relativeStrength = {
+        vsSpy: rsSpy ?? 1,
+        vsSector: rsSector ?? 1,
+        sectorEtf,
+      };
+
+      // Use RS vs SPY for signal (more IC than sector RS)
+      rsSignal = rsToSignal(rsSpy);
+    }
+  }
+
+  // For stocks: incorporate RS into bias (4-indicator model)
+  // Combine: Trend, Volume, Strength (RSI), RS vs SPY
+  let finalBias: Bias;
+  let finalConfluence: string;
+
+  if (category === "stocks" && rsSignal !== "neutral") {
+    // Stocks with RS: 4 signals, need 3+ for direction, else check 2+
+    const signals = [trendSignal, secondSignal, strengthSignal, rsSignal];
+    const bullishCount = signals.filter(s => s === "bullish").length;
+    const bearishCount = signals.filter(s => s === "bearish").length;
+
+    if (bullishCount >= 3) finalBias = "Bullish";
+    else if (bearishCount >= 3) finalBias = "Bearish";
+    else if (bullishCount >= 2 && bearishCount < 2) finalBias = "Bullish";
+    else if (bearishCount >= 2 && bullishCount < 2) finalBias = "Bearish";
+    else finalBias = "Neutral";
+
+    const dominantCount = Math.max(bullishCount, bearishCount);
+    const dominantDir = bullishCount > bearishCount ? "bullish" : bearishCount > bullishCount ? "bearish" : "mixed";
+    finalConfluence = dominantDir === "mixed" ? "mixed" : `${dominantCount}/4 ${dominantDir}`;
+  } else {
+    finalBias = combineBias(trendSignal, secondSignal, strengthSignal);
+    finalConfluence = formatConfluence(trendSignal, secondSignal, strengthSignal);
+  }
+
+  // Add RS to reasoning for stocks
+  let fullReasoning = `Trend: ${trendSignal}, ${reasoningSecond}, Strength: ${strengthSignal}`;
+  if (relativeStrength) {
+    fullReasoning += `, RS: ${rsSignal}`;
+  }
+
   return {
     ticker: data.ticker,
     price: data.price,
-    bias,
+    bias: finalBias,
     vsMA20: data.price > data.ma20 ? "above" : "below",
     volumeSignal,
     secondaryInd: secondaryDisplay,
-    reasoning: `Trend: ${trendSignal}, ${reasoningSecond}, Strength: ${strengthSignal}`,
+    reasoning: fullReasoning,
     indicators: {
       trend: trendSignal,
       volume: secondConfirmation as VolumeConfirmation,
       strength: strengthSignal,
     },
-    confluence: formatConfluence(trendSignal, secondSignal, strengthSignal),
+    confluence: finalConfluence,
+    relativeStrength,
   };
 }
 
