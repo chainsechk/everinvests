@@ -8,16 +8,15 @@ interface SignalRow {
   date: string;
   time_slot: string;
   bias: string;
-  summary: string;
   data_json: string | null;
   output_json: string | null;
 }
 
 interface AssetSignalRow {
   ticker: string;
-  bias: string;
-  price: number;
-  ma20: number;
+  bias: string | null;
+  price: number | null;
+  vs_20d_ma: string | null;
   data_json: string | null;
 }
 
@@ -84,7 +83,7 @@ export async function GET(context: APIContext) {
     for (const category of categories) {
       const signal = await db
         .prepare(
-          `SELECT id, category, date, time_slot, bias, summary, data_json, output_json
+          `SELECT id, category, date, time_slot, bias, data_json, output_json
            FROM signals
            WHERE category = ?
            ORDER BY date DESC, time_slot DESC
@@ -96,7 +95,7 @@ export async function GET(context: APIContext) {
       if (signal) {
         const assets = await db
           .prepare(
-            `SELECT ticker, bias, price, ma20, data_json
+            `SELECT ticker, bias, price, vs_20d_ma, data_json
              FROM asset_signals
              WHERE signal_id = ?`
           )
@@ -110,7 +109,7 @@ export async function GET(context: APIContext) {
           bias: signal.bias,
           date: signal.date,
           timeSlot: signal.time_slot,
-          summary: signal.summary || output.summary,
+          summary: output.summary || null,
           levels: output.levels,
           triggers: output.triggers,
           risks: output.risks,
@@ -118,8 +117,7 @@ export async function GET(context: APIContext) {
             ticker: a.ticker,
             bias: a.bias,
             price: a.price,
-            ma20: a.ma20,
-            vsMA20: a.ma20 > 0 ? ((a.price / a.ma20 - 1) * 100).toFixed(2) + "%" : null,
+            vsMA20: a.vs_20d_ma,
             ...(a.data_json ? JSON.parse(a.data_json) : {}),
           })),
           qualityFlags: data.qualityFlags || [],

@@ -11,16 +11,15 @@ interface SignalRow {
   date: string;
   time_slot: string;
   bias: string;
-  summary: string;
   data_json: string | null;
   output_json: string | null;
 }
 
 interface AssetSignalRow {
   ticker: string;
-  bias: string;
-  price: number;
-  ma20: number;
+  bias: string | null;
+  price: number | null;
+  vs_20d_ma: string | null;
   data_json: string | null;
 }
 
@@ -61,7 +60,7 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
       },
       async ({ category }) => {
         const signal = await this.env.DB.prepare(
-          `SELECT s.id, s.category, s.date, s.time_slot, s.bias, s.summary, s.data_json, s.output_json
+          `SELECT s.id, s.category, s.date, s.time_slot, s.bias, s.data_json, s.output_json
            FROM signals s
            WHERE s.category = ?
            ORDER BY s.date DESC, s.time_slot DESC
@@ -76,13 +75,13 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
 
         // Get asset signals
         const assets = await this.env.DB.prepare(
-          `SELECT ticker, bias, price, ma20, data_json
+          `SELECT ticker, bias, price, vs_20d_ma, data_json
            FROM asset_signals
            WHERE signal_id = ?`
         ).bind(signal.id).all<AssetSignalRow>();
 
         const assetList = (assets.results || []).map(a =>
-          `  - ${a.ticker}: ${a.bias} (price: $${a.price.toLocaleString()}, vs MA20: ${((a.price / a.ma20 - 1) * 100).toFixed(1)}%)`
+          `  - ${a.ticker}: ${a.bias} (price: $${a.price?.toLocaleString() || "N/A"}, vs MA20: ${a.vs_20d_ma || "N/A"})`
         ).join("\n");
 
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};
@@ -94,7 +93,7 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
 
 **Bias:** ${signal.bias}
 
-**Summary:** ${signal.summary || output.summary || "No summary available"}
+**Summary:** ${output.summary || "No summary available"}
 
 **Assets:**
 ${assetList || "No asset data"}
