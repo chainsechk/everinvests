@@ -1,0 +1,23 @@
+# mcp-server/wrangler.toml
+name = "everinvests-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-01-14"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding (read-only access to signals)
+[[d1_databases]]
+binding = "DB"
+database_name = "everinvests-db"
+database_id = "92386766-33b5-4dc8-a594-abf6fc4e6600"
+
+# Durable Object for MCP agent state
+[[durable_objects.bindings]]
+name = "MCP_AGENT"
+class_name = "EverInvestsMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EverInvestsMCP"]
+
+[vars]
+SITE_URL = "https://everinvests.com"

@@ -1,0 +1,21 @@
+{
+  "name": "everinvests-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "agents": "^0.0.98",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "@types/node": "^25.0.9",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.59.0"
+  }
+}
