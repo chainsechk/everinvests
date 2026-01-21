@@ -46,9 +46,9 @@ interface Props {
 const { assets, category, qualityFlags } = Astro.props;
 
 const secondaryLabel: Record<string, string> = {
-  crypto: "Funding",
-  forex: "RSI(14)",
-  stocks: "RSI(14)",
+  crypto: "F&G",       // Fear & Greed Index
+  forex: "Curve",      // Yield Curve status
+  stocks: "RSI(14)",   // RSI momentum
 };
 
 // Parse data_json to get indicator data

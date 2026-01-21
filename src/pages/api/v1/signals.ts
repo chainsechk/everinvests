@@ -173,7 +173,8 @@ export async function GET(context: APIContext) {
               strength: {
                 signal: strengthSignal,
                 value: a.secondary_ind || null,
-                type: category === "crypto" ? "fundingRate" : "rsi",
+                // Asset-class specific indicator types
+                type: category === "crypto" ? "fearGreed" : category === "forex" ? "yieldCurve" : "rsi",
               },
             },
             confluence: computedConfluence,
