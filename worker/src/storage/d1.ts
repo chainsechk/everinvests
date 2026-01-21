@@ -1,7 +1,62 @@
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
 import { formatMacroForStorage } from "../signals";
+import type { BenchmarkData } from "../data/twelvedata";
 
 type D1Database = import("@cloudflare/workers-types").D1Database;
+
+// ============================================================
+// Benchmark Data (Tier 2 IC - Relative Strength)
+// ============================================================
+
+export async function saveBenchmarkData(args: {
+  db: D1Database;
+  ticker: string;
+  date: string;
+  price: number;
+  ma20: number;
+  fetchedAt: string;
+}): Promise<void> {
+  const { db, ticker, date, price, ma20, fetchedAt } = args;
+
+  await db
+    .prepare(
+      `INSERT INTO benchmark_data (ticker, date, price, ma20, fetched_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(ticker, date) DO UPDATE SET
+         price = excluded.price,
+         ma20 = excluded.ma20,
+         fetched_at = excluded.fetched_at`
+    )
+    .bind(ticker, date, price, ma20, fetchedAt)
+    .run();
+}
+
+export async function getBenchmarkData(args: {
+  db: D1Database;
+}): Promise<BenchmarkData> {
+  const { db } = args;
+
+  // Get latest benchmark data for each ticker
+  const { results } = await db
+    .prepare(
+      `SELECT ticker, price, ma20
+       FROM benchmark_data
+       WHERE date = (SELECT MAX(date) FROM benchmark_data)
+       ORDER BY ticker`
+    )
+    .all<{ ticker: string; price: number; ma20: number }>();
+
+  const benchmarks: BenchmarkData = { spy: null, xlk: null, xle: null };
+
+  for (const row of results ?? []) {
+    const key = row.ticker.toLowerCase() as "spy" | "xlk" | "xle";
+    if (key in benchmarks) {
+      benchmarks[key] = { price: row.price, ma20: row.ma20 };
+    }
+  }
+
+  return benchmarks;
+}
 
 export async function saveMacroSignal(args: {
   db: D1Database;

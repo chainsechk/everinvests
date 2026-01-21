@@ -3,10 +3,11 @@ import type { Env } from "./env";
 import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
-import { logRun } from "./storage/d1";
+import { logRun, saveBenchmarkData } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
 import { generateWeeklyBlogPosts } from "./blog";
 import { sendDailyDigest } from "./digest";
+import { fetchBenchmarkData } from "./data/twelvedata";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -74,6 +75,16 @@ export default {
       );
     }
 
+    // Run benchmark fetch at 14:00 UTC on weekdays (before stocks at 17:00)
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+    if (utcHour === 14 && isWeekday) {
+      ctx.waitUntil(
+        runBenchmarkFetch(env).catch((err) =>
+          console.error("[Benchmarks] Fetch failed:", err)
+        )
+      );
+    }
+
     ctx.waitUntil(runScheduledJob(env, event.cron));
   },
 
@@ -105,9 +116,62 @@ export default {
       return Response.json({ sent });
     }
 
+    if (url.pathname === "/fetch-benchmarks") {
+      const result = await runBenchmarkFetch(env);
+      return Response.json(result);
+    }
+
     return new Response("everinvests-worker", { status: 200 });
   },
 };
+
+// Fetch and store benchmark ETF data (SPY, XLK, XLE)
+// Runs daily at 14:00 UTC, before stocks update at 17:00
+async function runBenchmarkFetch(env: Env): Promise<{
+  success: boolean;
+  benchmarks: { spy: boolean; xlk: boolean; xle: boolean };
+}> {
+  const apiKey = env.TWELVEDATA_API_KEY;
+  if (!apiKey) {
+    console.error("[Benchmarks] Missing TWELVEDATA_API_KEY");
+    return { success: false, benchmarks: { spy: false, xlk: false, xle: false } };
+  }
+
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+
+  console.log(`[Benchmarks] Fetching SPY, XLK, XLE for ${date}...`);
+
+  try {
+    const result = await fetchBenchmarkData(apiKey);
+
+    const saved = { spy: false, xlk: false, xle: false };
+
+    for (const ticker of ["SPY", "XLK", "XLE"] as const) {
+      const key = ticker.toLowerCase() as "spy" | "xlk" | "xle";
+      const data = result[key];
+      if (data) {
+        await saveBenchmarkData({
+          db: env.DB,
+          ticker,
+          date,
+          price: data.price,
+          ma20: data.ma20,
+          fetchedAt: result.fetchedAt,
+        });
+        saved[key] = true;
+        console.log(`[Benchmarks] Saved ${ticker}: price=${data.price.toFixed(2)}, ma20=${data.ma20.toFixed(2)}`);
+      }
+    }
+
+    console.log(`[Benchmarks] Complete: SPY=${saved.spy}, XLK=${saved.xlk}, XLE=${saved.xle}`);
+    return { success: true, benchmarks: saved };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[Benchmarks] Error: ${msg}`);
+    return { success: false, benchmarks: { spy: false, xlk: false, xle: false } };
+  }
+}
 
 async function runScheduledJob(
   env: Env,

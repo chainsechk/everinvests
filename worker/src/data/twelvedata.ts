@@ -399,7 +399,7 @@ export async function fetchStockData(
   // With 11 symbols total, wait time would be 82.5s between calls
   // This exceeds Cloudflare Worker's 30s limit
 
-  console.log(`[Stocks] Benchmarks: DISABLED (API rate limit constraints)`);
+  console.log(`[Stocks] Benchmarks: Loaded from D1 (fetched by daily cron)`);
 
   return {
     data: stockResult.data,
@@ -407,4 +407,56 @@ export async function fetchStockData(
     staleAssets: stockResult.staleAssets,
     benchmarks,
   };
+}
+
+// Fetch benchmark ETF data (SPY, XLK, XLE) - runs in separate daily cron
+// Only 3 symbols = 3 credits per batch call, well within rate limits
+export interface BenchmarkFetchResult {
+  spy: { price: number; ma20: number } | null;
+  xlk: { price: number; ma20: number } | null;
+  xle: { price: number; ma20: number } | null;
+  fetchedAt: string;
+}
+
+export async function fetchBenchmarkData(apiKey: string): Promise<BenchmarkFetchResult> {
+  const symbols = [...BENCHMARK_ETFS]; // SPY, XLK, XLE
+  const timestamp = new Date().toISOString();
+
+  console.log(`[Benchmarks] Fetching ${symbols.join(", ")}...`);
+
+  // 3 symbols = 3 credits per call, need ~23s wait between calls
+  const waitTimeMs = Math.ceil((3 / 8) * 60 * 1000); // ~22.5s
+
+  // Fetch quotes
+  const quotesResult = await getBatchQuotes(symbols, apiKey);
+  if (!quotesResult.cached) {
+    console.log(`[Benchmarks] Waiting ${waitTimeMs / 1000}s for rate limit...`);
+    await new Promise((r) => setTimeout(r, waitTimeMs));
+  }
+
+  // Fetch time series for MA20
+  const timeSeriesResult = await getBatchTimeSeries(symbols, apiKey);
+
+  // Build result
+  const result: BenchmarkFetchResult = {
+    spy: null,
+    xlk: null,
+    xle: null,
+    fetchedAt: timestamp,
+  };
+
+  for (const symbol of symbols) {
+    const price = quotesResult.quotes.get(symbol);
+    const tsData = timeSeriesResult.results.get(symbol);
+
+    if (price !== undefined && tsData !== undefined) {
+      const key = symbol.toLowerCase() as "spy" | "xlk" | "xle";
+      result[key] = { price, ma20: tsData.ma20 };
+      console.log(`[Benchmarks] ${symbol}: price=${price.toFixed(2)}, ma20=${tsData.ma20.toFixed(2)}`);
+    } else {
+      console.warn(`[Benchmarks] Missing data for ${symbol}`);
+    }
+  }
+
+  return result;
 }

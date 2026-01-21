@@ -1,5 +1,6 @@
 import { fetchCryptoData, fetchForexData, fetchStockData } from "../data";
 import { STOCK_KEY_TICKERS, type BenchmarkData } from "../data/twelvedata";
+import { getBenchmarkData } from "../storage/d1";
 import type { AssetData, Category } from "../types";
 import { CRYPTO_ASSETS, FOREX_ASSETS } from "../types";
 import type { SkillSpec } from "./types";
@@ -50,11 +51,23 @@ export const fetchAssetDataSkill: SkillSpec<void, FetchAssetDataOutput> = {
       staleAssets = result.staleAssets;
       cacheHits = result.cacheHits;
 
+      // Tier 2: Load benchmark data from D1 (fetched by daily cron at 14:00 UTC)
+      let benchmarks: BenchmarkData = { spy: null, xlk: null, xle: null };
+      try {
+        benchmarks = await getBenchmarkData({ db: env.DB });
+        const hasBenchmarks = benchmarks.spy || benchmarks.xlk || benchmarks.xle;
+        console.log(`[Stocks] Benchmarks from D1: SPY=${!!benchmarks.spy}, XLK=${!!benchmarks.xlk}, XLE=${!!benchmarks.xle}`);
+        if (!hasBenchmarks) {
+          console.log(`[Stocks] No benchmark data in D1 - relative strength disabled`);
+        }
+      } catch (e) {
+        console.error(`[Stocks] Failed to load benchmarks from D1:`, e);
+      }
+
       const fetched = new Set(assetData.map((a) => a.ticker));
       const missingTickers = expectedTickers.filter((t) => !fetched.has(t));
 
-      // Include benchmark data for stocks (Tier 2 relative strength)
-      return { assetData, expectedTickers, missingTickers, staleAssets, cacheHits, benchmarks: result.benchmarks };
+      return { assetData, expectedTickers, missingTickers, staleAssets, cacheHits, benchmarks };
     } else {
       throw new Error(`Unsupported category: ${ctx.category}`);
     }
