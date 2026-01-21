@@ -7,6 +7,7 @@ import { qualityChecksSkill } from "./qualityChecks";
 import { generateSummarySkill } from "./generateSummary";
 import { storeSignalSkill } from "./storeSignal";
 import { notifyTelegramSkill } from "./notifyTelegram";
+import { deliverWebhooksSkill } from "./deliverWebhooks";
 
 export const skillRegistry: Record<SkillKey, SkillSpec<any, any>> = {
   [toSkillKey(fetchMacroDataSkill.id, fetchMacroDataSkill.version)]: fetchMacroDataSkill,
@@ -16,4 +17,5 @@ export const skillRegistry: Record<SkillKey, SkillSpec<any, any>> = {
   [toSkillKey(generateSummarySkill.id, generateSummarySkill.version)]: generateSummarySkill,
   [toSkillKey(storeSignalSkill.id, storeSignalSkill.version)]: storeSignalSkill,
   [toSkillKey(notifyTelegramSkill.id, notifyTelegramSkill.version)]: notifyTelegramSkill,
+  [toSkillKey(deliverWebhooksSkill.id, deliverWebhooksSkill.version)]: deliverWebhooksSkill,
 };

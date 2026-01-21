@@ -6,6 +6,7 @@ import type { ComputeBiasOutput } from "../skills/computeBias";
 import type { QualityChecksOutput } from "../skills/qualityChecks";
 import type { GenerateSummaryOutput } from "../skills/generateSummary";
 import type { StoreSignalOutput } from "../skills/storeSignal";
+import type { DeliverWebhooksOutput } from "../skills/deliverWebhooks";
 
 export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
   return {
@@ -91,7 +92,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "notify",
-        skill: { id: "notify_telegram", version: "2" },
+        skill: { id: "notify_telegram", version: "4" },
         dependsOn: ["macro", "bias", "summary", "store"],
         input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;
@@ -108,6 +109,28 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
             date: ctx.date,
             timeSlot: ctx.timeSlot,
             delta: store.delta,
+          };
+        },
+      },
+      {
+        id: "webhooks",
+        skill: { id: "deliver_webhooks", version: "1" },
+        dependsOn: ["macro", "bias", "summary", "store"],
+        input: ({ ctx, state }) => {
+          const macro = state["macro"] as FetchMacroOutput;
+          const bias = state["bias"] as ComputeBiasOutput;
+          const summary = state["summary"] as GenerateSummaryOutput;
+          const store = state["store"] as StoreSignalOutput;
+
+          return {
+            signalId: store.signalId,
+            category: ctx.category as Category,
+            date: ctx.date,
+            timeSlot: ctx.timeSlot,
+            bias: bias.categoryBias,
+            summary: summary.summary,
+            macro: macro.macroSignal,
+            assets: bias.assetSignals,
           };
         },
       },
