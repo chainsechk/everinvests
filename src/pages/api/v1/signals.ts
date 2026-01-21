@@ -17,6 +17,7 @@ interface AssetSignalRow {
   bias: string | null;
   price: number | null;
   vs_20d_ma: string | null;
+  secondary_ind: string | null;
   data_json: string | null;
 }
 
@@ -95,7 +96,7 @@ export async function GET(context: APIContext) {
       if (signal) {
         const assets = await db
           .prepare(
-            `SELECT ticker, bias, price, vs_20d_ma, data_json
+            `SELECT ticker, bias, price, vs_20d_ma, secondary_ind, data_json
              FROM asset_signals
              WHERE signal_id = ?`
           )
@@ -105,6 +106,42 @@ export async function GET(context: APIContext) {
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};
         const data = signal.data_json ? JSON.parse(signal.data_json) : {};
 
+        // Parse asset reasoning to expose indicator confluence
+        const parsedAssets = (assets.results || []).map((a) => {
+          const assetData = a.data_json ? JSON.parse(a.data_json) : {};
+          const reasoning = assetData.reasoning || "";
+
+          // Parse "MA20: bullish, Secondary: neutral" format
+          const maMatch = reasoning.match(/MA20:\s*(\w+)/);
+          const secMatch = reasoning.match(/Secondary:\s*(\w+)/);
+
+          const maSignal = maMatch ? maMatch[1] : null;
+          const secSignal = secMatch ? secMatch[1] : null;
+
+          // Count bullish/bearish for confluence
+          const signals = [maSignal, secSignal].filter(Boolean);
+          const bullish = signals.filter(s => s === "bullish").length;
+          const bearish = signals.filter(s => s === "bearish").length;
+
+          return {
+            ticker: a.ticker,
+            bias: a.bias,
+            price: a.price,
+            indicators: {
+              trend: {
+                signal: maSignal,
+                position: a.vs_20d_ma, // "above" or "below"
+              },
+              momentum: {
+                signal: secSignal,
+                value: a.secondary_ind || null,
+                type: category === "crypto" ? "fundingRate" : "rsi",
+              },
+            },
+            confluence: `${bullish}/${signals.length} bullish`,
+          };
+        });
+
         signals[category] = {
           bias: signal.bias,
           date: signal.date,
@@ -113,13 +150,7 @@ export async function GET(context: APIContext) {
           levels: output.levels,
           triggers: output.triggers,
           risks: output.risks,
-          assets: (assets.results || []).map((a) => ({
-            ticker: a.ticker,
-            bias: a.bias,
-            price: a.price,
-            vsMA20: a.vs_20d_ma,
-            ...(a.data_json ? JSON.parse(a.data_json) : {}),
-          })),
+          assets: parsedAssets,
           qualityFlags: data.qualityFlags || [],
           url: `https://everinvests.com/${category}/${signal.date}/${signal.time_slot}`,
         };

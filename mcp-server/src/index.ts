@@ -80,9 +80,16 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
            WHERE signal_id = ?`
         ).bind(signal.id).all<AssetSignalRow>();
 
-        const assetList = (assets.results || []).map(a =>
-          `  - ${a.ticker}: ${a.bias} (price: $${a.price?.toLocaleString() || "N/A"}, vs MA20: ${a.vs_20d_ma || "N/A"})`
-        ).join("\n");
+        const assetList = (assets.results || []).map(a => {
+          const assetData = a.data_json ? JSON.parse(a.data_json) : {};
+          const reasoning = assetData.reasoning || "";
+          // Parse "MA20: bullish, Secondary: neutral" to show confluence
+          const maMatch = reasoning.match(/MA20:\s*(\w+)/);
+          const secMatch = reasoning.match(/Secondary:\s*(\w+)/);
+          const maSignal = maMatch ? maMatch[1] : "?";
+          const secSignal = secMatch ? secMatch[1] : "?";
+          return `  - ${a.ticker}: ${a.bias} [Trend: ${maSignal}, Momentum: ${secSignal}] $${a.price?.toLocaleString() || "N/A"}`;
+        }).join("\n");
 
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};
 
