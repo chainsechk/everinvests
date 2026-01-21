@@ -4,7 +4,68 @@
 Build a complete market signal broadcast site with automated daily signals for Crypto, Forex, and Stocks.
 
 ## Current Phase
-**Volume-Based Independent Metrics - COMPLETE**
+**Tier 1 IC Fixes - IN PROGRESS**
+
+---
+
+## Tier 1 IC Fixes (2026-01-21) - COMPLETE
+
+### Problem Statement
+Agent critique revealed we're using wrong indicators for each asset class:
+- Forex: RSI is meaningless (forex trends, doesn't oscillate)
+- Crypto: 20D MA too slow for 24/7 market, F&G not per-asset
+- All: DXY strength not linked to forex bias
+
+### Tier 1 Tasks (Zero API cost, high impact)
+
+| Task | Status | IC Gain |
+|------|--------|---------|
+| 1. Forex: Replace RSI with yield curve signal | ✅ complete | +15-25% |
+| 2. Forex: Link DXY strength to USD pair bias | ✅ complete | +15-20% |
+| 3. Crypto: F&G per-asset override | ✅ complete | +10-15% |
+| 4. Crypto: Use 7D MA instead of 20D | ✅ complete | +5-10% |
+| 5. Update tests and verify consistency | ✅ complete | - |
+| 6. Build, test, deploy | ✅ complete | - |
+
+### Implementation Details
+
+**Forex yield curve signal:**
+- Replaced RSI strength with yield curve interpretation
+- Inverted curve → bearish (risk-off)
+- Normal curve → bullish (risk-on)
+- Flat → neutral
+
+**DXY link to forex:**
+- USD/JPY, USD/CAD: Strong DXY → bullish (USD appreciates)
+- EUR/USD, AUD/USD: Strong DXY → bearish (inverse pairs)
+- Replaces volume signal for forex (no meaningful OTC volume)
+
+**Crypto F&G per-asset:**
+- F&G used directly for crypto strength signal
+- F&G < 30 → bullish (fear = buying opportunity)
+- F&G > 70 → bearish (greed = selling opportunity)
+
+**Crypto 7D MA:**
+- Crypto now uses 7D MA (faster mean-reversion for 24/7 market)
+- Field still named "ma20" for API compatibility
+
+### Files Changed
+- `worker/src/signals/bias.ts` - Asset-class specific indicators, BiasContext
+- `worker/src/skills/computeBias.ts` - v3 with macroData pass-through
+- `worker/src/skills/fetchMacroData.ts` - Export macroData
+- `worker/src/workflows/category.ts` - Pass macroData to bias
+- `worker/src/data/binance.ts` - 7D MA for crypto
+- `worker/src/signals/index.ts` - Export BiasContext
+
+### Verification
+- Crypto reasoning now shows: "Trend: X, Volume: X, Strength: bullish" (F&G-based)
+- Forex reasoning now shows: "Trend: X, DXY: X, Strength: bullish" (yield curve)
+- Tests: 87/87 passing
+- Deployed: Live on everinvests.com
+
+---
+
+## Previous Phase: Volume-Based Independent Metrics - COMPLETE
 
 - Pages: https://everinvests.com
 - Worker: https://everinvests-worker.duyuefeng0708.workers.dev

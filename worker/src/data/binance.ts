@@ -46,10 +46,11 @@ async function getMarketChartData(coinId: string): Promise<{ chart: CoinGeckoMar
   return { chart: data, cached, cachedAt };
 }
 
-// Calculate price, MA20, volume, avgVolume, and BBW from market chart data
+// Calculate price, MA7 (crypto uses 7D for faster mean-reversion), volume, avgVolume, and BBW
+// Note: Field is still called "ma20" for API compatibility, but crypto uses 7D MA
 function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
   price: number;
-  ma20: number;
+  ma20: number; // Actually 7D MA for crypto (higher IC than 20D)
   volume: number;
   avgVolume: number;
   bbWidth?: number;
@@ -74,20 +75,21 @@ function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
     }
   }
 
-  // Take last 20 days (or fewer if not available), excluding current day
-  const recentPrices = dailyPrices.slice(-21, -1);
-  const closes20 = recentPrices.slice(-20);
+  // CRYPTO: Use 7D MA (faster mean-reversion for 24/7 market, higher IC)
+  // Take last 7 days excluding current day
+  const recentPrices7 = dailyPrices.slice(-8, -1);
+  const closes7 = recentPrices7.slice(-7);
 
-  const ma20 = closes20.length > 0
-    ? closes20.reduce((sum, c) => sum + c, 0) / closes20.length
+  const ma7 = closes7.length > 0
+    ? closes7.reduce((sum, c) => sum + c, 0) / closes7.length
     : price;
 
-  // Calculate Bollinger Band Width (BBW) = (Upper - Lower) / Middle = (4 * stdDev) / ma20
+  // Calculate Bollinger Band Width using 7D data for crypto
   let bbWidth: number | undefined;
-  if (closes20.length >= 20 && ma20 > 0) {
-    const variance = closes20.reduce((sum, c) => sum + Math.pow(c - ma20, 2), 0) / 20;
+  if (closes7.length >= 7 && ma7 > 0) {
+    const variance = closes7.reduce((sum, c) => sum + Math.pow(c - ma7, 2), 0) / closes7.length;
     const stdDev = Math.sqrt(variance);
-    bbWidth = (4 * stdDev) / ma20;
+    bbWidth = (4 * stdDev) / ma7;
   }
 
   // Current 24h volume is the most recent volume point
@@ -112,7 +114,8 @@ function calculatePriceAndVolume(chart: CoinGeckoMarketChart): {
     ? recentVolumes.reduce((sum, v) => sum + v, 0) / recentVolumes.length
     : volume;
 
-  return { price, ma20, volume, avgVolume, bbWidth };
+  // Return ma7 as "ma20" for API compatibility
+  return { price, ma20: ma7, volume, avgVolume, bbWidth };
 }
 
 // ============================================================
@@ -164,11 +167,11 @@ async function getCoinCapPriceAndVolume(assetId: string): Promise<{
   };
 }
 
-// Get 20-day MA and BBW from CoinCap history (no volume history available)
+// Get 7-day MA and BBW from CoinCap history (crypto uses 7D for higher IC)
 async function getCoinCapMA(assetId: string): Promise<{ ma20: number; bbWidth?: number; cached: boolean }> {
-  // Get last 25 days of daily data
+  // Get last 15 days of daily data (enough for 7D MA)
   const end = Date.now();
-  const start = end - 25 * 24 * 60 * 60 * 1000;
+  const start = end - 15 * 24 * 60 * 60 * 1000;
   const url = `${COINCAP_API}/assets/${assetId}/history?interval=d1&start=${start}&end=${end}`;
 
   const { data, cached } = await cachedFetch<{ data: CoinCapHistory[] }>(
@@ -182,30 +185,31 @@ async function getCoinCapMA(assetId: string): Promise<{ ma20: number; bbWidth?: 
     CRYPTO_TIMEOUT_MS
   );
 
-  if (!data.data || data.data.length < 15) {
+  if (!data.data || data.data.length < 7) {
     throw new Error(`Insufficient CoinCap history for ${assetId}`);
   }
 
-  // Calculate MA20 from the most recent days (exclude today)
-  const prices = data.data.slice(-21, -1).map(d => parseFloat(d.priceUsd));
+  // CRYPTO: Calculate 7D MA (faster mean-reversion, higher IC)
+  const prices = data.data.slice(-8, -1).map(d => parseFloat(d.priceUsd));
   const validPrices = prices.filter(p => Number.isFinite(p) && p > 0);
 
-  if (validPrices.length < 10) {
+  if (validPrices.length < 5) {
     throw new Error(`Invalid CoinCap MA data for ${assetId}`);
   }
 
-  const prices20 = validPrices.slice(-20);
-  const ma20 = prices20.reduce((sum, p) => sum + p, 0) / prices20.length;
+  const prices7 = validPrices.slice(-7);
+  const ma7 = prices7.reduce((sum, p) => sum + p, 0) / prices7.length;
 
-  // Calculate Bollinger Band Width (BBW) = (4 * stdDev) / ma20
+  // Calculate Bollinger Band Width using 7D data
   let bbWidth: number | undefined;
-  if (prices20.length >= 20 && ma20 > 0) {
-    const variance = prices20.reduce((sum, p) => sum + Math.pow(p - ma20, 2), 0) / 20;
+  if (prices7.length >= 7 && ma7 > 0) {
+    const variance = prices7.reduce((sum, p) => sum + Math.pow(p - ma7, 2), 0) / prices7.length;
     const stdDev = Math.sqrt(variance);
-    bbWidth = (4 * stdDev) / ma20;
+    bbWidth = (4 * stdDev) / ma7;
   }
 
-  return { ma20, bbWidth, cached };
+  // Return ma7 as "ma20" for API compatibility
+  return { ma20: ma7, bbWidth, cached };
 }
 
 // Fetch price, MA, volume, and BBW from CoinCap (fallback)

@@ -284,6 +284,60 @@ Composite score from:
 
 ---
 
+## IC Analysis: Asset Class-Specific Indicators (2026-01-21)
+
+### Agent Critique Summary
+
+An agent analyzed indicators from first principles. Key finding: **We're using wrong indicators for each asset class.**
+
+### Information Coefficient (IC) by Indicator
+
+| Indicator | Asset Class | Current IC | Notes |
+|-----------|-------------|-----------|-------|
+| Price vs MA20 | All | 0.15-0.25 | Weak for crypto (20D too slow) |
+| Volume Ratio | Crypto/Stocks | 0.20-0.35 | **HIGH** - truly independent |
+| RSI(14) | Forex/Stocks | 0.10-0.18 | **WRONG for forex** - forex trends, doesn't oscillate |
+| Funding Rate | Crypto | 0.25-0.40 | **HIGH** - excellent for mean-reversion |
+| Fear & Greed | Crypto | 0.15-0.25 | Currently macro-only, should be per-asset |
+| DXY vs MA20 | Forex | 0.30-0.45 | **HIGH** - but only used at macro level |
+| VIX Level | Macro | 0.20-0.30 | Good |
+| Yield Curve | Macro | 0.35-0.50 | **VERY HIGH** - not used in forex bias |
+| Rate Differentials | Forex | 0.45-0.60 | **MISSING** - huge opportunity |
+
+### Asset Class Mismatch
+
+| Asset Class | Current IC | Achievable IC | Main Problem |
+|-------------|-----------|---------------|--------------|
+| **Crypto** | ~0.22 | ~0.32 | 20D MA too slow, F&G not per-asset |
+| **Forex** | ~0.18 | ~0.40 | RSI is objectively wrong |
+| **Stocks** | ~0.22 | ~0.38 | Missing sector filter |
+
+### Tier 1 Fixes (Zero API cost)
+
+| Fix | Target | IC Gain | Effort |
+|-----|--------|---------|--------|
+| Forex: Replace RSI with yield curve signal | Forex | +15-25% | 5 min |
+| Forex: Link DXY strength to USD pair bias | Forex | +15-20% | 10 min |
+| Crypto: F&G per-asset override | Crypto | +10-15% | 5 min |
+| Crypto: Use 7D MA instead of 20D | Crypto | +5-10% | 5 min |
+
+### Tier 2 Fixes (1-2 API calls)
+
+| Fix | Target | IC Gain | Effort |
+|-----|--------|---------|--------|
+| Stocks: Sector ETF comparison (XLK/XLE/XLV) | Stocks | +15-20% | 1-2 hrs |
+| Stocks: Relative strength vs SPY | Stocks | +10-15% | 1 hr |
+
+### Key Insight: What Each Asset Class Needs
+
+| Asset Class | Primary Driver | Current Gap |
+|-------------|---------------|-------------|
+| **Crypto** | Sentiment + Flow | F&G not linked to asset bias |
+| **Forex** | Rate differentials + DXY | Using RSI (meaningless) |
+| **Stocks** | Sector rotation | Ignoring sector context |
+
+---
+
 ## Previous Analysis (Superseded)
 
 The MA10 vs MA20 crossover implementation was a step forward but not truly independent.

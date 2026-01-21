@@ -11,6 +11,7 @@ export interface FetchMacroInput {
 
 export interface FetchMacroOutput {
   macroSignal: MacroSignal;
+  macroData: MacroData | null; // Raw data for F&G, yield curve, etc.
   macroId: number | null;
   macroFallback: boolean;
   macroStale: boolean;
@@ -93,6 +94,7 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
 
     const result: FetchMacroOutput = {
       macroSignal: signalForDownstream,
+      macroData: macroData,
       macroId: macroId || null,
       macroFallback,
       macroStale,

@@ -23,7 +23,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
       },
       {
         id: "bias",
-        skill: { id: "compute_bias", version: "2" },
+        skill: { id: "compute_bias", version: "3" },
         dependsOn: ["macro", "assets"],
         input: ({ ctx, state }) => {
           const macro = state["macro"] as FetchMacroOutput;
@@ -31,7 +31,8 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
           return {
             category: ctx.category as Category,
             assetData: assets.assetData,
-            macroSignal: macro.macroSignal, // For contrarian override
+            macroSignal: macro.macroSignal,
+            macroData: macro.macroData, // For F&G, yield curve, DXY in per-asset bias
           };
         },
       },

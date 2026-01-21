@@ -1,11 +1,12 @@
-import { calculateAssetBias, calculateCategoryBias, extractLevels, identifyRisks } from "../signals";
-import type { AssetData, AssetSignal, Bias, Category, MacroSignal } from "../types";
+import { calculateAssetBias, calculateCategoryBias, extractLevels, identifyRisks, type BiasContext } from "../signals";
+import type { AssetData, AssetSignal, Bias, Category, MacroSignal, MacroData } from "../types";
 import type { SkillSpec } from "./types";
 
 export interface ComputeBiasInput {
   category: Category;
   assetData: AssetData[];
-  macroSignal?: MacroSignal; // For contrarian override
+  macroSignal?: MacroSignal;
+  macroData?: MacroData; // Raw macro data for F&G, etc.
 }
 
 export interface ComputeBiasOutput {
@@ -17,10 +18,19 @@ export interface ComputeBiasOutput {
 
 export const computeBiasSkill: SkillSpec<ComputeBiasInput, ComputeBiasOutput> = {
   id: "compute_bias",
-  version: "2", // Bumped for macro signal support
+  version: "3", // Bumped for asset-class specific indicators
   async run({ input }) {
+    // Build context for asset-class specific calculations
+    const context: BiasContext = {
+      macroSignal: input.macroSignal,
+      fearGreed: input.macroData?.fearGreed,
+      dxyBias: input.macroSignal?.dxyBias,
+      yieldCurve: input.macroSignal?.yieldCurve,
+    };
+
+    // Calculate per-asset bias with context
     const assetSignals = input.assetData.map((data) =>
-      calculateAssetBias(data, input.category)
+      calculateAssetBias(data, input.category, context)
     );
 
     // Pass macro signal for contrarian override at F&G extremes
