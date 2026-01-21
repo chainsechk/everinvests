@@ -13,6 +13,44 @@ interface TelegramResponse {
   description?: string;
 }
 
+interface InlineKeyboardButton {
+  text: string;
+  url: string;
+}
+
+interface InlineKeyboardMarkup {
+  inline_keyboard: InlineKeyboardButton[][];
+}
+
+// Build inline keyboard based on CTA mode
+function buildInlineKeyboard(
+  analysisUrl: string,
+  ctaMode: CTAMode
+): InlineKeyboardMarkup {
+  const buttons: InlineKeyboardButton[][] = [];
+
+  // First row: View Analysis button
+  buttons.push([{ text: "📊 View Full Analysis", url: analysisUrl }]);
+
+  // Second row: CTA button based on mode
+  if (ctaMode === "waitlist") {
+    buttons.push([
+      { text: "🚀 Join VIP Waitlist", url: "https://t.me/EverInvestsBot?start=waitlist" },
+    ]);
+  } else if (ctaMode === "live") {
+    buttons.push([
+      { text: "⭐ Join VIP", url: "https://t.me/EverInvestsVIPBot" },
+    ]);
+  }
+
+  // Third row: Share and Performance
+  buttons.push([
+    { text: "📈 Performance", url: "https://everinvests.com/performance" },
+  ]);
+
+  return { inline_keyboard: buttons };
+}
+
 // Format delta section for message
 function formatDeltaSection(delta: SignalDelta | null): string {
   if (!delta || !delta.previousBias) {
@@ -85,19 +123,9 @@ export function formatSignalMessage(
     message += `... and ${assets.length - 10} more\n`;
   }
 
-  // Build URL with UTM parameters
-  const baseUrl = (siteUrl || DEFAULT_SITE_URL).replace(/\/$/, "");
-  const analysisUrl = new URL(`/${category}/${date}/${timeSlot}`, baseUrl);
-  analysisUrl.searchParams.set("utm_source", "telegram");
-  analysisUrl.searchParams.set("utm_medium", "notification");
-  analysisUrl.searchParams.set("utm_campaign", `${category}_signal`);
-  message += `\n🔗 <a href="${analysisUrl.href}">View Full Analysis</a>`;
-
-  // Add VIP CTA if configured
-  const cta = getCTAConfig(ctaMode || 'waitlist').telegram;
-  if (cta) {
-    message += cta;
-  }
+  // Note: URL and CTA are now handled via inline keyboard buttons
+  // Keep a simple footer for message clarity
+  message += `\n📊 <b>EverInvests</b> • Free Daily Signals`;
 
   return message;
 }
@@ -106,20 +134,27 @@ export function formatSignalMessage(
 export async function sendTelegramMessage(
   botToken: string,
   chatId: string,
-  message: string
+  message: string,
+  replyMarkup?: InlineKeyboardMarkup
 ): Promise<boolean> {
   const url = `${TELEGRAM_API}${botToken}/sendMessage`;
+
+  const payload: Record<string, unknown> = {
+    chat_id: chatId,
+    text: message,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  };
+
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data: TelegramResponse = await response.json();
@@ -169,5 +204,15 @@ export async function notifySignal(
     ctaMode
   );
 
-  return sendTelegramMessage(botToken, chatId, message);
+  // Build analysis URL for inline keyboard
+  const baseUrl = (siteUrl || DEFAULT_SITE_URL).replace(/\/$/, "");
+  const analysisUrl = new URL(`/${category}/${date}/${timeSlot}`, baseUrl);
+  analysisUrl.searchParams.set("utm_source", "telegram");
+  analysisUrl.searchParams.set("utm_medium", "button");
+  analysisUrl.searchParams.set("utm_campaign", `${category}_signal`);
+
+  // Build inline keyboard with action buttons
+  const keyboard = buildInlineKeyboard(analysisUrl.href, ctaMode || "waitlist");
+
+  return sendTelegramMessage(botToken, chatId, message, keyboard);
 }

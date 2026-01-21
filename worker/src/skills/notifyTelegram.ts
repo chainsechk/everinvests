@@ -21,7 +21,7 @@ export interface NotifyTelegramOutput {
 
 export const notifyTelegramSkill: SkillSpec<NotifyTelegramInput, NotifyTelegramOutput> = {
   id: "notify_telegram",
-  version: "3",
+  version: "4", // v4: Added inline keyboard buttons for interactive CTAs
   async run({ env, input }) {
     const ctaMode = getCTAMode(env);
     const notified = await notifySignal(
