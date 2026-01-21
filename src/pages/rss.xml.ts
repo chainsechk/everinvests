@@ -48,21 +48,23 @@ function getBiasEmoji(bias: string): string {
 
 export async function GET(context: APIContext) {
   const db = context.locals.runtime?.env?.DB;
-
-  if (!db) {
-    return new Response("Database not configured", { status: 500 });
-  }
-
-  // Fetch recent signals (last 50)
-  const result = await db.prepare(`
-    SELECT id, category, date, time_slot, bias, summary, created_at
-    FROM signals
-    ORDER BY date DESC, time_slot DESC
-    LIMIT 50
-  `).all<SignalRow>();
-
-  const signals = result.results || [];
   const now = new Date().toUTCString();
+
+  let signals: SignalRow[] = [];
+
+  if (db) {
+    try {
+      const result = await db.prepare(`
+        SELECT id, category, date, time_slot, bias, summary, created_at
+        FROM signals
+        ORDER BY date DESC, time_slot DESC
+        LIMIT 50
+      `).all<SignalRow>();
+      signals = result.results || [];
+    } catch (e) {
+      console.error("RSS feed error:", e);
+    }
+  }
 
   const items = signals.map((signal) => {
     const categoryTitle = signal.category.charAt(0).toUpperCase() + signal.category.slice(1);
