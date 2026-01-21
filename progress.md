@@ -643,12 +643,70 @@
 #### Files Modified:
 - src/components/VIPCTA.astro - Added click tracking script
 
+## Session: 2026-01-21 (Critique Review)
+
+### Phase 1-4 Critique Review - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Security Issues Identified & Fixed:
+1. **Webhook API had NO authentication**
+   - Fix: Added API key validation via `Authorization: Bearer <WEBHOOK_API_KEY>`
+   - All webhook endpoints now require valid API key
+   - Files: `src/pages/api/webhooks/index.ts`, `src/pages/api/webhooks/[id].ts`
+
+2. **SSRF vulnerability in webhook URLs**
+   - Fix: Added `isInternalUrl()` function to block:
+     - localhost, 127.0.0.1, ::1
+     - Private IPs: 10.x.x.x, 172.16-31.x.x, 192.168.x.x, 169.254.x.x
+     - Internal hostnames: *.local, *.internal
+   - File: `src/pages/api/webhooks/index.ts`
+
+#### Performance Issues Fixed:
+1. **Sequential DB queries in performance page**
+   - Problem: 6 sequential DB queries causing slow load
+   - Fix: Parallelized queries using Promise.all (6 → 2 batches)
+   - File: `src/pages/performance.astro`
+
+#### Bug Fixes:
+1. **Webhook category matching was flawed**
+   - Problem: `LIKE '%crypto%'` could match "cryptox"
+   - Fix: Used exact match patterns:
+     - `categories = ?` (exact: "crypto")
+     - `categories LIKE ?,` (starts with: "crypto,forex")
+     - `categories LIKE %,?,%` (middle: "forex,crypto,stocks")
+     - `categories LIKE %,?` (ends with: "forex,crypto")
+   - File: `worker/src/webhooks/deliver.ts`
+
+#### Missing Features Added:
+1. **Webhook timeout**
+   - Added 10-second timeout using AbortController
+   - Prevents hanging requests from blocking delivery
+   - File: `worker/src/webhooks/deliver.ts`
+
+2. **Webhook payload versioning**
+   - Added `version: "1.0"` field for backwards compatibility
+   - File: `worker/src/webhooks/deliver.ts`
+
+3. **Category-specific RSS feeds**
+   - Added `?category=crypto|forex|stocks` parameter
+   - Returns filtered feed for specific category
+   - File: `src/pages/rss.xml.ts`
+
+#### Commit:
+- `cd4582d fix: security and performance improvements from critique review`
+
+#### Deployment:
+- Pages: https://3a1f516e.everinvests.pages.dev
+- Worker: version 3f6b4de7-9e6a-41ec-9c3e-9bcd33e0db3c
+
 ## 5-Question Reboot Check (2026-01-21)
 | Question | Answer |
 |----------|--------|
-| Where am I? | VIP Bridge - ALL PHASES COMPLETE |
-| Where am I going? | Growth Plan tasks (Social, OG Images, RSS, etc.) |
-| What's the goal? | Funnel free users to VIP waitlist + enrich free tier |
-| What have I learned? | Free APIs work, SEO structured data added |
-| What have I done? | CTA config, TG CTA, Website CTA, Expanded sources, SEO, Analytics |
+| Where am I? | Growth Plan Phase 4 COMPLETE, Critique Review COMPLETE |
+| Where am I going? | Phase 5: MCP Server + Structured API |
+| What's the goal? | Agent-native features for programmatic access |
+| What have I learned? | Security review critical before production |
+| What have I done? | Fixed security, performance, and feature gaps in Phase 1-4 |
 
