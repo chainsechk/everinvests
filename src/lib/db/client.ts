@@ -11,6 +11,7 @@ import {
   distinctTickersSql,
   recentSignalPagesSql,
   relatedSignalsSql,
+  latestSignalWithAssetsSql,
 } from "./queries";
 
 type D1Database = import("@cloudflare/workers-types").D1Database;
@@ -25,6 +26,17 @@ export async function getLatestSignal(
 ): Promise<SignalWithMacro | null> {
   const row = await db
     .prepare(latestSignalSql())
+    .bind(category)
+    .first<SignalWithMacro>();
+  return row ?? null;
+}
+
+export async function getLatestSignalWithAssets(
+  db: D1Database,
+  category: Category
+): Promise<SignalWithMacro | null> {
+  const row = await db
+    .prepare(latestSignalWithAssetsSql())
     .bind(category)
     .first<SignalWithMacro>();
   return row ?? null;

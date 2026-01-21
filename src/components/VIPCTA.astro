@@ -10,15 +10,15 @@ const { category = 'crypto', mode = 'waitlist', utmSource = 'website' } = Astro.
 
 const config = {
   waitlist: {
-    title: 'EverInvests VIP Launching Soon',
-    subtitle: "We're building professional-grade signals with:",
+    title: "Don't just get signals. Get conviction.",
+    subtitle: "You've had the right call before—but did you hold it? VIP gives you the WHY behind every trade, so you actually trust your positions:",
     cta: 'Join VIP Waitlist',
     url: `https://t.me/EverInvestsBot?start=waitlist_${utmSource}_${category}`,
-    subtext: 'Be first to know when we launch',
+    subtext: 'Limited spots available',
   },
   live: {
-    title: 'Want More Than Just Bias?',
-    subtitle: 'Free signals show direction only. EverInvests VIP gives you:',
+    title: "Don't just get signals. Get conviction.",
+    subtitle: "You've had the right call before—but did you hold it? VIP gives you the WHY behind every trade, so you actually trust your positions:",
     cta: 'Join EverInvests VIP',
     url: `https://t.me/EverInvestsVIPBot?start=${utmSource}_${category}`,
     subtext: null,
@@ -28,19 +28,19 @@ const config = {
 const c = config[mode];
 
 const features = [
-  { name: 'Regime', desc: '8-12 market states, not just bullish/bearish' },
-  { name: 'Confidence', desc: 'How much to trust this signal' },
-  { name: 'Directives', desc: 'Position size, leverage, stop-loss' },
-  { name: 'Evidence', desc: 'What data triggered this call' },
-  { name: 'Invalidation', desc: 'When to exit or distrust' },
-  { name: 'Alerts', desc: 'Real-time threshold notifications' },
+  { name: 'Whale Alerts', desc: 'See when big money loads up—options flow & on-chain data in plain English' },
+  { name: 'AI Debate Room', desc: "Bull vs Bear AI agents argue every trade. If they can't agree, we don't trade." },
+  { name: 'Full Reasoning', desc: "Every signal explains WHY—so you understand it, not just follow it" },
+  { name: 'Private Telegram', desc: 'Real-time chat with serious traders. Ask questions, share setups, get gut checks.' },
+  { name: 'Mobile Alerts', desc: 'Telegram pings the moment consensus hits—no app to check' },
+  { name: 'Team Access', desc: "Market freaking out? We're in the chat with you." },
 ];
 ---
 
 <div class="relative overflow-hidden rounded-2xl my-8" data-animate>
   <!-- Background gradient -->
   <div class="absolute inset-0 bg-gradient-to-br from-vip/20 via-cyber/10 to-vip/20"></div>
-  <div class="absolute inset-0 bg-void-50/90 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay-medium);"></div>
 
   <!-- Content -->
   <div class="relative p-6 sm:p-8">

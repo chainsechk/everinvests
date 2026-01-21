@@ -85,7 +85,7 @@ function getMacroColor(macro: string | null): string {
         </p>
       )}
       {extractDelta(signal.output_json) && (
-        <div class="mt-2 pt-2 border-t border-void-100/50">
+        <div class="mt-2 pt-2 border-t border-divider">
           <DeltaBadge delta={extractDelta(signal.output_json)} variant="compact" />
         </div>
       )}

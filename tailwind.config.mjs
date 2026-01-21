@@ -4,59 +4,76 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Core palette - Terminal Luxe
-        void: {
-          DEFAULT: "#0a0e17",
-          50: "#141a24",
-          100: "#1a2332",
-          200: "#232d3f",
+        // Theme-aware colors using CSS variables
+        bg: {
+          primary: "var(--bg-primary)",
+          secondary: "var(--bg-secondary)",
+          tertiary: "var(--bg-tertiary)",
+          elevated: "var(--bg-elevated)",
         },
-        // Signal colors with glow variants
+        txt: {
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
+          tertiary: "var(--text-muted)",
+          inverse: "var(--text-inverse)",
+        },
+        // Signal colors
         bullish: {
-          DEFAULT: "#00ff88",
-          glow: "rgba(0, 255, 136, 0.4)",
-          dim: "rgba(0, 255, 136, 0.15)",
+          DEFAULT: "var(--bullish)",
+          bg: "var(--bullish-bg)",
+          glow: "var(--bullish-bg)",
+          dim: "var(--bullish-bg)",
         },
         bearish: {
-          DEFAULT: "#ff4466",
-          glow: "rgba(255, 68, 102, 0.4)",
-          dim: "rgba(255, 68, 102, 0.15)",
+          DEFAULT: "var(--bearish)",
+          bg: "var(--bearish-bg)",
+          glow: "var(--bearish-bg)",
+          dim: "var(--bearish-bg)",
         },
         neutral: {
-          DEFAULT: "#5e6e82",
-          glow: "rgba(94, 110, 130, 0.4)",
-          dim: "rgba(94, 110, 130, 0.15)",
+          DEFAULT: "var(--neutral)",
+          bg: "var(--neutral-bg)",
+          glow: "var(--neutral-bg)",
+          dim: "var(--neutral-bg)",
         },
-        // Macro sentiment
-        riskon: "#00ff88",
-        riskoff: "#ff4466",
-        mixed: "#fbbf24",
         // Accent colors
+        accent: {
+          DEFAULT: "var(--accent)",
+          secondary: "var(--accent-secondary)",
+          bg: "var(--accent-bg)",
+        },
         cyber: {
-          DEFAULT: "#00d4ff",
-          glow: "rgba(0, 212, 255, 0.4)",
+          DEFAULT: "var(--accent)",
+          glow: "var(--accent-bg)",
         },
-        // VIP accent
+        // VIP colors
         vip: {
-          DEFAULT: "#e94560",
-          glow: "rgba(233, 69, 96, 0.4)",
+          DEFAULT: "var(--vip)",
+          bg: "var(--vip-bg)",
+          glow: "var(--vip-bg)",
         },
-        // Text hierarchy
-        txt: {
-          primary: "#f8fafc",
-          secondary: "#94a3b8",
-          muted: "#5e6e82",
+        // Legacy void colors for backward compatibility
+        // Maps to the new theme-aware CSS variables
+        void: {
+          DEFAULT: "var(--bg-primary)",
+          50: "var(--bg-secondary)",
+          100: "var(--bg-tertiary)",
+          200: "var(--bg-elevated)",
         },
+        // Macro colors
+        riskon: "var(--bullish)",
+        riskoff: "var(--bearish)",
+        mixed: "#fbbf24",
       },
       fontFamily: {
         display: ['"Outfit"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-        body: ['"Inter"', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        body: ['"DM Sans"', 'system-ui', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
-        'grid-flow': 'gridFlow 20s linear infinite',
         'fade-in': 'fadeIn 0.6s ease-out forwards',
         'slide-up': 'slideUp 0.6s ease-out forwards',
         'ticker': 'ticker 30s linear infinite',
@@ -65,10 +82,6 @@ export default {
         glow: {
           '0%': { opacity: '0.5' },
           '100%': { opacity: '1' },
-        },
-        gridFlow: {
-          '0%': { transform: 'translateY(0)' },
-          '100%': { transform: 'translateY(50px)' },
         },
         fadeIn: {
           '0%': { opacity: '0' },
@@ -84,18 +97,10 @@ export default {
         },
       },
       boxShadow: {
-        'glow-bullish': '0 0 20px rgba(0, 255, 136, 0.3), 0 0 40px rgba(0, 255, 136, 0.1)',
-        'glow-bearish': '0 0 20px rgba(255, 68, 102, 0.3), 0 0 40px rgba(255, 68, 102, 0.1)',
-        'glow-cyber': '0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1)',
-        'card': '0 4px 24px rgba(0, 0, 0, 0.4)',
-      },
-      backgroundImage: {
-        'grid-pattern': `linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                         linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px)`,
-        'gradient-radial': 'radial-gradient(ellipse at center, var(--tw-gradient-stops))',
-      },
-      backgroundSize: {
-        'grid': '50px 50px',
+        'glow-bullish': '0 0 20px var(--bullish-bg)',
+        'glow-bearish': '0 0 20px var(--bearish-bg)',
+        'glow-cyber': '0 0 20px var(--accent-bg)',
+        'card': 'var(--shadow-card)',
       },
     },
   },

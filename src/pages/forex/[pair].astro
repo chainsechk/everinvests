@@ -156,7 +156,7 @@ const financialProductSchema = {
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-void-200/30">
+              <tr class="border-b border-divider">
                 <th class="text-left py-2 px-3 text-txt-muted font-medium">Date</th>
                 <th class="text-left py-2 px-3 text-txt-muted font-medium">Time</th>
                 <th class="text-left py-2 px-3 text-txt-muted font-medium">Bias</th>
@@ -167,7 +167,7 @@ const financialProductSchema = {
             </thead>
             <tbody>
               {assetHistory.map((row, index) => (
-                <tr class:list={["border-b border-void-200/20 hover:bg-void-100/30", index === 0 && "bg-void-100/20"]}>
+                <tr class:list={["border-b border-divider hover:bg-subtle", index === 0 && "bg-subtle"]}>
                   <td class="py-2 px-3">
                     <a href={`/forex/${row.date}/${row.time_slot}`} class="text-txt-primary hover:text-cyber transition-colors">
                       {formatDate(row.date)}
@@ -206,7 +206,7 @@ const financialProductSchema = {
           {validPairs.filter(p => p !== normalizedPair).map((p) => (
             <a
               href={`/forex/${p.toLowerCase()}`}
-              class="px-3 py-1.5 text-sm rounded-lg bg-void-100/50 border border-void-200/30 text-txt-secondary hover:text-txt-primary hover:border-cyber/30 transition-colors"
+              class="px-3 py-1.5 text-sm rounded-lg bg-subtle border border-divider text-txt-secondary hover:text-txt-primary hover:border-cyber/30 transition-colors"
             >
               {formatPairName(p)}
             </a>

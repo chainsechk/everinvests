@@ -3,8 +3,8 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="relative border-t border-void-200/30 mt-16">
-  <div class="absolute inset-0 bg-void-50/50 backdrop-blur-sm"></div>
+<footer class="relative border-t mt-16" style="border-color: var(--border-divider);">
+  <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay-light);"></div>
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative py-12">
     <div class="grid gap-8 md:grid-cols-3">
       <!-- Brand -->
@@ -73,7 +73,7 @@ const year = new Date().getFullYear();
     </div>
 
     <!-- Bottom bar -->
-    <div class="mt-12 pt-6 border-t border-void-200/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-txt-muted">
+    <div class="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-txt-muted" style="border-color: var(--border-divider);">
       <p>&copy; {year} EverInvests. Signals for educational purposes only.</p>
       <p class="font-mono">Not financial advice • DYOR</p>
     </div>

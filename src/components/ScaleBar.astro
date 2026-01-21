@@ -55,7 +55,7 @@ const label = getLabel(value, type);
   <!-- Compact: single row with value, bar, label -->
   <div class="flex items-center gap-2 min-w-[90px]">
     <span class="font-mono text-xs font-medium text-txt-primary w-5">{value}</span>
-    <div class="flex-1 h-1.5 bg-void-200/50 rounded-full overflow-hidden relative">
+    <div class="flex-1 h-1.5 rounded-full overflow-hidden relative scale-bar-track">
       <div class:list={["absolute left-0 top-0 h-full rounded-full", barColor]} style={`width: ${percentage}%`}></div>
     </div>
     {label && <span class="text-[10px] text-txt-muted whitespace-nowrap">{label}</span>}
@@ -67,25 +67,38 @@ const label = getLabel(value, type);
       <span class="font-mono text-xs font-medium text-txt-primary">{value}</span>
       {label && <span class="text-[10px] text-txt-muted">{label}</span>}
     </div>
-    <div class="relative h-1.5 bg-void-200/50 rounded-full overflow-hidden">
+    <div class="relative h-1.5 rounded-full overflow-hidden scale-bar-track">
       <div class:list={["absolute left-0 top-0 h-full rounded-full transition-all duration-300", barColor]} style={`width: ${percentage}%`}></div>
       {type === "fear-greed" && (
         <>
-          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 25%"></div>
-          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 50%"></div>
-          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 75%"></div>
+          <div class="absolute top-0 w-px h-full scale-bar-marker" style="left: 25%"></div>
+          <div class="absolute top-0 w-px h-full scale-bar-marker" style="left: 50%"></div>
+          <div class="absolute top-0 w-px h-full scale-bar-marker" style="left: 75%"></div>
         </>
       )}
       {type === "rsi" && (
         <>
-          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 30%"></div>
-          <div class="absolute top-0 w-px h-full bg-void-200/60" style="left: 70%"></div>
+          <div class="absolute top-0 w-px h-full scale-bar-marker" style="left: 30%"></div>
+          <div class="absolute top-0 w-px h-full scale-bar-marker" style="left: 70%"></div>
         </>
       )}
     </div>
-    <div class="flex justify-between text-[9px] text-txt-muted/60 mt-0.5">
+    <div class="flex justify-between text-[9px] mt-0.5 scale-bar-labels">
       <span>{min}</span>
       <span>{max}</span>
     </div>
   </div>
 )}
+
+<style>
+  .scale-bar-track {
+    background: var(--scale-bar-bg);
+  }
+  .scale-bar-marker {
+    background: var(--scale-bar-marker);
+  }
+  .scale-bar-labels {
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+</style>

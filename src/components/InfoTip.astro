@@ -41,14 +41,21 @@ const arrowClasses = {
   }
 
   .info-tip-btn {
-    @apply text-txt-muted hover:text-cyber transition-colors cursor-help p-0.5 -m-0.5;
+    @apply transition-colors cursor-help p-0.5 -m-0.5;
+    color: var(--text-muted);
+  }
+
+  .info-tip-btn:hover {
+    color: var(--accent);
   }
 
   .info-tip-content {
-    @apply absolute hidden w-48 px-3 py-2 text-xs text-txt-secondary
-           bg-void-100 border border-void-200/50 rounded-lg shadow-xl
-           whitespace-normal text-left leading-relaxed;
+    @apply absolute hidden w-48 px-3 py-2 text-xs
+           rounded-lg shadow-xl whitespace-normal text-left leading-relaxed;
     z-index: 9999;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
   }
 
   .info-tip-wrapper:hover .info-tip-content,

@@ -1,13 +1,15 @@
 ---
 // src/components/Header.astro
+import ThemeToggle from "./ThemeToggle.astro";
+
 const pathname = Astro.url.pathname;
 
 const navLinks = [
-  { href: "/", label: "Home", icon: "home" },
-  { href: "/crypto", label: "Crypto", icon: "btc" },
-  { href: "/forex", label: "Forex", icon: "fx" },
-  { href: "/stocks", label: "Stocks", icon: "chart" },
-  { href: "/performance", label: "Performance", icon: "stats" },
+  { href: "/", label: "Home" },
+  { href: "/crypto", label: "Crypto" },
+  { href: "/forex", label: "Forex" },
+  { href: "/stocks", label: "Stocks" },
+  { href: "/performance", label: "Performance" },
 ];
 
 function isActive(href: string): boolean {
@@ -16,20 +18,18 @@ function isActive(href: string): boolean {
 }
 ---
 
-<header class="sticky top-0 z-50 backdrop-blur-xl border-b border-void-200/30">
-  <div class="absolute inset-0 bg-void/80"></div>
+<header class="sticky top-0 z-50 header-blur">
+  <div class="header-bg"></div>
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative">
     <nav class="flex items-center justify-between h-16">
       <!-- Logo -->
       <a href="/" class="flex items-center gap-3 group">
-        <div class="relative">
-          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyber to-bullish flex items-center justify-center shadow-glow-cyber group-hover:scale-105 transition-transform">
-            <svg class="w-5 h-5 text-void" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M13 7l5 5-5 5M6 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+        <div class="logo-mark">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M13 7l5 5-5 5M6 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <span class="font-display font-bold text-xl text-txt-primary group-hover:text-gradient transition-all">
+        <span class="font-display font-bold text-xl logo-text">
           EverInvests
         </span>
       </a>
@@ -41,44 +41,48 @@ function isActive(href: string): boolean {
             <a
               href={link.href}
               class:list={[
-                "relative px-4 py-2 rounded-lg font-display font-medium text-sm transition-all duration-200",
-                isActive(link.href)
-                  ? "text-txt-primary bg-void-100"
-                  : "text-txt-secondary hover:text-txt-primary hover:bg-void-100/50",
+                "nav-link",
+                isActive(link.href) && "nav-link-active",
               ]}
             >
               {link.label}
               {isActive(link.href) && (
-                <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-cyber"></span>
+                <span class="nav-indicator"></span>
               )}
             </a>
           </li>
         ))}
-        <li class="ml-2">
-          <a
-            href="https://t.me/everinvests"
-            target="_blank"
-            rel="noopener"
-            class="btn-telegram text-xs py-2"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
-            </svg>
-            Join
-          </a>
-        </li>
       </ul>
 
+      <!-- Right side: Theme toggle + CTA -->
+      <div class="hidden sm:flex items-center gap-3">
+        <ThemeToggle />
+        <a
+          href="https://t.me/everinvests"
+          target="_blank"
+          rel="noopener"
+          class="btn-telegram text-xs py-2"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+          </svg>
+          Join
+        </a>
+      </div>
+
       <!-- Mobile Menu Button -->
-      <button
-        id="mobile-menu-btn"
-        class="sm:hidden p-2 rounded-lg text-txt-secondary hover:text-txt-primary hover:bg-void-100/50 transition-colors"
-        aria-label="Toggle menu"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
+      <div class="flex sm:hidden items-center gap-2">
+        <ThemeToggle />
+        <button
+          id="mobile-menu-btn"
+          class="mobile-menu-btn"
+          aria-label="Toggle menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
     </nav>
 
     <!-- Mobile Navigation -->
@@ -89,17 +93,15 @@ function isActive(href: string): boolean {
             <a
               href={link.href}
               class:list={[
-                "block px-4 py-3 rounded-lg font-display font-medium text-sm transition-colors",
-                isActive(link.href)
-                  ? "text-txt-primary bg-void-100"
-                  : "text-txt-secondary hover:text-txt-primary hover:bg-void-100/50",
+                "mobile-nav-link",
+                isActive(link.href) && "mobile-nav-link-active",
               ]}
             >
               {link.label}
             </a>
           </li>
         ))}
-        <li class="mt-2">
+        <li class="mt-3">
           <a
             href="https://t.me/everinvests"
             target="_blank"
@@ -125,3 +127,108 @@ function isActive(href: string): boolean {
     mobileMenu?.classList.toggle('hidden');
   });
 </script>
+
+<style>
+  .header-blur {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .header-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    opacity: 0.85;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* Logo styling */
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-accent);
+    color: var(--text-inverse);
+    transition: transform 0.2s ease;
+  }
+
+  .group:hover .logo-mark {
+    transform: scale(1.05);
+  }
+
+  .logo-text {
+    color: var(--text-primary);
+    transition: color 0.2s ease;
+  }
+
+  .group:hover .logo-text {
+    color: var(--accent);
+  }
+
+  /* Navigation links */
+  .nav-link {
+    position: relative;
+    display: block;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+
+  .nav-link-active {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+
+  .nav-indicator {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Mobile navigation */
+  .mobile-nav-link {
+    display: block;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link-active {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+
+  .mobile-menu-btn {
+    padding: 8px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .mobile-menu-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+</style>

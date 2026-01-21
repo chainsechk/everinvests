@@ -108,3 +108,15 @@ export function relatedSignalsSql(): string {
     ORDER BY category
   `;
 }
+
+export function latestSignalWithAssetsSql(): string {
+  return `
+    SELECT s.*, m.overall as macro_overall
+    FROM signals s
+    LEFT JOIN macro_signals m ON s.macro_id = m.id
+    WHERE s.category = ?
+      AND EXISTS (SELECT 1 FROM asset_signals a WHERE a.signal_id = s.id)
+    ORDER BY s.date DESC, s.time_slot DESC
+    LIMIT 1
+  `;
+}

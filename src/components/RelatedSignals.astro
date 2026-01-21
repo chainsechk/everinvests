@@ -40,7 +40,7 @@ const otherSignals = relatedSignals.filter(s => s.category !== currentCategory);
         return (
           <a
             href={`/${signal.category}/${signal.date}/${signal.time_slot}`}
-            class="flex items-center gap-3 p-3 rounded-lg bg-void-100/30 border border-void-200/30 hover:border-cyber/30 transition-colors"
+            class="flex items-center gap-3 p-3 rounded-lg bg-subtle border border-subtle hover:border-cyber/30 transition-colors"
           >
             <span class="text-xl">{meta.icon}</span>
             <div class="flex-1 min-w-0">

@@ -163,15 +163,15 @@ function formatSecondary(value: string | null, cat: string): string {
 }
 
 function getMaClass(value: string | null): string {
-  if (value === "above") return "text-bullish bg-bullish/10 border-bullish/20";
-  if (value === "below") return "text-bearish bg-bearish/10 border-bearish/20";
-  return "text-txt-muted bg-void-100/50 border-void-200/30";
+  if (value === "above") return "text-bullish border ma-above";
+  if (value === "below") return "text-bearish border ma-below";
+  return "text-txt-muted border ma-neutral";
 }
 
 function getVolumeClass(value: string | null | undefined): string {
-  if (value === "high") return "text-bullish bg-bullish/10 border-bullish/20";
-  if (value === "low") return "text-mixed bg-mixed/10 border-mixed/20";
-  return "text-txt-muted bg-void-100/50 border-void-200/30";
+  if (value === "high") return "text-bullish border vol-high";
+  if (value === "low") return "text-mixed border vol-low";
+  return "text-txt-muted border vol-neutral";
 }
 
 function formatVolume(value: string | null | undefined): string {
@@ -320,3 +320,33 @@ function getAssetUrl(ticker: string, cat: string): string {
     </div>
   )}
 </div>
+
+<style>
+  /* Trend indicator badges */
+  .ma-above {
+    background: var(--bullish-bg);
+    border-color: var(--bullish-border);
+  }
+  .ma-below {
+    background: var(--bearish-bg);
+    border-color: var(--bearish-border);
+  }
+  .ma-neutral {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+  }
+
+  /* Volume indicator badges */
+  .vol-high {
+    background: var(--bullish-bg);
+    border-color: var(--bullish-border);
+  }
+  .vol-low {
+    background: var(--neutral-bg);
+    border-color: var(--neutral-border);
+  }
+  .vol-neutral {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+  }
+</style>

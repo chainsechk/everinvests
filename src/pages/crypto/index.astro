@@ -9,7 +9,7 @@ import AssetTable from "../../components/AssetTable.astro";
 import HistoryMini from "../../components/HistoryMini.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import VIPCTA from "../../components/VIPCTA.astro";
-import { getLatestMacro, getLatestSignal, getAssetSignals, getSignalHistory } from "../../lib/db";
+import { getLatestMacro, getLatestSignal, getLatestSignalWithAssets, getAssetSignals, getSignalHistory } from "../../lib/db";
 
 const category = "crypto" as const;
 const categoryTitle = "Crypto";
@@ -22,6 +22,7 @@ let signal = null;
 let assets: any[] = [];
 let history: any[] = [];
 let qualityFlags: any = null;
+let usingFallbackAssets = false;
 
 if (db) {
   [macro, signal] = await Promise.all([
@@ -42,6 +43,15 @@ if (db) {
         qualityFlags = output.quality_flags || null;
       } catch {
         // Ignore parse errors
+      }
+    }
+
+    // Fallback: if current signal has no assets, get assets from last signal with data
+    if (assets.length === 0) {
+      const fallbackSignal = await getLatestSignalWithAssets(db, category);
+      if (fallbackSignal && fallbackSignal.id !== signal.id) {
+        assets = await getAssetSignals(db, fallbackSignal.id);
+        usingFallbackAssets = true;
       }
     }
   }
@@ -126,8 +136,13 @@ const serviceSchema = {
     <!-- Asset Table -->
     {assets.length > 0 && (
       <div class="card" data-animate>
-        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Asset Breakdown</h2>
-        <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} />
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display font-semibold text-lg text-txt-primary">Asset Breakdown</h2>
+          {usingFallbackAssets && (
+            <span class="text-xs text-txt-muted bg-subtle px-2 py-1 rounded">Using last available data</span>
+          )}
+        </div>
+        <AssetTable assets={assets} category={category} qualityFlags={usingFallbackAssets ? null : qualityFlags} />
       </div>
     )}
 
