@@ -26,7 +26,8 @@ export type StockTicker = typeof STOCK_ASSETS[number];
 export interface AssetData {
   ticker: string;
   price: number;
-  ma20: number;
+  ma10: number;  // 10-day moving average (for crossover signal)
+  ma20: number;  // 20-day moving average
   secondaryIndicator: number; // funding rate for crypto, RSI for forex/stocks
   timestamp: string;
 }
@@ -52,8 +53,16 @@ export interface AssetSignal {
   price: number;
   bias: Bias;
   vsMA20: "above" | "below";
+  maCrossover: "bullish" | "bearish" | "neutral";  // MA10 vs MA20
   secondaryInd: string;
   reasoning?: string;
+  // Indicator signals for confluence analysis
+  indicators?: {
+    trend: "bullish" | "bearish" | "neutral";      // Price vs MA20
+    momentum: "bullish" | "bearish" | "neutral";   // MA10 vs MA20 crossover
+    strength: "bullish" | "bearish" | "neutral";   // RSI/Funding
+  };
+  confluence?: string;  // e.g., "3/3 bullish"
 }
 
 export interface MacroSignal {

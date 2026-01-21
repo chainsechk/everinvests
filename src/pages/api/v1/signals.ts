@@ -106,22 +106,56 @@ export async function GET(context: APIContext) {
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};
         const data = signal.data_json ? JSON.parse(signal.data_json) : {};
 
-        // Parse asset reasoning to expose indicator confluence
+        // Parse asset data to expose indicator confluence
         const parsedAssets = (assets.results || []).map((a) => {
           const assetData = a.data_json ? JSON.parse(a.data_json) : {};
-          const reasoning = assetData.reasoning || "";
 
-          // Parse "MA20: bullish, Secondary: neutral" format
-          const maMatch = reasoning.match(/MA20:\s*(\w+)/);
-          const secMatch = reasoning.match(/Secondary:\s*(\w+)/);
+          // Use structured indicator data if available, fall back to parsing reasoning
+          const indicators = assetData.indicators || null;
+          const confluence = assetData.confluence || null;
+          const maCrossover = assetData.maCrossover || null;
 
-          const maSignal = maMatch ? maMatch[1] : null;
-          const secSignal = secMatch ? secMatch[1] : null;
+          // If indicators not available, try parsing old format for backwards compat
+          let trendSignal = indicators?.trend || null;
+          let momentumSignal = indicators?.momentum || null;
+          let strengthSignal = indicators?.strength || null;
 
-          // Count bullish/bearish for confluence
-          const signals = [maSignal, secSignal].filter(Boolean);
-          const bullish = signals.filter(s => s === "bullish").length;
-          const bearish = signals.filter(s => s === "bearish").length;
+          if (!indicators && assetData.reasoning) {
+            const reasoning = assetData.reasoning;
+            // Try new format first: "Trend: bullish, Momentum: neutral, Strength: bearish"
+            const trendMatch = reasoning.match(/Trend:\s*(\w+)/);
+            const momentumMatch = reasoning.match(/Momentum:\s*(\w+)/);
+            const strengthMatch = reasoning.match(/Strength:\s*(\w+)/);
+
+            if (trendMatch) trendSignal = trendMatch[1];
+            if (momentumMatch) momentumSignal = momentumMatch[1];
+            if (strengthMatch) strengthSignal = strengthMatch[1];
+
+            // Fall back to old format: "MA20: bullish, Secondary: neutral"
+            if (!trendSignal) {
+              const maMatch = reasoning.match(/MA20:\s*(\w+)/);
+              if (maMatch) trendSignal = maMatch[1];
+            }
+            if (!strengthSignal) {
+              const secMatch = reasoning.match(/Secondary:\s*(\w+)/);
+              if (secMatch) strengthSignal = secMatch[1];
+            }
+          }
+
+          // Count signals for confluence if not already provided
+          let computedConfluence = confluence;
+          if (!computedConfluence) {
+            const signals = [trendSignal, momentumSignal, strengthSignal].filter(Boolean);
+            const bullish = signals.filter(s => s === "bullish").length;
+            const bearish = signals.filter(s => s === "bearish").length;
+            if (bullish > bearish) {
+              computedConfluence = `${bullish}/${signals.length} bullish`;
+            } else if (bearish > bullish) {
+              computedConfluence = `${bearish}/${signals.length} bearish`;
+            } else {
+              computedConfluence = "mixed";
+            }
+          }
 
           return {
             ticker: a.ticker,
@@ -129,16 +163,20 @@ export async function GET(context: APIContext) {
             price: a.price,
             indicators: {
               trend: {
-                signal: maSignal,
+                signal: trendSignal,
                 position: a.vs_20d_ma, // "above" or "below"
               },
               momentum: {
-                signal: secSignal,
+                signal: momentumSignal,
+                maCrossover: maCrossover, // "bullish", "bearish", or "neutral"
+              },
+              strength: {
+                signal: strengthSignal,
                 value: a.secondary_ind || null,
                 type: category === "crypto" ? "fundingRate" : "rsi",
               },
             },
-            confluence: `${bullish}/${signals.length} bullish`,
+            confluence: computedConfluence,
           };
         });
 

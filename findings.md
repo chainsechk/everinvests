@@ -1,205 +1,273 @@
 # Findings & Decisions
 
-## Requirements
-- API endpoints for signals: `/api/today/[category]` and `/api/history/[category]`
-- Categories: crypto, forex, stocks
-- D1 database with tables: macro_signals, signals, asset_signals, run_logs
-- Astro SSR on Cloudflare Pages
-- TypeScript throughout
-- Vitest for unit tests
+## Indicator Confluence Analysis (2026-01-21)
 
-## Research Findings
+### First Principles: What Problem Are We Solving?
 
-### Phase 2 Complete (2026-01-17)
+**The core question:** "vs_20d alone would not say much, need a combo of similar indicators"
 
-**TTL Cache Implementation:**
-- worker/src/cache/ttl.ts: Cloudflare Cache API integration
-- TTL: 5 min for quotes, 15 min for SMA/RSI, 60 min for macro
-- Cache hit tracking and staleness detection built-in
+This is fundamentally about **signal confidence**. A single indicator (price above MA20) tells you:
+- The trend direction (above = uptrend tendency)
+- Nothing about strength, momentum, or sustainability
 
-**Quality Checks Enhanced:**
-- QualityFlags: `missing_assets`, `macro_fallback`, `macro_stale`, `stale_assets`, `outlier_values`
-- Outlier detection: price vs MA deviation, extreme RSI, extreme funding rate
-- Thresholds: 50% MA deviation, RSI 5-95, 1% funding rate
+**First principles breakdown:**
+1. **What is vs_20d measuring?** → Trend position (lagging)
+2. **What does it miss?** → Momentum, strength, acceleration
+3. **What would give confluence?** → Indicators measuring *different* aspects of price action
 
-**Data Fetching Updated:**
-- TwelveData: cached fetch, returns cacheHits and staleAssets
-- AlphaVantage: cached fetch, returns cached and isStale flags
-- Skills updated to v2 with new output fields
+---
 
-**UI Updated:**
-- SignalDetail.astro: shows all quality flag types
-- AssetTable.astro: shows stale/outlier icons per asset with tooltips
-- Category pages pass qualityFlags to AssetTable
+### Current System Analysis
 
-**Tests Added:**
-- tests/worker/quality-checks.test.ts (20 tests)
-- All 37 tests passing
+```
+Current Indicators:
+┌─────────────────┬────────────────────┬──────────────────┐
+│ Category        │ Indicator 1        │ Indicator 2      │
+├─────────────────┼────────────────────┼──────────────────┤
+│ Crypto          │ Price vs MA20      │ Funding Rate     │
+│ Forex/Stocks    │ Price vs MA20      │ RSI (14)         │
+└─────────────────┴────────────────────┴──────────────────┘
 
-### Project State (Task 1 Discovery)
-- **Empty repo** - no Astro scaffolding exists
-- Only docs present: CLAUDE.md, design.md, docs/plans/
-- No package.json, no src/ directory
-- **Action needed**: Full Astro scaffold required (Task 2)
-
-### From design.md
-- **Crypto**: BTC, ETH - updates at 00:00, 08:00, 16:00 UTC
-- **Forex**: USD/JPY, EUR/USD, USD/CAD, USD/AUD - 00:00, 08:00, 14:00 weekdays
-- **Stocks**: 25 tickers - 17:00, 21:00 weekdays
-- Signal output: Macro context, Bias, Key Levels, Triggers, Risks, Summary, Timestamp
-
-### DB Schema (signals table)
-```sql
-CREATE TABLE signals (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  category      TEXT NOT NULL,           -- 'crypto' | 'forex' | 'stocks'
-  date          TEXT NOT NULL,
-  time_slot     TEXT NOT NULL,           -- '08:00'
-  generated_at  TEXT NOT NULL,
-  bias          TEXT NOT NULL,
-  macro_id      INTEGER REFERENCES macro_signals(id),
-  data_json     TEXT,
-  output_json   TEXT,                    -- levels, triggers, risks, summary
-  UNIQUE(category, date, time_slot)
-);
+Bias Rule: 2/2 bullish = Bullish, 2/2 bearish = Bearish, else Neutral
 ```
 
-### API Shape
-- `GET /api/today/[category]` → Returns latest signal for category
-- `GET /api/history/[category]?limit=N` → Returns N most recent signals (default 7, max 30)
+**What's good:**
+- 2 independent signals (trend + momentum/sentiment)
+- Reduces false positives vs single indicator
 
-## Technical Decisions
-| Decision | Rationale |
-|----------|-----------|
-| Category normalization | Only accept 'crypto', 'forex', 'stocks' - return 404 for others |
-| Limit validation | 1-30 range, default 7 |
-| D1 binding via locals.db | Astro Cloudflare adapter pattern |
+**What's missing:**
+- No measure of trend *strength* (is it accelerating or fading?)
+- No shorter-term confirmation (MA20 is 4 weeks of data)
+- RSI can stay overbought for extended periods in strong trends
 
-## D1 Database
-- **database_name**: `everinvests-db`
-- **database_id**: `92386766-33b5-4dc8-a594-abf6fc4e6600`
-- **region**: EEUR
-- **created**: 2026-01-14
+---
 
-## Issues Encountered
+### Candidate Indicators: Fetch vs Calculate
+
+#### Available from TwelveData (Already Using)
+| Indicator | API Endpoint | Credits/Call | Notes |
+|-----------|--------------|--------------|-------|
+| Price | `/quote` | 1 | Already batched |
+| RSI (14) | `/rsi` | 1 | Already using |
+| SMA (any period) | `/sma` | 1 | **Extra call needed** |
+| EMA (any period) | `/ema` | 1 | **Extra call needed** |
+| MACD | `/macd` | 1 | **Extra call needed** |
+| ADX | `/adx` | 1 | Trend strength |
+| Stochastic | `/stoch` | 1 | Mean reversion |
+
+**TwelveData rate limit: 8 credits/minute**
+
+#### Can Calculate Locally (No API Cost)
+| Indicator | Required Data | Calculation |
+|-----------|---------------|-------------|
+| MA10 | 10 daily closes | `sum(closes) / 10` |
+| MA50 | 50 daily closes | `sum(closes) / 50` |
+| EMA | Price history | `EMA_today = (Price * k) + (EMA_yesterday * (1-k))` |
+| Price Change % | Current + previous | `(current - previous) / previous` |
+| Trend Slope | MA values over time | Linear regression |
+| Volatility (ATR-like) | High/Low/Close | `avg(high - low)` over N days |
+
+**Key insight:** We already fetch 25 days of price history for MA20 calculation via `/time_series`. This data can be reused for:
+- MA10 (shorter MA for crossover)
+- Price momentum (5-day ROC)
+- Simple volatility measure
+
+---
+
+### Rate Limit Budget Analysis
+
+**Current API calls per signal run:**
+```
+TwelveData (forex + stocks):
+- Batch quote:      1 call × 2 categories = 2 credits
+- Batch time_series: 1 call × 2 categories = 2 credits (includes 25 days data)
+- Batch RSI:        1 call × 2 categories = 2 credits
+Total: 6 credits per run
+
+Runs per day: ~6 (crypto 3x, forex 3x weekdays, stocks 2x weekdays)
+Estimated: 6 × 6 = 36 credits/day (well under 800 limit)
+```
+
+**If we add more TwelveData indicators:**
+- Adding MACD: +2 credits/run → 48 credits/day
+- Adding ADX: +2 credits/run → 60 credits/day
+- Still well under limit, but increases rate limit risk (8/min)
+
+---
+
+### First Principles: What Makes Good Confluence?
+
+**Principle 1: Indicators should measure DIFFERENT things**
+Bad confluence: MA10 + MA20 + MA50 (all measure trend, high correlation)
+Good confluence: MA20 (trend) + RSI (momentum) + ADX (strength)
+
+**Principle 2: Fast + Slow confirmation**
+- Slow indicator (MA20): Shows established trend
+- Fast indicator (MA10, 5-day ROC): Shows recent momentum
+- Confirmation: When fast and slow agree
+
+**Principle 3: Avoid indicator redundancy**
+- RSI and Stochastic measure similar things (momentum oscillators)
+- Pick one, not both
+
+**Principle 4: Keep it simple**
+- More indicators ≠ better signals
+- 2-3 well-chosen indicators > 5 correlated ones
+- Diminishing returns after 3 indicators
+
+---
+
+### Recommended Approach: Calculate Locally
+
+**Why calculate instead of fetch:**
+1. **Zero additional API calls** - use existing time_series data
+2. **No rate limit risk** - local computation is instant
+3. **Same data quality** - we already have the closes
+4. **More flexible** - can experiment with parameters
+
+**Proposed confluence model (3 indicators):**
+
+| Signal | Source | Interpretation |
+|--------|--------|----------------|
+| **Trend** | Price vs MA20 | Position in trend (above/below) |
+| **Momentum** | MA10 vs MA20 | Trend acceleration (golden/death cross forming) |
+| **Strength** | RSI (14) | Overbought/oversold, momentum confirmation |
+
+**Why this combination:**
+- MA20: Current trend direction (already have)
+- MA10 vs MA20: Crossover signal - when MA10 > MA20, trend is strengthening
+- RSI: Momentum confirmation + extreme readings warning
+
+**Confluence scoring:**
+```
+Bullish:
+  - Price > MA20 (+1)
+  - MA10 > MA20 (+1)
+  - RSI < 70 and rising OR RSI < 30 oversold (+1)
+
+Bearish:
+  - Price < MA20 (+1)
+  - MA10 < MA20 (+1)
+  - RSI > 30 and falling OR RSI > 70 overbought (+1)
+
+Score: 3/3 = Strong signal, 2/3 = Moderate, 1/3 or less = Weak/Neutral
+```
+
+---
+
+### Implementation Plan
+
+**Option A: Minimal change (recommended)**
+Calculate MA10 from existing time_series data:
+```typescript
+// Already have 25 days of closes from time_series
+const ma10 = closes.slice(0, 10).reduce((a,b) => a+b) / 10;
+const ma20 = closes.slice(0, 20).reduce((a,b) => a+b) / 20;
+
+// New signal: MA10 vs MA20
+const maSignal = ma10 > ma20 ? "bullish" : ma10 < ma20 ? "bearish" : "neutral";
+```
+
+**Changes required:**
+1. `twelvedata.ts`: Return MA10 alongside MA20 from time_series
+2. `types.ts`: Add `ma10` to `AssetData`
+3. `bias.ts`: Add MA crossover as third indicator
+4. Update confluence scoring to 3 indicators
+
+**Option B: Add TwelveData MACD (more API calls)**
+```
+Pros:
+- MACD histogram is a leading indicator
+- Well-known signal
+
+Cons:
+- Extra API call per category
+- MACD can be calculated from EMAs locally
+```
+
+**Recommendation: Option A**
+- Zero additional API cost
+- Data already available
+- Covers trend + momentum + strength dimensions
+
+---
+
+### Summary Decision
+
+**Question:** Should we fetch more indicators or calculate locally?
+
+**Answer:** **Calculate locally** using existing data.
+
+**Rationale:**
+1. We already fetch 25 days of closes via `/time_series`
+2. MA10 can be computed from first 10 closes (no extra API call)
+3. This gives us 3 independent signals:
+   - Trend position (Price vs MA20)
+   - Trend momentum (MA10 vs MA20)
+   - Strength (RSI)
+4. Rate limit risk = 0 increase
+5. Implementation is ~20 lines of code change
+
+---
+
+## Implementation Complete (2026-01-21)
+
+### Changes Made
+
+**1. Types (worker/src/types.ts)**
+- Added `ma10: number` to `AssetData` interface
+- Added `maCrossover: "bullish" | "bearish" | "neutral"` to `AssetSignal`
+- Added `indicators` object and `confluence` string to `AssetSignal`
+
+**2. Data Fetchers**
+- `worker/src/data/twelvedata.ts`: Now calculates both MA10 and MA20 from time_series data (no extra API calls)
+- `worker/src/data/binance.ts`: Updated CoinGecko and CoinCap functions to calculate both MA10 and MA20
+
+**3. Bias Calculation (worker/src/signals/bias.ts)**
+- New 3-indicator confluence model:
+  - **Trend**: Price vs MA20 (±1% threshold)
+  - **Momentum**: MA10 vs MA20 (±0.5% threshold for crossover)
+  - **Strength**: RSI (45/55 thresholds in middle range) or Funding Rate
+- Bias rule: 2+ of 3 signals agree → that direction, else Neutral
+- Added confluence scoring (e.g., "3/3 bullish", "2/3 bearish", "mixed")
+
+**4. Storage (worker/src/storage/d1.ts)**
+- Updated `saveAssetSignals` to store full indicator breakdown in `data_json`
+
+**5. UI (src/components/AssetTable.astro)**
+- Added "MA X" (MA crossover) column with up/down arrows
+- Parses `data_json` to display crossover signal
+
+**6. APIs**
+- `src/pages/api/v1/signals.ts`: Updated to parse new indicator format with backwards compat
+- `mcp-server/src/index.ts`: Updated to show T:B/M:N/S:B format in get_signal output
+
+### Verification
+- TypeScript: All checks pass (worker, frontend, mcp-server)
+- Tests: All 87 tests pass
+- Build: Frontend builds successfully
+
+### No Database Migration Needed
+The new indicator data is stored in the existing `data_json` column - no schema changes required.
+
+---
+
+## Previous Findings (Reference)
+
+### Signal Indicator Confluence (Previous Note)
+**Problem:** Raw values like `vsMA20: "above"` are not actionable.
+**Solution:** Expose **interpreted signals** showing confluence.
+
+### IMPORTANT: Rate Limit Distinction
+**External APIs (worker/src/data/*.ts) - RATE LIMITED, MUST BE SEQUENTIAL**
+**D1 Database (src/pages/*.astro) - NO RATE LIMITS, CAN PARALLELIZE**
+
+### Issues Encountered
 | Issue | Resolution |
 |-------|------------|
 | Binance API blocked by CF Workers | Migrated to CoinGecko API for crypto data |
 | CoinGecko requires User-Agent header | Added `User-Agent: EverInvests/1.0` to fetch |
-| TwelveData 8 req/min rate limit | Reduced stocks to 5 key tickers, sequential calls |
-| Worker secrets vs Pages secrets | Must deploy secrets to both separately |
-| Binance funding rate wrong domain | Fixed: `fapi.binance.com` not `api.binance.com` |
-
-## Signal Indicator Confluence (First Principles)
-
-**Problem:** Raw values like `vsMA20: "above"` are not actionable.
-- Is "above MA20" significant? Depends on how far above
-- What about momentum? Need multiple indicators
-
-**Solution:** Expose **interpreted signals** showing confluence:
-```json
-{
-  "indicators": {
-    "trend": { "signal": "bullish", "position": "above" },
-    "momentum": { "signal": "neutral", "value": "54.8", "type": "rsi" }
-  },
-  "confluence": "1/2 bullish"
-}
-```
-
-**Signal Derivation (from bias.ts):**
-- **Trend:** Price vs 20D MA with 1% threshold
-  - `> +1%` → bullish, `< -1%` → bearish, else neutral
-- **Momentum:** RSI (forex/stocks) or Funding Rate (crypto)
-  - RSI: `< 30` → bullish (oversold), `> 70` → bearish (overbought)
-  - Funding: `< 0.01%` → bullish, `> 0.05%` → bearish
-
-**Bias Rule:** 2/2 bullish = Bullish, 2/2 bearish = Bearish, else Neutral
-
-## IMPORTANT: Rate Limit Distinction
-**External APIs (worker/src/data/*.ts) - RATE LIMITED, MUST BE SEQUENTIAL:**
-- TwelveData: 8 req/min - forex/stocks price, SMA, RSI
-- Alpha Vantage: 25 req/day - DXY, VIX, yields
-- CoinGecko: Soft limits - crypto price/MA
-- These calls in worker MUST remain sequential with delays!
-
-**D1 Database (src/pages/*.astro) - NO RATE LIMITS, CAN PARALLELIZE:**
-- All queries to `Astro.locals.runtime?.env?.DB` are local SQLite
-- Safe to use Promise.all() for D1 queries
-- Example: performance.astro parallelizes D1 queries safely
-
-**Don't confuse these two!** Future agents: check if code is calling D1 or external APIs before deciding on parallelization.
-
-## Resources
-- Implementation plan: `docs/plans/2026-01-14-signal-api-foundation.md`
-- Design doc: `docs/plans/2026-01-14-everinvests-design.md`
-- Schema: See design.md Section 5
-
-## Visual/Browser Findings
-- N/A (no browser operations yet)
-
-## VIP Bridge (2026-01-20)
-
-### Scope Clarification
-- **This repo (everinvests):** Free site + Free TG channel only
-- **Separate project:** EverInvests VIP (paid TG group, edge bot, premium signals)
-- **"VIP Bridge":** CTAs added to free tier that funnel users to paid VIP
-
-### Funnel States (Progressive)
-| State | CTA Points To | VIP Status |
-|-------|---------------|------------|
-| **Pre-Launch** | Waitlist (TG bot or form) | Not built yet |
-| Soft Launch | Edge bot (limited access) | MVP ready |
-| Live | Edge bot (open subscriptions) | Full product |
-
-**Current state:** Pre-Launch (waitlist mode)
-
-### CTA Configuration
-Environment-based switching between modes:
-```toml
-# wrangler.toml
-[vars]
-VIP_CTA_MODE = "waitlist"  # Options: "waitlist", "live", "none"
-```
-
-### Waitlist Mode CTA
-```
-━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 EverInvests VIP launching soon
-Regime analysis • Confidence scores • Directives
-👉 Join waitlist: t.me/EverInvestsBot?start=waitlist
-```
-
-### Live Mode CTA (when VIP ready)
-```
-━━━━━━━━━━━━━━━━━━━━━━━━
-Want regime + confidence + directives?
-👉 Join EverInvests VIP: t.me/EverInvestsVIPBot
-```
-
-### Expanded Free Sources Strategy
-
-**Current free sources (limited):**
-- DXY, VIX, 10Y (Alpha Vantage)
-- Price, MA20, RSI (TwelveData)
-- Funding rate (Binance)
-
-**To add (expand free tier value):**
-| Source | Data | Why Add |
-|--------|------|---------|
-| Alternative.me | BTC Fear & Greed | Sentiment |
-| CoinGecko | BTC Dominance | Alt season indicator |
-| FRED | 2Y-10Y Spread | Recession indicator |
-| FRED | Fed Funds Rate | Rate cycle |
-| TwelveData | Gold (XAU/USD) | Risk-off proxy |
-
-**Differentiation principle:**
-- Free = Rich data + Simple output (Bias)
-- VIP = Premium sources + Complex analysis (Regime, Directives)
-
-### Design Files
-- `docs/plans/2026-01-20-vip-bridge-design.md` - Full architecture (v6.0)
-- `docs/plans/2026-01-20-vip-bridge-implementation.md` - Implementation tasks (v3.0)
+| TwelveData 8 req/min rate limit | Batch API, sequential calls with delays |
 
 ---
 *Update this file after every 2 view/browser/search operations*

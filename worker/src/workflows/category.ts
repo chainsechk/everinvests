@@ -14,7 +14,7 @@ export function createCategoryWorkflow(workflowId: string): WorkflowDefinition {
     steps: [
       {
         id: "macro",
-        skill: { id: "fetch_macro_data", version: "2" },
+        skill: { id: "fetch_macro_data", version: "3" },
         input: ({ ctx }) => ({ date: ctx.date, timeSlot: ctx.timeSlot }),
       },
       {

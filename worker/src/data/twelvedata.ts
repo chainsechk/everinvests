@@ -112,11 +112,17 @@ async function getBatchQuotes(
   return { quotes, cached, cachedAt };
 }
 
-// Batch fetch time series for multiple symbols (to compute MA20)
+// Result type for MA calculations
+interface MAResult {
+  ma10: number;
+  ma20: number;
+}
+
+// Batch fetch time series for multiple symbols (to compute MA10 and MA20)
 async function getBatchTimeSeries(
   symbols: string[],
   apiKey: string
-): Promise<{ ma20s: Map<string, number>; cached: boolean }> {
+): Promise<{ mas: Map<string, MAResult>; cached: boolean }> {
   const symbolList = symbols.join(",");
   const url = `${TWELVEDATA_API}/time_series?symbol=${symbolList}&interval=1day&outputsize=25&apikey=${apiKey}`;
 
@@ -127,10 +133,10 @@ async function getBatchTimeSeries(
     TWELVEDATA_TIMEOUT_MS
   );
 
-  const ma20s = new Map<string, number>();
+  const mas = new Map<string, MAResult>();
 
-  // Helper to calculate MA20 from time series
-  const calcMA20 = (ts: TwelveDataTimeSeries): number | null => {
+  // Helper to calculate MA10 and MA20 from time series
+  const calcMAs = (ts: TwelveDataTimeSeries): MAResult | null => {
     if (!ts.values || ts.values.length < 20) {
       console.warn(`[TwelveData] Insufficient values: ${ts.values?.length || 0}`);
       return null;
@@ -141,22 +147,29 @@ async function getBatchTimeSeries(
       console.warn(`[TwelveData] Only ${validCloses.length} valid closes`);
       return null;
     }
-    const ma = validCloses.reduce((sum, c) => sum + c, 0) / validCloses.length;
-    return Number.isFinite(ma) && ma > 0 ? ma : null;
+
+    // Calculate MA10 from first 10 closes, MA20 from all 20
+    const ma10 = validCloses.slice(0, 10).reduce((sum, c) => sum + c, 0) / 10;
+    const ma20 = validCloses.reduce((sum, c) => sum + c, 0) / 20;
+
+    if (!Number.isFinite(ma10) || !Number.isFinite(ma20) || ma10 <= 0 || ma20 <= 0) {
+      return null;
+    }
+    return { ma10, ma20 };
   };
 
   // Check for top-level error (rate limit, etc.)
   if (isTwelveDataError(data)) {
     console.error(`[TwelveData] Batch time_series error: ${(data as TwelveDataError).message}`);
-    return { ma20s, cached };
+    return { mas, cached };
   }
 
   // Single symbol returns object directly with values at top level
   if (symbols.length === 1) {
     const singleData = data as TwelveDataTimeSeries | TwelveDataError;
     if (!isTwelveDataError(singleData)) {
-      const ma = calcMA20(singleData);
-      if (ma !== null) ma20s.set(symbols[0], ma);
+      const result = calcMAs(singleData);
+      if (result !== null) mas.set(symbols[0], result);
     }
   } else {
     // Multi-symbol: check response structure
@@ -174,14 +187,14 @@ async function getBatchTimeSeries(
         console.warn(`[TwelveData] Error for ${symbol}: ${(ts as TwelveDataError).message}`);
         continue;
       }
-      const ma = calcMA20(ts as TwelveDataTimeSeries);
-      if (ma !== null) {
-        ma20s.set(symbol, ma);
+      const result = calcMAs(ts as TwelveDataTimeSeries);
+      if (result !== null) {
+        mas.set(symbol, result);
       }
     }
   }
 
-  return { ma20s, cached };
+  return { mas, cached };
 }
 
 // Batch fetch RSI for multiple symbols
@@ -255,8 +268,8 @@ async function fetchBatchData(
     await new Promise(r => setTimeout(r, waitTimeMs));
   }
 
-  const ma20sResult = await getBatchTimeSeries(symbols, apiKey);
-  if (!ma20sResult.cached) {
+  const masResult = await getBatchTimeSeries(symbols, apiKey);
+  if (!masResult.cached) {
     console.log(`[${category}] Waiting ${waitTimeMs/1000}s for rate limit...`);
     await new Promise(r => setTimeout(r, waitTimeMs));
   }
@@ -265,7 +278,7 @@ async function fetchBatchData(
 
   // Count cache hits
   if (quotesResult.cached) totalCacheHits++;
-  if (ma20sResult.cached) totalCacheHits++;
+  if (masResult.cached) totalCacheHits++;
   if (rsisResult.cached) totalCacheHits++;
 
   // Check staleness
@@ -280,20 +293,21 @@ async function fetchBatchData(
   // Combine results for each symbol
   for (const symbol of symbols) {
     const price = quotesResult.quotes.get(symbol);
-    const ma20 = ma20sResult.ma20s.get(symbol);
+    const maData = masResult.mas.get(symbol);
     const rsi = rsisResult.rsis.get(symbol);
 
-    if (price !== undefined && ma20 !== undefined && rsi !== undefined) {
+    if (price !== undefined && maData !== undefined && rsi !== undefined) {
       results.push({
         ticker: symbol,
         price,
-        ma20,
+        ma10: maData.ma10,
+        ma20: maData.ma20,
         secondaryIndicator: rsi,
         timestamp,
       });
-      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma20=${ma20.toFixed(2)}, rsi=${rsi.toFixed(1)}`);
+      console.log(`[${category}] Got ${symbol}: price=${price.toFixed(2)}, ma10=${maData.ma10.toFixed(2)}, ma20=${maData.ma20.toFixed(2)}, rsi=${rsi.toFixed(1)}`);
     } else {
-      console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ma20=${ma20 !== undefined}, rsi=${rsi !== undefined}`);
+      console.warn(`[${category}] Missing data for ${symbol}: price=${price !== undefined}, ma=${maData !== undefined}, rsi=${rsi !== undefined}`);
     }
   }
 

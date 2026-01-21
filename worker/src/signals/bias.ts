@@ -1,12 +1,16 @@
-// Bias calculation logic
-// Rule: 2 bullish signals = Bullish, 2 bearish = Bearish, else Neutral
+// Bias calculation logic with 3-indicator confluence
+// Rule: 2+ bullish signals = Bullish, 2+ bearish = Bearish, else Neutral
+// Indicators:
+//   1. Trend: Price vs MA20 (position in trend)
+//   2. Momentum: MA10 vs MA20 (trend acceleration/deceleration)
+//   3. Strength: RSI (forex/stocks) or Funding Rate (crypto)
 
 import type { AssetData, AssetSignal, Bias, Category } from "../types";
 
 type SignalDirection = "bullish" | "bearish" | "neutral";
 
-// Price vs 20-day MA
-function calculateMASignal(price: number, ma20: number): SignalDirection {
+// Indicator 1: Price vs 20-day MA (Trend Position)
+function calculateTrendSignal(price: number, ma20: number): SignalDirection {
   const diff = (price - ma20) / ma20;
   // Above MA by more than 1% = bullish, below by more than 1% = bearish
   if (diff > 0.01) return "bullish";
@@ -14,8 +18,18 @@ function calculateMASignal(price: number, ma20: number): SignalDirection {
   return "neutral";
 }
 
-// Secondary indicator signal
-function calculateSecondarySignal(
+// Indicator 2: MA10 vs MA20 (Momentum/Crossover)
+function calculateMomentumSignal(ma10: number, ma20: number): SignalDirection {
+  const diff = (ma10 - ma20) / ma20;
+  // MA10 above MA20 by >0.5% = bullish momentum (golden cross forming)
+  // MA10 below MA20 by >0.5% = bearish momentum (death cross forming)
+  if (diff > 0.005) return "bullish";
+  if (diff < -0.005) return "bearish";
+  return "neutral";
+}
+
+// Indicator 3: Strength indicator (RSI or Funding Rate)
+function calculateStrengthSignal(
   indicator: number,
   category: Category
 ): SignalDirection {
@@ -27,28 +41,59 @@ function calculateSecondarySignal(
     return "neutral";
   } else {
     // RSI for forex/stocks
-    // < 30 = oversold (bullish), > 70 = overbought (bearish)
+    // < 30 = oversold (bullish reversal potential)
+    // > 70 = overbought (bearish reversal potential)
+    // 30-50 with trend = supporting bearish
+    // 50-70 with trend = supporting bullish
     if (indicator < 30) return "bullish";
     if (indicator > 70) return "bearish";
+    // RSI in middle range: slight bias based on which side of 50
+    if (indicator < 45) return "bearish";
+    if (indicator > 55) return "bullish";
     return "neutral";
   }
 }
 
-// Combine signals into final bias
-function combineBias(maSignal: SignalDirection, secondarySignal: SignalDirection): Bias {
-  const bullishCount = [maSignal, secondarySignal].filter(s => s === "bullish").length;
-  const bearishCount = [maSignal, secondarySignal].filter(s => s === "bearish").length;
+// Combine 3 signals into final bias
+function combineBias(
+  trendSignal: SignalDirection,
+  momentumSignal: SignalDirection,
+  strengthSignal: SignalDirection
+): Bias {
+  const signals = [trendSignal, momentumSignal, strengthSignal];
+  const bullishCount = signals.filter(s => s === "bullish").length;
+  const bearishCount = signals.filter(s => s === "bearish").length;
 
+  // 2+ of 3 signals agree = that direction, else Neutral
   if (bullishCount >= 2) return "Bullish";
   if (bearishCount >= 2) return "Bearish";
   return "Neutral";
 }
 
+// Calculate confluence string for display
+function formatConfluence(
+  trendSignal: SignalDirection,
+  momentumSignal: SignalDirection,
+  strengthSignal: SignalDirection
+): string {
+  const signals = [trendSignal, momentumSignal, strengthSignal];
+  const bullishCount = signals.filter(s => s === "bullish").length;
+  const bearishCount = signals.filter(s => s === "bearish").length;
+
+  if (bullishCount > bearishCount) {
+    return `${bullishCount}/3 bullish`;
+  } else if (bearishCount > bullishCount) {
+    return `${bearishCount}/3 bearish`;
+  }
+  return "mixed";
+}
+
 // Calculate bias for a single asset
 export function calculateAssetBias(data: AssetData, category: Category): AssetSignal {
-  const maSignal = calculateMASignal(data.price, data.ma20);
-  const secondarySignal = calculateSecondarySignal(data.secondaryIndicator, category);
-  const bias = combineBias(maSignal, secondarySignal);
+  const trendSignal = calculateTrendSignal(data.price, data.ma20);
+  const momentumSignal = calculateMomentumSignal(data.ma10, data.ma20);
+  const strengthSignal = calculateStrengthSignal(data.secondaryIndicator, category);
+  const bias = combineBias(trendSignal, momentumSignal, strengthSignal);
 
   // Format secondary indicator for display
   let secondaryDisplay: string;
@@ -60,13 +105,23 @@ export function calculateAssetBias(data: AssetData, category: Category): AssetSi
     secondaryDisplay = data.secondaryIndicator.toFixed(1);
   }
 
+  // Determine MA crossover state for display
+  const maCrossover: "bullish" | "bearish" | "neutral" = momentumSignal;
+
   return {
     ticker: data.ticker,
     price: data.price,
     bias,
     vsMA20: data.price > data.ma20 ? "above" : "below",
+    maCrossover,
     secondaryInd: secondaryDisplay,
-    reasoning: `MA20: ${maSignal}, Secondary: ${secondarySignal}`,
+    reasoning: `Trend: ${trendSignal}, Momentum: ${momentumSignal}, Strength: ${strengthSignal}`,
+    indicators: {
+      trend: trendSignal,
+      momentum: momentumSignal,
+      strength: strengthSignal,
+    },
+    confluence: formatConfluence(trendSignal, momentumSignal, strengthSignal),
   };
 }
 

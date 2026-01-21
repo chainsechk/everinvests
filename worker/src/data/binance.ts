@@ -57,8 +57,8 @@ async function getOHLCData(coinId: string): Promise<{ ohlc: CoinGeckoOHLC[]; cac
   return { ohlc, cached, cachedAt };
 }
 
-// Calculate price and 20-day MA from OHLC data
-function calculatePriceAndMA(ohlc: CoinGeckoOHLC[]): { price: number; ma20: number } {
+// Calculate price, 10-day MA, and 20-day MA from OHLC data
+function calculatePriceAndMAs(ohlc: CoinGeckoOHLC[]): { price: number; ma10: number; ma20: number } {
   if (ohlc.length === 0) {
     throw new Error("No OHLC data available");
   }
@@ -80,13 +80,22 @@ function calculatePriceAndMA(ohlc: CoinGeckoOHLC[]): { price: number; ma20: numb
     }
   }
 
-  // Take last 20 days (or fewer if not available)
-  const recentCloses = dailyCloses.slice(-21, -1); // Exclude current day
-  const ma20 = recentCloses.length > 0
-    ? recentCloses.reduce((sum, c) => sum + c, 0) / recentCloses.length
+  // Take last 20 days (or fewer if not available), excluding current day
+  const recentCloses = dailyCloses.slice(-21, -1);
+
+  // Calculate MA10 from last 10 days, MA20 from last 20 days
+  const closes10 = recentCloses.slice(-10);
+  const closes20 = recentCloses.slice(-20);
+
+  const ma10 = closes10.length > 0
+    ? closes10.reduce((sum, c) => sum + c, 0) / closes10.length
     : price;
 
-  return { price, ma20 };
+  const ma20 = closes20.length > 0
+    ? closes20.reduce((sum, c) => sum + c, 0) / closes20.length
+    : price;
+
+  return { price, ma10, ma20 };
 }
 
 // ============================================================
@@ -125,8 +134,8 @@ async function getCoinCapPrice(assetId: string): Promise<{ price: number; cached
   return { price, cached, cachedAt };
 }
 
-// Get 20-day MA from CoinCap history
-async function getCoinCapMA20(assetId: string): Promise<{ ma20: number; cached: boolean }> {
+// Get 10-day and 20-day MA from CoinCap history
+async function getCoinCapMAs(assetId: string): Promise<{ ma10: number; ma20: number; cached: boolean }> {
   // Get last 25 days of daily data
   const end = Date.now();
   const start = end - 25 * 24 * 60 * 60 * 1000;
@@ -147,22 +156,28 @@ async function getCoinCapMA20(assetId: string): Promise<{ ma20: number; cached: 
     throw new Error(`Insufficient CoinCap history for ${assetId}`);
   }
 
-  // Calculate 20-day MA from the most recent 20 days (exclude today)
+  // Calculate MAs from the most recent days (exclude today)
   const prices = data.data.slice(-21, -1).map(d => parseFloat(d.priceUsd));
   const validPrices = prices.filter(p => Number.isFinite(p) && p > 0);
 
-  if (validPrices.length < 15) {
+  if (validPrices.length < 10) {
     throw new Error(`Invalid CoinCap MA data for ${assetId}`);
   }
 
-  const ma20 = validPrices.reduce((sum, p) => sum + p, 0) / validPrices.length;
-  return { ma20, cached };
+  // MA10 from last 10 prices, MA20 from all valid prices (up to 20)
+  const prices10 = validPrices.slice(-10);
+  const prices20 = validPrices.slice(-20);
+
+  const ma10 = prices10.reduce((sum, p) => sum + p, 0) / prices10.length;
+  const ma20 = prices20.reduce((sum, p) => sum + p, 0) / prices20.length;
+
+  return { ma10, ma20, cached };
 }
 
-// Fetch price and MA from CoinCap (fallback)
+// Fetch price and MAs from CoinCap (fallback)
 async function fetchFromCoinCap(
   ticker: CryptoTicker
-): Promise<{ price: number; ma20: number; cached: boolean; cachedAt?: string }> {
+): Promise<{ price: number; ma10: number; ma20: number; cached: boolean; cachedAt?: string }> {
   const assetId = COINCAP_IDS[ticker];
   if (!assetId) {
     throw new Error(`Unknown CoinCap ticker: ${ticker}`);
@@ -170,11 +185,12 @@ async function fetchFromCoinCap(
 
   const [priceResult, maResult] = await Promise.all([
     getCoinCapPrice(assetId),
-    getCoinCapMA20(assetId),
+    getCoinCapMAs(assetId),
   ]);
 
   return {
     price: priceResult.price,
+    ma10: maResult.ma10,
     ma20: maResult.ma20,
     cached: priceResult.cached && maResult.cached,
     cachedAt: priceResult.cachedAt,
@@ -243,6 +259,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
   for (const ticker of tickers) {
     try {
       let price: number;
+      let ma10: number;
       let ma20: number;
       let cached = false;
       let cachedAt: string | undefined;
@@ -261,8 +278,9 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
           getFundingRate(ticker),
         ]);
 
-        const priceData = calculatePriceAndMA(ohlcResult.ohlc);
+        const priceData = calculatePriceAndMAs(ohlcResult.ohlc);
         price = priceData.price;
+        ma10 = priceData.ma10;
         ma20 = priceData.ma20;
         cached = ohlcResult.cached;
         cachedAt = ohlcResult.cachedAt;
@@ -270,6 +288,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
         results.push({
           ticker,
           price,
+          ma10,
           ma20,
           secondaryIndicator: fundingRate,
           timestamp,
@@ -286,6 +305,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
           ]);
 
           price = capResult.price;
+          ma10 = capResult.ma10;
           ma20 = capResult.ma20;
           cached = capResult.cached;
           cachedAt = capResult.cachedAt;
@@ -294,6 +314,7 @@ export async function fetchCryptoData(tickers: readonly CryptoTicker[]): Promise
           results.push({
             ticker,
             price,
+            ma10,
             ma20,
             secondaryIndicator: fundingRate,
             timestamp,

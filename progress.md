@@ -749,12 +749,69 @@
 - `169fbbe` - feat: add Phase 5 agent-native features
 - `d946172` - fix: correct column names in MCP server and v1 API
 
+## Session: 2026-01-21 (Indicator Confluence)
+
+### 3-Indicator Confluence Model - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Problem Statement
+"vs_20d alone would not say much, need a combo of similar indicators"
+
+#### Solution: Calculate MA10 locally (zero extra API calls)
+Implemented 3-indicator confluence model:
+1. **Trend**: Price vs MA20 (position in trend)
+2. **Momentum**: MA10 vs MA20 (crossover signal)
+3. **Strength**: RSI/Funding Rate (overbought/oversold)
+
+Bias rule: 2+ of 3 signals agree → that direction, else Neutral
+
+#### Files Modified:
+- `worker/src/types.ts` - Added ma10, maCrossover, indicators, confluence
+- `worker/src/data/twelvedata.ts` - Calculate MA10 from existing time_series
+- `worker/src/data/binance.ts` - Calculate MA10 from CoinGecko/CoinCap OHLC
+- `worker/src/signals/bias.ts` - New 3-indicator confluence logic
+- `worker/src/storage/d1.ts` - Store indicators in data_json
+- `src/components/AssetTable.astro` - Added MA crossover column
+- `src/pages/api/v1/signals.ts` - Parse new indicator format
+- `mcp-server/src/index.ts` - Updated get_signal output format
+
+#### Verification:
+- TypeScript: All checks pass
+- Tests: 87/87 passing
+- Build: Frontend builds successfully
+
+#### Key Decisions:
+| Decision | Rationale |
+|----------|-----------|
+| Calculate MA10 locally | Zero API cost - data already in time_series |
+| 0.5% threshold for crossover | Filters noise while detecting meaningful divergence |
+| Store in data_json | No DB migration needed, backwards compatible |
+
+## Deployment: 2026-01-21 03:20 UTC
+
+### Deployed to Production
+- Worker: `everinvests-worker` v7dbc3cd4
+- Frontend: `everinvests.pages.dev` (fece7c5e)
+- MCP Server: `everinvests-mcp` v5d1c8784
+
+### Fix Applied During Deployment
+- **Issue:** `fetch_macro_data@2` version mismatch (skill is `@3`)
+- **Fix:** Updated `workflows/category.ts` to use version `@3`
+
+### Verification
+- ✅ New signal generated with 3-indicator confluence
+- ✅ Website shows "MA X" column with ↑/↓ arrows
+- ✅ v1 API returns full indicator breakdown
+- ✅ BTC example: `{"confluence": "2/3 bullish", "indicators": {...}}`
+
 ## 5-Question Reboot Check (2026-01-21)
 | Question | Answer |
 |----------|--------|
-| Where am I? | Growth Plan Phase 5 COMPLETE |
-| Where am I going? | Phase 6: X/Twitter (low priority) or new tasks |
-| What's the goal? | Agent-native features for programmatic access - DONE |
-| What have I learned? | Schema mismatch caught during testing |
-| What have I done? | MCP Server + Structured API deployed and working |
+| Where am I? | 3-Indicator Confluence DEPLOYED |
+| Where am I going? | Monitor production, next feature |
+| What's the goal? | Better signal quality via confluence |
+| What have I learned? | Skill version mismatches break workflows |
+| What have I done? | Full stack deployed and verified |
 

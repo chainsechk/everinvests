@@ -82,13 +82,29 @@ export class EverInvestsMCP extends McpAgent<Env, {}, {}> {
 
         const assetList = (assets.results || []).map(a => {
           const assetData = a.data_json ? JSON.parse(a.data_json) : {};
-          const reasoning = assetData.reasoning || "";
-          // Parse "MA20: bullish, Secondary: neutral" to show confluence
-          const maMatch = reasoning.match(/MA20:\s*(\w+)/);
-          const secMatch = reasoning.match(/Secondary:\s*(\w+)/);
-          const maSignal = maMatch ? maMatch[1] : "?";
-          const secSignal = secMatch ? secMatch[1] : "?";
-          return `  - ${a.ticker}: ${a.bias} [Trend: ${maSignal}, Momentum: ${secSignal}] $${a.price?.toLocaleString() || "N/A"}`;
+
+          // Use structured indicators if available, else parse reasoning
+          let trendSignal = "?";
+          let momentumSignal = "?";
+          let strengthSignal = "?";
+
+          if (assetData.indicators) {
+            trendSignal = assetData.indicators.trend || "?";
+            momentumSignal = assetData.indicators.momentum || "?";
+            strengthSignal = assetData.indicators.strength || "?";
+          } else if (assetData.reasoning) {
+            // Try new format: "Trend: bullish, Momentum: neutral, Strength: bearish"
+            const trendMatch = assetData.reasoning.match(/Trend:\s*(\w+)/);
+            const momentumMatch = assetData.reasoning.match(/Momentum:\s*(\w+)/);
+            const strengthMatch = assetData.reasoning.match(/Strength:\s*(\w+)/);
+            if (trendMatch) trendSignal = trendMatch[1];
+            if (momentumMatch) momentumSignal = momentumMatch[1];
+            if (strengthMatch) strengthSignal = strengthMatch[1];
+          }
+
+          const confluence = assetData.confluence || `${[trendSignal, momentumSignal, strengthSignal].filter(s => s === "bullish").length}/3`;
+
+          return `  - ${a.ticker}: ${a.bias} [T:${trendSignal[0].toUpperCase()} M:${momentumSignal[0].toUpperCase()} S:${strengthSignal[0].toUpperCase()}] (${confluence}) $${a.price?.toLocaleString() || "N/A"}`;
         }).join("\n");
 
         const output = signal.output_json ? JSON.parse(signal.output_json) : {};

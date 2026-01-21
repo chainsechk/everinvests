@@ -116,7 +116,12 @@ export async function saveAssetSignals(args: {
         asset.price,
         asset.vsMA20,
         asset.secondaryInd,
-        JSON.stringify({ reasoning: asset.reasoning })
+        JSON.stringify({
+          reasoning: asset.reasoning,
+          maCrossover: asset.maCrossover,
+          indicators: asset.indicators,
+          confluence: asset.confluence,
+        })
       )
       .run();
   }
