@@ -114,7 +114,12 @@ See: `docs/plans/2026-01-20-vip-bridge-implementation.md` for tasks
   - "Performance" - links to stats page
   - Replaced text CTA with interactive buttons
   - Updated notifyTelegramSkill to v4
-- [ ] Task 9: RSS Feed
+- [x] Task 9: RSS Feed (2026-01-21)
+  - Created `/rss.xml` endpoint with last 50 signals
+  - RSS 2.0 format with atom:link, proper metadata
+  - Added RSS autodiscovery link in HTML head
+  - Added RSS link with icon in footer
+  - Added Performance and Blog links to footer
 - [ ] Task 10: Webhook System
 
 ### Phase 5: Agent-Native Features - PENDING
