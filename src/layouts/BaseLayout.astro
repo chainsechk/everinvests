@@ -28,11 +28,6 @@ const websiteSchema = {
   name: "EverInvests",
   url: SITE_URL || "https://everinvests.com",
   description: "Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${SITE_URL || "https://everinvests.com"}/search?q={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
 };
 
 const organizationSchema = {

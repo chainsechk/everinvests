@@ -155,7 +155,7 @@ const breadcrumbSchema = {
     <div class="text-center py-4" data-animate>
       <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-3">Our Track Record</h1>
       <p class="text-txt-secondary max-w-xl mx-auto">
-        Real results from real trading. No backtests, no hypotheticals.
+        Transparent performance metrics. Updated daily.
       </p>
     </div>
 
@@ -205,10 +205,19 @@ const breadcrumbSchema = {
           <div class="text-sm text-txt-muted">Total Signals</div>
         </div>
         <div class="card text-center py-6">
-          <div class="font-mono text-4xl font-bold text-txt-primary mb-2">
-            {stats.accuracyRate !== null ? `${stats.accuracyRate}%` : "—"}
-          </div>
-          <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+          {stats.accuracyRate !== null ? (
+            <>
+              <div class="font-mono text-4xl font-bold text-txt-primary mb-2">{stats.accuracyRate}%</div>
+              <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+              <div class="text-xs text-txt-muted/60 mt-1">vs 50% random baseline</div>
+            </>
+          ) : (
+            <>
+              <div class="font-mono text-2xl font-bold text-txt-muted mb-2">Building...</div>
+              <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+              <div class="text-xs text-txt-muted/60 mt-1">Requires 30 days of data</div>
+            </>
+          )}
         </div>
         <div class="card text-center py-6">
           <div class="font-mono text-4xl font-bold text-txt-secondary mb-2">{stats.signalsToday}</div>
@@ -293,11 +302,11 @@ const breadcrumbSchema = {
                     <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="none" class="text-void-200"/>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="font-mono text-lg font-bold text-txt-muted">—</span>
+                    <span class="font-mono text-sm text-txt-muted">Building</span>
                   </div>
                 </div>
-                <div class="text-sm text-txt-muted">Collecting data</div>
-                <div class="text-[10px] text-txt-muted/60 mt-1">Accuracy measured after 30 days</div>
+                <div class="text-sm text-txt-muted">Measuring accuracy</div>
+                <div class="text-[10px] text-txt-muted/60 mt-1">Requires verified signal outcomes</div>
               </div>
             )}
           </div>

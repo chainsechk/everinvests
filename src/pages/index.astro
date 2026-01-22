@@ -5,7 +5,6 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import MacroBar from "../components/MacroBar.astro";
 import SignalCard from "../components/SignalCard.astro";
-import TelegramCTA from "../components/TelegramCTA.astro";
 import VIPCTA from "../components/VIPCTA.astro";
 import { getLatestMacro, getLatestSignal, getAssetSignals } from "../lib/db";
 
@@ -80,9 +79,12 @@ function formatLastUpdate(): string {
         <span class="text-gradient">Now we share our edge.</span>
       </h1>
 
-      <p class="text-lg text-txt-secondary max-w-2xl mx-auto mb-8">
-        Our crypto strategy doubled money every 2 years for 5 years straight.
+      <p class="text-lg text-txt-secondary max-w-2xl mx-auto mb-2">
+        Our crypto strategy doubled money every 2 years for 5 years straight.*
         Now we're sharing it free—Crypto, Forex, and Stocks signals, updated daily.
+      </p>
+      <p class="text-xs text-txt-muted mb-8">
+        *<a href="/performance" class="underline hover:text-txt-secondary">See our track record</a>. Past performance does not guarantee future results.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-4">
@@ -146,15 +148,15 @@ function formatLastUpdate(): string {
 
     <!-- Features Grid -->
     <section class="grid gap-6 sm:grid-cols-3" data-animate>
-      <div class="card-glass text-center py-6">
+      <a href="/performance" class="card-glass text-center py-6 block hover:border-cyber/30 transition-colors">
         <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 flex items-center justify-center">
           <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
         </div>
-        <h3 class="font-display font-semibold text-txt-primary mb-2">Proven Track Record</h3>
-        <p class="text-sm text-txt-muted">Doubled money every 2 years in crypto since 2019</p>
-      </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">5 Years Live Trading</h3>
+        <p class="text-sm text-txt-muted">See our track record →</p>
+      </a>
 
       <div class="card-glass text-center py-6">
         <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -177,10 +179,7 @@ function formatLastUpdate(): string {
       </div>
     </section>
 
-    <!-- Telegram CTA -->
-    <TelegramCTA variant="full" />
-
-    <!-- VIP CTA -->
+    <!-- VIP CTA (single funnel to avoid confusion) -->
     <VIPCTA category="all" mode="waitlist" utmSource="homepage" />
 
     <!-- Update Schedule -->

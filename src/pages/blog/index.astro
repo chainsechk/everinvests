@@ -18,13 +18,21 @@ interface BlogPost {
 
 const db = Astro.locals.runtime.env.DB;
 
-// Fetch all blog posts, newest first
-const result = await db.prepare(
-  `SELECT id, slug, title, content, category, published_at, views
-   FROM blog_posts
-   ORDER BY published_at DESC
-   LIMIT 50`
-).all<BlogPost>();
+// Get category filter from URL
+const categoryFilter = Astro.url.searchParams.get('category');
+const validCategories = ['crypto', 'forex', 'stocks'];
+const activeCategory = validCategories.includes(categoryFilter || '') ? categoryFilter : null;
+
+// Fetch blog posts with optional category filter
+let query = `SELECT id, slug, title, content, category, published_at, views FROM blog_posts`;
+if (activeCategory) {
+  query += ` WHERE category = ?`;
+}
+query += ` ORDER BY published_at DESC LIMIT 50`;
+
+const result = activeCategory
+  ? await db.prepare(query).bind(activeCategory).all<BlogPost>()
+  : await db.prepare(query).all<BlogPost>();
 
 const posts = result.results || [];
 
@@ -72,18 +80,18 @@ function getExcerpt(content: string, length: number = 150): string {
       </p>
     </div>
 
-    <!-- Category Filter (optional future enhancement) -->
+    <!-- Category Filter -->
     <div class="flex items-center justify-center gap-2 mb-8" data-animate>
-      <a href="/blog" class="px-4 py-2 rounded-lg bg-cyber/10 text-cyber text-sm font-medium">
+      <a href="/blog" class:list={["px-4 py-2 rounded-lg text-sm transition-colors", !activeCategory ? "bg-cyber/10 text-cyber font-medium" : "hover:bg-subtle text-txt-muted"]}>
         All
       </a>
-      <a href="/blog?category=crypto" class="px-4 py-2 rounded-lg hover:bg-subtle text-txt-muted text-sm transition-colors">
+      <a href="/blog?category=crypto" class:list={["px-4 py-2 rounded-lg text-sm transition-colors", activeCategory === 'crypto' ? "bg-cyber/10 text-cyber font-medium" : "hover:bg-subtle text-txt-muted"]}>
         Crypto
       </a>
-      <a href="/blog?category=forex" class="px-4 py-2 rounded-lg hover:bg-subtle text-txt-muted text-sm transition-colors">
+      <a href="/blog?category=forex" class:list={["px-4 py-2 rounded-lg text-sm transition-colors", activeCategory === 'forex' ? "bg-cyber/10 text-cyber font-medium" : "hover:bg-subtle text-txt-muted"]}>
         Forex
       </a>
-      <a href="/blog?category=stocks" class="px-4 py-2 rounded-lg hover:bg-subtle text-txt-muted text-sm transition-colors">
+      <a href="/blog?category=stocks" class:list={["px-4 py-2 rounded-lg text-sm transition-colors", activeCategory === 'stocks' ? "bg-cyber/10 text-cyber font-medium" : "hover:bg-subtle text-txt-muted"]}>
         Stocks
       </a>
     </div>
@@ -114,9 +122,6 @@ function getExcerpt(content: string, length: number = 150): string {
                       <div class="flex items-center gap-2 mb-2">
                         <span class={`px-2 py-0.5 rounded text-xs font-mono uppercase ${categoryColors[post.category] || 'bg-void-100 text-txt-muted'} border`}>
                           {post.category}
-                        </span>
-                        <span class="text-xs text-txt-muted">
-                          {post.views} views
                         </span>
                       </div>
                       <h3 class="font-display font-bold text-lg text-txt-primary group-hover:text-cyber transition-colors mb-2 truncate">
