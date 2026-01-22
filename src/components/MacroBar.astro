@@ -260,9 +260,10 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 ---
 
 <div class="card-glass" data-animate>
-  <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-0">
+  <!-- Row 1: Market sentiment + USD, Volatility, 10Y Rate -->
+  <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
     <!-- Overall Macro Sentiment -->
-    <div class="flex items-center gap-3 sm:pr-6 sm:border-r" style="border-color: var(--border-divider);">
+    <div class="flex items-center gap-3">
       <div class="flex items-center gap-2">
         <span class:list={[
           "pulse-dot",
@@ -289,38 +290,40 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       </span>
     </div>
 
-    <!-- Indicators Grid - human-readable labels with info tips -->
-    <div class="flex items-center gap-4 sm:gap-6 sm:pl-6 flex-wrap justify-center">
-      <!-- US Dollar Index -->
-      <div class="macro-chip">
-        <span class="text-txt-muted inline-flex items-center gap-1">
-          USD
-          <InfoTip text="US Dollar strength. When the dollar is Strong, it typically hurts assets priced in USD (like crypto and commodities). Weak dollar often means risk-on." position="top" />
-        </span>
-        <span class="text-txt-primary font-semibold">{dxy.label}</span>
-        <span class="font-mono text-cyber">{dxy.icon}</span>
-      </div>
+    <!-- US Dollar Index -->
+    <div class="macro-chip">
+      <span class="text-txt-muted inline-flex items-center gap-1">
+        USD
+        <InfoTip text="US Dollar strength. When the dollar is Strong, it typically hurts assets priced in USD (like crypto and commodities). Weak dollar often means risk-on." position="top" />
+      </span>
+      <span class="text-txt-primary font-semibold">{dxy.label}</span>
+      <span class="font-mono text-cyber">{dxy.icon}</span>
+    </div>
 
-      <!-- Market Volatility -->
-      <div class="macro-chip">
-        <span class="text-txt-muted inline-flex items-center gap-1">
-          Volatility
-          <InfoTip text="Market fear gauge (VIX). Low volatility = calm markets, good for investing. High volatility = fearful markets, prices may swing wildly." position="top" />
-        </span>
-        <span class:list={["font-semibold", vix.color]}>{vix.label}</span>
-      </div>
+    <!-- Market Volatility -->
+    <div class="macro-chip">
+      <span class="text-txt-muted inline-flex items-center gap-1">
+        Volatility
+        <InfoTip text="Market fear gauge (VIX). Low volatility = calm markets, good for investing. High volatility = fearful markets, prices may swing wildly." position="top" />
+      </span>
+      <span class:list={["font-semibold", vix.color]}>{vix.label}</span>
+    </div>
 
-      <!-- 10Y Treasury Yield -->
-      <div class="macro-chip">
-        <span class="text-txt-muted inline-flex items-center gap-1">
-          10Y Rate
-          <InfoTip text="US Treasury bond yields. Rising rates compete with stocks for investor money. Falling rates are generally bullish for risk assets." position="top" />
-        </span>
-        <span class="text-txt-primary font-semibold">{yields.label}</span>
-        <span class="font-mono text-cyber">{yields.icon}</span>
-      </div>
+    <!-- 10Y Treasury Yield -->
+    <div class="macro-chip">
+      <span class="text-txt-muted inline-flex items-center gap-1">
+        10Y Rate
+        <InfoTip text="US Treasury bond yields. Rising rates compete with stocks for investor money. Falling rates are generally bullish for risk assets." position="top" />
+      </span>
+      <span class="text-txt-primary font-semibold">{yields.label}</span>
+      <span class="font-mono text-cyber">{yields.icon}</span>
+    </div>
+  </div>
 
-      {/* Fear & Greed - only show if data available, with visual scale */}
+  <!-- Row 2: Sentiment, Rate Spread, Regime -->
+  {hasExpanded && (
+    <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
+      {/* Fear & Greed - with visual scale */}
       {expanded.fearGreed !== undefined && (
         <div class="macro-chip">
           <span class="text-txt-muted inline-flex items-center gap-1">
@@ -342,7 +345,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         </div>
       )}
 
-      {/* Regime Classification - Phase 1 */}
+      {/* Regime Classification */}
       {expanded.regime && (
         <div class="macro-chip">
           <span class="text-txt-muted inline-flex items-center gap-1">
@@ -359,7 +362,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         </div>
       )}
     </div>
-  </div>
+  )}
 
   {/* Event Window Alert - show when active economic event */}
   {expanded.regime?.phase1_event?.active && (
@@ -450,7 +453,13 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
   {expanded.regime?.upcomingEvents && expanded.regime.upcomingEvents.length > 0 && !expanded.regime.phase1_event?.active && (
     <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
       <div class="flex items-center gap-2 text-base text-txt-muted">
-        <span class="font-mono text-sm">📅</span>
+        <span class="font-mono text-sm inline-flex items-center gap-1">
+          📅
+          <InfoTip
+            text="Major economic events that can move markets. FOMC = Fed interest rate decisions. CPI = inflation data. NFP = jobs report. These events often cause volatility—consider reducing position sizes before them."
+            position="top"
+          />
+        </span>
         <span>Upcoming: {expanded.regime.upcomingEvents.slice(0, 3).join(" | ")}</span>
       </div>
     </div>
