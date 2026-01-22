@@ -26,23 +26,23 @@
     --border-default: rgba(0, 0, 0, 0.12);
     --border-strong: rgba(0, 0, 0, 0.18);
 
-    --text-primary: #1a1a1a;
-    --text-secondary: #3d4852;
-    --text-muted: #64748b;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-muted: #4b5563;
     --text-inverse: #ffffff;
 
-    /* Signal colors - balanced for light theme readability */
-    --bullish: #047857;
-    --bullish-bg: rgba(5, 150, 105, 0.1);
-    --bullish-border: rgba(5, 150, 105, 0.25);
+    /* Signal colors - high contrast for light theme visibility */
+    --bullish: #059669;
+    --bullish-bg: rgba(5, 150, 105, 0.12);
+    --bullish-border: rgba(5, 150, 105, 0.35);
 
-    --bearish: #b91c1c;
-    --bearish-bg: rgba(185, 28, 28, 0.1);
-    --bearish-border: rgba(185, 28, 28, 0.25);
+    --bearish: #dc2626;
+    --bearish-bg: rgba(220, 38, 38, 0.12);
+    --bearish-border: rgba(220, 38, 38, 0.35);
 
-    --neutral: #52525b;
-    --neutral-bg: rgba(82, 82, 91, 0.1);
-    --neutral-border: rgba(82, 82, 91, 0.25);
+    --neutral: #4b5563;
+    --neutral-bg: rgba(75, 85, 99, 0.12);
+    --neutral-border: rgba(75, 85, 99, 0.35);
 
     /* Accent - deep navy for trust */
     --accent: #1e3a5f;
@@ -72,9 +72,9 @@
     --scale-bar-marker: rgba(0, 0, 0, 0.15);
 
     /* Typography - Light mode needs larger/heavier text due to irradiation illusion */
-    --font-size-base: 16px;
-    --font-size-sm: 15px;
-    --font-size-xs: 14px;
+    --font-size-base: 17px;
+    --font-size-sm: 16px;
+    --font-size-xs: 15px;
     --font-weight-body: 450;
     --font-weight-small: 550;
     --font-weight-muted: 500;
@@ -146,9 +146,9 @@
     --scale-bar-marker: rgba(255, 255, 255, 0.15);
 
     /* Typography - Dark mode can use slightly smaller typography (irradiation compensates) */
-    --font-size-base: 15px;
-    --font-size-sm: 14px;
-    --font-size-xs: 13px;
+    --font-size-base: 16px;
+    --font-size-sm: 15px;
+    --font-size-xs: 14px;
     --font-weight-body: 400;
     --font-weight-small: 450;
     --font-weight-muted: 450;
@@ -717,8 +717,20 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: var(--bullish);
+    background: inherit;
     animation: pulse-ring 2s ease-out infinite;
+  }
+
+  .pulse-dot-bullish {
+    background: var(--bullish);
+  }
+
+  .pulse-dot-bearish {
+    background: var(--bearish);
+  }
+
+  .pulse-dot-mixed {
+    background: var(--vip);
   }
 
   @keyframes pulse-ring {

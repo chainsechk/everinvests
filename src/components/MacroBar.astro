@@ -264,7 +264,11 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
     <!-- Overall Macro Sentiment -->
     <div class="flex items-center gap-3 sm:pr-6 sm:border-r" style="border-color: var(--border-divider);">
       <div class="flex items-center gap-2">
-        <span class="pulse-dot"></span>
+        <span class:list={[
+          "pulse-dot",
+          overall?.toLowerCase().includes("risk-on") ? "pulse-dot-bullish" :
+          overall?.toLowerCase().includes("risk-off") ? "pulse-dot-bearish" : "pulse-dot-mixed"
+        ]}></span>
         <span class="font-mono text-xs text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
           Market
           <InfoTip
@@ -382,11 +386,21 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         ]}>
           {expanded.regime.phase2_fearGreed.regime === "extreme_fear" ? "↑" : "↓"}
         </span>
-        <span class:list={["font-medium", getContrarianSignal(expanded.regime.phase2_fearGreed)?.color]}>
+        <span class:list={["font-medium inline-flex items-center gap-1", getContrarianSignal(expanded.regime.phase2_fearGreed)?.color]}>
           {getContrarianSignal(expanded.regime.phase2_fearGreed)?.label}
+          <InfoTip
+            text={expanded.regime.phase2_fearGreed.regime === "extreme_fear"
+              ? "Contrarian signal: When fear is extreme, markets often overreact. Historically, buying during extreme fear has led to better returns."
+              : "Contrarian signal: When greed is extreme, markets may be overheated. Historically, this precedes pullbacks."}
+            position="top"
+          />
         </span>
-        <span class="text-txt-muted text-xs">
-          F&G at {expanded.regime.phase2_fearGreed.value} ({getFearGreedRegimeLabel(expanded.regime.phase2_fearGreed.regime)})
+        <span class="text-txt-muted text-xs inline-flex items-center gap-1">
+          Fear & Greed at {expanded.regime.phase2_fearGreed.value}
+          <InfoTip
+            text="The Fear & Greed Index measures market sentiment from 0 (extreme fear) to 100 (extreme greed). Values below 25 or above 75 often signal turning points."
+            position="top"
+          />
         </span>
       </div>
     </div>

@@ -58,14 +58,14 @@ const label = getLabel(value, type);
     <div class="flex-1 h-1.5 rounded-full overflow-hidden relative scale-bar-track">
       <div class:list={["absolute left-0 top-0 h-full rounded-full", barColor]} style={`width: ${percentage}%`}></div>
     </div>
-    {label && <span class="text-[10px] text-txt-muted whitespace-nowrap">{label}</span>}
+    {label && <span class="text-xs text-txt-muted whitespace-nowrap">{label}</span>}
   </div>
 ) : (
   <!-- Full: stacked layout with 0-100 scale -->
   <div class="w-full min-w-[70px]">
     <div class="flex items-center gap-2 mb-1">
       <span class="font-mono text-xs font-medium text-txt-primary">{value}</span>
-      {label && <span class="text-[10px] text-txt-muted">{label}</span>}
+      {label && <span class="text-xs text-txt-muted">{label}</span>}
     </div>
     <div class="relative h-1.5 rounded-full overflow-hidden scale-bar-track">
       <div class:list={["absolute left-0 top-0 h-full rounded-full transition-all duration-300", barColor]} style={`width: ${percentage}%`}></div>
@@ -83,7 +83,7 @@ const label = getLabel(value, type);
         </>
       )}
     </div>
-    <div class="flex justify-between text-[9px] mt-0.5 scale-bar-labels">
+    <div class="flex justify-between text-xs mt-0.5 scale-bar-labels">
       <span>{min}</span>
       <span>{max}</span>
     </div>
