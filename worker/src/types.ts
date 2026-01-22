@@ -146,6 +146,8 @@ export interface GdeltRegimeData {
   trend: "rising" | "stable" | "falling";
   topThreats: string[];
   lastUpdated: string;
+  regime: "calm" | "elevated" | "high" | "critical";
+  signalDampening: number;
 }
 
 export interface RegimeClassification {

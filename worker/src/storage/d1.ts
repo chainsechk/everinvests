@@ -1,6 +1,7 @@
 import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
 import { formatMacroForStorage } from "../signals";
 import type { BenchmarkData } from "../data/twelvedata";
+import type { GdeltResult } from "../data/gdelt";
 
 type D1Database = import("@cloudflare/workers-types").D1Database;
 
@@ -374,4 +375,86 @@ export async function saveLLMRun(args: LLMRunInput): Promise<number> {
     console.error("Failed to save LLM run:", e);
     return 0;
   }
+}
+
+// ============================================================
+// GDELT Geopolitical Score (Phase 4 Regime Detection)
+// ============================================================
+
+export async function saveGdeltScore(args: {
+  db: D1Database;
+  date: string;
+  result: GdeltResult;
+}): Promise<void> {
+  const { db, date, result } = args;
+
+  await db
+    .prepare(
+      `INSERT INTO gdelt_scores (date, score, trend, top_threats, articles, avg_tone, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(date) DO UPDATE SET
+         score = excluded.score,
+         trend = excluded.trend,
+         top_threats = excluded.top_threats,
+         articles = excluded.articles,
+         avg_tone = excluded.avg_tone,
+         fetched_at = excluded.fetched_at`
+    )
+    .bind(
+      date,
+      result.score,
+      result.trend,
+      JSON.stringify(result.topThreats),
+      result.articles,
+      result.avgTone,
+      result.lastUpdated
+    )
+    .run();
+}
+
+export async function getLatestGdeltScore(args: {
+  db: D1Database;
+}): Promise<GdeltResult | null> {
+  const { db } = args;
+
+  const row = await db
+    .prepare(
+      `SELECT score, trend, top_threats, articles, avg_tone, fetched_at
+       FROM gdelt_scores
+       ORDER BY date DESC
+       LIMIT 1`
+    )
+    .first<{
+      score: number;
+      trend: string;
+      top_threats: string;
+      articles: number;
+      avg_tone: number;
+      fetched_at: string;
+    }>();
+
+  if (!row) return null;
+
+  return {
+    score: row.score,
+    trend: row.trend as "rising" | "stable" | "falling",
+    topThreats: JSON.parse(row.top_threats) as string[],
+    articles: row.articles,
+    avgTone: row.avg_tone,
+    lastUpdated: row.fetched_at,
+  };
+}
+
+export async function getPreviousGdeltScore(args: {
+  db: D1Database;
+}): Promise<number | undefined> {
+  const { db } = args;
+
+  const row = await db
+    .prepare(
+      `SELECT score FROM gdelt_scores ORDER BY date DESC LIMIT 1`
+    )
+    .first<{ score: number }>();
+
+  return row?.score;
 }

@@ -2,7 +2,7 @@
 
 ## Current Task: All Phases Complete (2026-01-22)
 
-Regime detection system fully implemented (Phases 1-3). Phase 4 (GDELT) is future work.
+Regime detection system FULLY implemented (all 4 phases).
 
 ### Phases Overview
 | Phase | Feature | Effort | API Cost | Status |
@@ -10,10 +10,28 @@ Regime detection system fully implemented (Phases 1-3). Phase 4 (GDELT) is futur
 | 1 | Economic Calendar Events | 2h | $0 | `complete` ✓ |
 | 2 | F&G Extreme Regime | 1.5h | $0 | `complete` ✓ |
 | 3 | VIX Regime Thresholds | 2h | $0 | `complete` ✓ |
-| 4 | GDELT Geopolitical | 4h | $0 | `future` |
+| 4 | GDELT Geopolitical | 4h | $0 | `complete` ✓ |
 
 ### Design Reference
 Full implementation plan: `docs/plans/2026-01-22-regime-detection-implementation.md`
+
+---
+
+## Completed: Phase 4 Regime Detection - GDELT Geopolitical (2026-01-22) ✓
+
+Full GDELT integration for geopolitical tension monitoring:
+- Created `worker/src/data/gdelt.ts` - GDELT API fetcher
+- Added storage functions in `d1.ts` for gdelt_scores
+- Added daily GDELT fetch to cron at 01:00 UTC
+- Added `classifyRegimePhase4()` to regime.ts
+- Integrated into macro signal calculation
+- Added Phase 4 display in MacroBar.astro
+- Created migration `0006_gdelt_scores.sql`
+
+Alerts trigger when:
+- Critical (score ≥70): Geopolitical crisis
+- High (score ≥50): High geopolitical risk
+- Elevated + Rising: Rising tension warning
 
 ---
 

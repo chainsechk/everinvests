@@ -40,6 +40,13 @@ interface RegimeClassification {
     action: "aggressive" | "normal" | "cautious" | "defensive";
     signalDampening: number;
   };
+  phase4_gdelt?: {
+    score: number;
+    trend: "rising" | "stable" | "falling";
+    topThreats: string[];
+    regime: "calm" | "elevated" | "high" | "critical";
+    signalDampening: number;
+  };
   upcomingEvents?: string[];
   summary: string;
 }
@@ -150,6 +157,40 @@ function getVixRegimeAlert(phase3: RegimeClassification["phase3_vix"]): { label:
       };
     default:
       return null; // normal/complacent - no alert needed
+  }
+}
+
+// Phase 4: GDELT geopolitical regime helpers
+function getGdeltRegimeAlert(phase4: RegimeClassification["phase4_gdelt"]): { label: string; description: string; color: string; icon: string } | null {
+  if (!phase4) return null;
+  switch (phase4.regime) {
+    case "critical":
+      return {
+        label: "Geopolitical Crisis",
+        description: `Tension score ${phase4.score} - ${phase4.topThreats.slice(0, 2).join(", ") || "major events"}`,
+        color: "text-bearish",
+        icon: "⚠"
+      };
+    case "high":
+      return {
+        label: "High Geopolitical Risk",
+        description: `Tension score ${phase4.score}${phase4.trend === "rising" ? " (rising)" : ""}`,
+        color: "text-mixed",
+        icon: "△"
+      };
+    case "elevated":
+      // Only show if trend is rising
+      if (phase4.trend === "rising") {
+        return {
+          label: "Rising Geopolitical Tension",
+          description: `Tension score ${phase4.score} - monitoring ${phase4.topThreats[0] || "developments"}`,
+          color: "text-mixed",
+          icon: "◇"
+        };
+      }
+      return null;
+    default:
+      return null; // calm - no alert needed
   }
 }
 
@@ -366,6 +407,26 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         </span>
         <span class="text-txt-muted text-xs">
           {getVixRegimeAlert(expanded.regime.phase3_vix)?.description}
+        </span>
+      </div>
+    </div>
+  )}
+
+  {/* Phase 4: GDELT Geopolitical Alert - show when geopolitical risk elevated/high/critical */}
+  {expanded.regime?.phase4_gdelt && getGdeltRegimeAlert(expanded.regime.phase4_gdelt) && (
+    <div class="mt-3 pt-3 border-t" style="border-color: var(--border-divider);">
+      <div class="flex items-center gap-2 text-sm">
+        <span class:list={[
+          "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+          expanded.regime.phase4_gdelt.regime === "critical" ? "bg-bearish/20 text-bearish" : "bg-mixed/20 text-mixed"
+        ]}>
+          {getGdeltRegimeAlert(expanded.regime.phase4_gdelt)?.icon}
+        </span>
+        <span class:list={["font-medium", getGdeltRegimeAlert(expanded.regime.phase4_gdelt)?.color]}>
+          {getGdeltRegimeAlert(expanded.regime.phase4_gdelt)?.label}
+        </span>
+        <span class="text-txt-muted text-xs">
+          {getGdeltRegimeAlert(expanded.regime.phase4_gdelt)?.description}
         </span>
       </div>
     </div>

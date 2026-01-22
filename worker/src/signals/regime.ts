@@ -68,6 +68,8 @@ export interface GdeltRegimeData {
   trend: "rising" | "stable" | "falling";
   topThreats: string[];
   lastUpdated: string;
+  regime: "calm" | "elevated" | "high" | "critical";
+  signalDampening: number;
 }
 
 export interface RegimeClassification {
@@ -222,6 +224,44 @@ export function classifyRegimePhase3(vix: number): VixRegimeData {
 }
 
 // ============================================================================
+// PHASE 4: GDELT GEOPOLITICAL SCORE
+// ============================================================================
+
+export function classifyRegimePhase4(
+  gdeltScore: number | undefined,
+  gdeltTrend?: "rising" | "stable" | "falling",
+  topThreats?: string[]
+): GdeltRegimeData | undefined {
+  if (gdeltScore === undefined) return undefined;
+
+  let regime: "calm" | "elevated" | "high" | "critical";
+  let signalDampening: number;
+
+  if (gdeltScore >= 70) {
+    regime = "critical";
+    signalDampening = 0.4;
+  } else if (gdeltScore >= 50) {
+    regime = "high";
+    signalDampening = 0.7;
+  } else if (gdeltScore >= 30) {
+    regime = "elevated";
+    signalDampening = 0.9;
+  } else {
+    regime = "calm";
+    signalDampening = 1.0;
+  }
+
+  return {
+    score: gdeltScore,
+    trend: gdeltTrend ?? "stable",
+    topThreats: topThreats ?? [],
+    lastUpdated: new Date().toISOString(),
+    regime,
+    signalDampening,
+  };
+}
+
+// ============================================================================
 // COMBINED REGIME CLASSIFICATION
 // ============================================================================
 
@@ -231,10 +271,14 @@ export interface ClassifyRegimeInput {
   fearGreed?: number;
   vix?: number;
   stressLevel?: number;
+  // Phase 4: GDELT geopolitical data
+  gdeltScore?: number;
+  gdeltTrend?: "rising" | "stable" | "falling";
+  gdeltTopThreats?: string[];
 }
 
 export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification {
-  const { date, timeSlot, fearGreed, vix, stressLevel } = input;
+  const { date, timeSlot, fearGreed, vix, stressLevel, gdeltScore, gdeltTrend, gdeltTopThreats } = input;
 
   // Phase 1: Economic Events
   const phase1 = classifyRegimePhase1(date, timeSlot);
@@ -245,6 +289,9 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   // Phase 3: VIX Thresholds
   const phase3 = vix !== undefined ? classifyRegimePhase3(vix) : undefined;
 
+  // Phase 4: GDELT Geopolitical
+  const phase4 = classifyRegimePhase4(gdeltScore, gdeltTrend, gdeltTopThreats);
+
   // Calculate combined dampening (use most restrictive)
   let signalDampening = 1.0;
   if (phase1?.active) {
@@ -252,6 +299,9 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   }
   if (phase3) {
     signalDampening = Math.min(signalDampening, phase3.signalDampening);
+  }
+  if (phase4) {
+    signalDampening = Math.min(signalDampening, phase4.signalDampening);
   }
 
   // Determine overall classification
@@ -261,11 +311,22 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   let riskLevel: RegimeClassification["riskLevel"] = "moderate";
 
   // Priority: Crisis > Stressed > Event > Normal
-  if (phase3?.regime === "crisis") {
+  // Phase 4 critical geopolitical = crisis
+  if (phase4?.regime === "critical") {
+    classification = "crisis";
+    confidence = 0.85;
+    recommendedAction = "defensive";
+    riskLevel = "critical";
+  } else if (phase3?.regime === "crisis") {
     classification = "crisis";
     confidence = 0.9;
     recommendedAction = "defensive";
     riskLevel = "critical";
+  } else if (phase4?.regime === "high") {
+    classification = "stressed";
+    confidence = 0.8;
+    recommendedAction = "cautious";
+    riskLevel = "high";
   } else if (phase3?.regime === "stressed") {
     classification = "stressed";
     confidence = 0.8;
@@ -302,7 +363,7 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   const upcomingEvents = formatUpcomingEvents(date, 7);
 
   // Generate summary
-  const summary = generateRegimeSummary(classification, phase1, phase2, phase3);
+  const summary = generateRegimeSummary(classification, phase1, phase2, phase3, phase4);
 
   return {
     classification,
@@ -313,6 +374,7 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
     phase1_event: phase1,
     phase2_fearGreed: phase2,
     phase3_vix: phase3,
+    phase4_gdelt: phase4,
     upcomingEvents,
     summary,
   };
@@ -322,16 +384,24 @@ function generateRegimeSummary(
   classification: RegimeClassificationType,
   phase1: RegimeClassification["phase1_event"],
   phase2: FearGreedRegimeData | undefined,
-  phase3: VixRegimeData | undefined
+  phase3: VixRegimeData | undefined,
+  phase4: GdeltRegimeData | undefined
 ): string {
   const parts: string[] = [];
 
   if (classification === "crisis") {
-    parts.push("Market in crisis mode (VIX >30)");
+    if (phase4?.regime === "critical") {
+      parts.push(`Geopolitical crisis (score ${phase4.score})`);
+    } else {
+      parts.push("Market in crisis mode (VIX >30)");
+    }
   } else if (classification === "event") {
     const eventNames = phase1?.events.map((e) => e.name).join(", ") || "economic event";
     parts.push(`Active event window: ${eventNames}`);
   } else if (classification === "stressed") {
+    if (phase4?.regime === "high") {
+      parts.push(`Elevated geopolitical risk (score ${phase4.score})`);
+    }
     if (phase3?.regime === "stressed") {
       parts.push("Elevated volatility regime");
     }
@@ -346,6 +416,11 @@ function generateRegimeSummary(
 
   if (phase3?.regime === "apathy") {
     parts.push("Warning: VIX unusually low (complacency)");
+  }
+
+  // Add rising geopolitical tension warning
+  if (phase4?.trend === "rising" && phase4.regime !== "calm") {
+    parts.push(`Geopolitical tension rising`);
   }
 
   return parts.join(". ");

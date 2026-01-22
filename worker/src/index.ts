@@ -3,11 +3,12 @@ import type { Env } from "./env";
 import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
-import { logRun, saveBenchmarkData } from "./storage/d1";
+import { logRun, saveBenchmarkData, saveGdeltScore, getPreviousGdeltScore } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
 import { generateWeeklyBlogPosts } from "./blog";
 import { sendDailyDigest } from "./digest";
 import { fetchBenchmarkData } from "./data/twelvedata";
+import { fetchGdeltScore } from "./data/gdelt";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -52,6 +53,13 @@ export default {
       ctx.waitUntil(
         checkSignalAccuracy(env).catch((err) =>
           console.error("[Accuracy] Check failed:", err)
+        )
+      );
+
+      // Fetch GDELT geopolitical score daily at 01:00 UTC (Phase 4 Regime)
+      ctx.waitUntil(
+        runGdeltFetch(env).catch((err) =>
+          console.error("[GDELT] Fetch failed:", err)
         )
       );
     }
@@ -121,9 +129,59 @@ export default {
       return Response.json(result);
     }
 
+    if (url.pathname === "/fetch-gdelt") {
+      const result = await runGdeltFetch(env);
+      return Response.json(result);
+    }
+
     return new Response("everinvests-worker", { status: 200 });
   },
 };
+
+// Fetch and store GDELT geopolitical score (Phase 4 Regime Detection)
+// Runs daily at 01:00 UTC
+async function runGdeltFetch(env: Env): Promise<{
+  success: boolean;
+  score: number;
+  trend: string;
+  topThreats: string[];
+}> {
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+
+  console.log(`[GDELT] Fetching geopolitical score for ${date}...`);
+
+  try {
+    // Get previous score for trend calculation
+    const previousScore = await getPreviousGdeltScore({ db: env.DB });
+
+    // Fetch new score from GDELT
+    const result = await fetchGdeltScore(previousScore);
+
+    // Store in database
+    await saveGdeltScore({ db: env.DB, date, result });
+
+    console.log(
+      `[GDELT] Score: ${result.score}, Trend: ${result.trend}, Articles: ${result.articles}, Top: ${result.topThreats.join(", ")}`
+    );
+
+    return {
+      success: true,
+      score: result.score,
+      trend: result.trend,
+      topThreats: result.topThreats,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[GDELT] Error: ${msg}`);
+    return {
+      success: false,
+      score: 0,
+      trend: "stable",
+      topThreats: [],
+    };
+  }
+}
 
 // Fetch and store benchmark ETF data (SPY, XLK, XLE)
 // Runs daily at 14:00 UTC, before stocks update at 17:00

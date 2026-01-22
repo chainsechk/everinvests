@@ -154,10 +154,18 @@ function calculateOverall(
   return "Mixed";
 }
 
+// GDELT result from database (Phase 4)
+interface GdeltInput {
+  score: number;
+  trend: "rising" | "stable" | "falling";
+  topThreats: string[];
+}
+
 export function calculateMacroSignal(
   data: MacroData,
   date?: string,
-  timeSlot?: string
+  timeSlot?: string,
+  gdeltData?: GdeltInput
 ): MacroSignal {
   const dxyBias = analyzeDXY(data.dxy, data.dxyMa20);
   const vixLevel = analyzeVIX(data.vix);
@@ -179,6 +187,10 @@ export function calculateMacroSignal(
         fearGreed: data.fearGreed,
         vix: data.vix,
         stressLevel,
+        // Phase 4: GDELT geopolitical data
+        gdeltScore: gdeltData?.score,
+        gdeltTrend: gdeltData?.trend,
+        gdeltTopThreats: gdeltData?.topThreats,
       })
     : undefined;
 

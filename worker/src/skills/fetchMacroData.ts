@@ -1,7 +1,7 @@
 import { fetchMacroData } from "../data";
 import { calculateMacroSignal } from "../signals";
 import type { MacroData, MacroSignal } from "../types";
-import { saveMacroSignal } from "../storage/d1";
+import { saveMacroSignal, getLatestGdeltScore } from "../storage/d1";
 import type { SharedState, SkillSpec } from "./types";
 
 export interface FetchMacroInput {
@@ -72,8 +72,16 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
         macroFallback = true;
         fallbackReason = "Macro fetch returned invalid data";
       } else {
-        // Pass date and timeSlot for regime classification
-        macroSignal = calculateMacroSignal(macroData, input.date, input.timeSlot);
+        // Fetch GDELT data from database (Phase 4 Regime)
+        const gdeltData = await getLatestGdeltScore({ db: env.DB });
+
+        // Pass date, timeSlot, and GDELT for regime classification
+        macroSignal = calculateMacroSignal(
+          macroData,
+          input.date,
+          input.timeSlot,
+          gdeltData ?? undefined
+        );
       }
     }
 
