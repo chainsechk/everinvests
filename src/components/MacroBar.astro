@@ -28,6 +28,12 @@ interface RegimeClassification {
     }>;
     dampening: number;
   };
+  phase2_fearGreed?: {
+    regime: "extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed";
+    value: number;
+    contrarian: boolean;
+    confidence: number;
+  };
   upcomingEvents?: string[];
   summary: string;
 }
@@ -87,6 +93,28 @@ function getRegimeIcon(classification: string | undefined): string {
     case "event": return "◉";
     default: return "○";
   }
+}
+
+// Phase 2: Fear & Greed regime helpers
+function getFearGreedRegimeLabel(regime: string | undefined): string {
+  switch (regime) {
+    case "extreme_fear": return "Extreme Fear";
+    case "fear": return "Fear";
+    case "extreme_greed": return "Extreme Greed";
+    case "greed": return "Greed";
+    default: return "Neutral";
+  }
+}
+
+function getContrarianSignal(phase2: RegimeClassification["phase2_fearGreed"]): { label: string; color: string } | null {
+  if (!phase2?.contrarian) return null;
+  if (phase2.regime === "extreme_fear") {
+    return { label: "Contrarian Bullish", color: "text-bullish" };
+  }
+  if (phase2.regime === "extreme_greed") {
+    return { label: "Contrarian Bearish", color: "text-bearish" };
+  }
+  return null;
 }
 
 function getOverallColor(value: string | null): string {
@@ -262,6 +290,26 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         </span>
         <span class="text-txt-muted text-xs">
           (signals dampened {Math.round((1 - expanded.regime.signalDampening) * 100)}%)
+        </span>
+      </div>
+    </div>
+  )}
+
+  {/* Phase 2: Fear & Greed Contrarian Alert - show when sentiment at extremes */}
+  {expanded.regime?.phase2_fearGreed?.contrarian && getContrarianSignal(expanded.regime.phase2_fearGreed) && (
+    <div class="mt-3 pt-3 border-t" style="border-color: var(--border-divider);">
+      <div class="flex items-center gap-2 text-sm">
+        <span class:list={[
+          "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+          expanded.regime.phase2_fearGreed.regime === "extreme_fear" ? "bg-bullish/20 text-bullish" : "bg-bearish/20 text-bearish"
+        ]}>
+          {expanded.regime.phase2_fearGreed.regime === "extreme_fear" ? "↑" : "↓"}
+        </span>
+        <span class:list={["font-medium", getContrarianSignal(expanded.regime.phase2_fearGreed)?.color]}>
+          {getContrarianSignal(expanded.regime.phase2_fearGreed)?.label}
+        </span>
+        <span class="text-txt-muted text-xs">
+          F&G at {expanded.regime.phase2_fearGreed.value} ({getFearGreedRegimeLabel(expanded.regime.phase2_fearGreed.regime)})
         </span>
       </div>
     </div>
