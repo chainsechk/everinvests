@@ -27,6 +27,11 @@ function parseOutput(outputJson: string | null) {
 
 const output = parseOutput(signal.output_json);
 const qualityFlags = output?.quality_flags || null;
+const levels = output?.levels ?? null;
+const levelKeys = levels ? Object.keys(levels) : [];
+const levelsTitle = levelKeys.length > 0 && levelKeys.every((key) => key.toLowerCase().includes("price"))
+  ? "Latest Prices"
+  : "Key Levels";
 
 function formatDate(dateStr: string): string {
   try {
@@ -75,12 +80,12 @@ function getMacroColor(macro: string | null): string {
     </div>
   )}
 
-  <!-- Latest Prices -->
-  {output?.levels && Object.keys(output.levels).length > 0 && (
+  <!-- Levels -->
+  {levels && levelKeys.length > 0 && (
     <div class="space-y-3">
-      <h3 class="font-display font-semibold text-sm text-txt-muted uppercase tracking-wider">Latest Prices</h3>
+      <h3 class="font-display font-semibold text-sm text-txt-muted uppercase tracking-wider">{levelsTitle}</h3>
       <div class="flex flex-wrap gap-3">
-        {Object.entries(output.levels).map(([key, value]) => (
+        {Object.entries(levels).map(([key, value]) => (
           <div class="px-4 py-2 rounded-lg bg-subtle border border-subtle">
             <span class="text-xs text-txt-muted uppercase tracking-wide">{key.replace(/_/g, " ")}</span>
             <div class="font-mono font-semibold text-txt-primary">{value}</div>

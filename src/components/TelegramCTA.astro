@@ -2,12 +2,15 @@
 // src/components/TelegramCTA.astro
 interface Props {
   variant?: "full" | "compact";
+  vipMode?: "waitlist" | "live";
 }
 
-const { variant = "full" } = Astro.props;
+const { variant = "full", vipMode = "waitlist" } = Astro.props;
 
 const freeChannelUrl = "https://t.me/everinvests";
-const premiumUrl = "https://t.me/everinvests_premium";
+const vipConfig = vipMode === "live"
+  ? { label: "VIP Group", url: "https://t.me/everinvests_premium" }
+  : { label: "VIP Waitlist", url: "https://t.me/EverInvestsBot?start=waitlist_telegram_cta" };
 ---
 
 {variant === "full" ? (
@@ -35,7 +38,7 @@ const premiumUrl = "https://t.me/everinvests_premium";
           </h3>
           <p class="text-sm text-txt-secondary max-w-lg">
             Email is too slow. Apps need checking. Telegram pings your phone the moment signals update.
-            Free channel = daily bias. VIP group = real-time discussion + whale alerts + AI debates.
+            Free channel = daily bias. VIP adds real-time discussion + whale alerts + AI debates.
           </p>
         </div>
 
@@ -47,8 +50,8 @@ const premiumUrl = "https://t.me/everinvests_premium";
             </svg>
             Free Channel
           </a>
-          <a href={premiumUrl} target="_blank" rel="noopener" class="btn-primary">
-            VIP Group
+          <a href={vipConfig.url} target="_blank" rel="noopener" class="btn-primary">
+            {vipConfig.label}
           </a>
         </div>
       </div>

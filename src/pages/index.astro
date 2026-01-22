@@ -47,8 +47,17 @@ const stocksAssetCount = await getAssetCount(stocksSignal);
 function formatNextUpdate(): string {
   const now = new Date();
   const utcHour = now.getUTCHours();
-  const schedules = [0, 8, 14, 16, 17, 21];
-  const nextHour = schedules.find((h) => h > utcHour) || schedules[0];
+  const dayOfWeek = now.getUTCDay();
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+
+  const cryptoHours = [0, 8, 16];
+  const forexHours = [0, 8, 14];
+  const stocksHours = [17, 21];
+
+  const schedules = isWeekday
+    ? Array.from(new Set([...cryptoHours, ...forexHours, ...stocksHours])).sort((a, b) => a - b)
+    : cryptoHours;
+  const nextHour = schedules.find((h) => h > utcHour) ?? schedules[0];
   return `${nextHour.toString().padStart(2, "0")}:00 UTC`;
 }
 
