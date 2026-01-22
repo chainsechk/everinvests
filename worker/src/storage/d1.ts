@@ -81,6 +81,8 @@ export async function saveMacroSignal(args: {
       ...(typeof rawData === "object" && rawData !== null ? rawData : { raw: rawData }),
       fallback: isFallback,
       fallback_reason: fallbackReason ?? null,
+      // Include regime classification in data_json (Phase 1-4)
+      regime: signal?.regime ?? null,
     }),
   };
 

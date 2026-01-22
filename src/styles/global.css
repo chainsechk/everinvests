@@ -22,32 +22,32 @@
     --bg-tertiary: #f3f2ef;
     --bg-elevated: #ffffff;
 
-    --border-subtle: rgba(0, 0, 0, 0.06);
-    --border-default: rgba(0, 0, 0, 0.1);
-    --border-strong: rgba(0, 0, 0, 0.15);
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-default: rgba(0, 0, 0, 0.12);
+    --border-strong: rgba(0, 0, 0, 0.18);
 
     --text-primary: #1a1a1a;
-    --text-secondary: #525252;
-    --text-muted: #8a8a8a;
+    --text-secondary: #3d4852;
+    --text-muted: #64748b;
     --text-inverse: #ffffff;
 
-    /* Signal colors - softer for light theme */
-    --bullish: #059669;
-    --bullish-bg: rgba(5, 150, 105, 0.08);
-    --bullish-border: rgba(5, 150, 105, 0.2);
+    /* Signal colors - balanced for light theme readability */
+    --bullish: #047857;
+    --bullish-bg: rgba(5, 150, 105, 0.1);
+    --bullish-border: rgba(5, 150, 105, 0.25);
 
-    --bearish: #dc2626;
-    --bearish-bg: rgba(220, 38, 38, 0.08);
-    --bearish-border: rgba(220, 38, 38, 0.2);
+    --bearish: #b91c1c;
+    --bearish-bg: rgba(185, 28, 28, 0.1);
+    --bearish-border: rgba(185, 28, 28, 0.25);
 
-    --neutral: #71717a;
-    --neutral-bg: rgba(113, 113, 122, 0.08);
-    --neutral-border: rgba(113, 113, 122, 0.2);
+    --neutral: #52525b;
+    --neutral-bg: rgba(82, 82, 91, 0.1);
+    --neutral-border: rgba(82, 82, 91, 0.25);
 
     /* Accent - deep navy for trust */
     --accent: #1e3a5f;
-    --accent-secondary: #2563eb;
-    --accent-bg: rgba(30, 58, 95, 0.06);
+    --accent-secondary: #1d4ed8;
+    --accent-bg: rgba(30, 58, 95, 0.08);
 
     /* VIP - warm coral */
     --vip: #e85d4c;
@@ -67,9 +67,23 @@
     /* Semi-transparent utility colors */
     --bg-overlay-light: rgba(255, 255, 255, 0.8);
     --bg-overlay-medium: rgba(255, 255, 255, 0.9);
-    --border-divider: rgba(0, 0, 0, 0.08);
-    --scale-bar-bg: rgba(0, 0, 0, 0.06);
-    --scale-bar-marker: rgba(0, 0, 0, 0.12);
+    --border-divider: rgba(0, 0, 0, 0.1);
+    --scale-bar-bg: rgba(0, 0, 0, 0.08);
+    --scale-bar-marker: rgba(0, 0, 0, 0.15);
+
+    /* Typography - Light mode needs larger/heavier text due to irradiation illusion */
+    --font-size-base: 16px;
+    --font-size-sm: 15px;
+    --font-size-xs: 14px;
+    --font-weight-body: 450;
+    --font-weight-small: 550;
+    --font-weight-muted: 500;
+    --font-weight-data: 600;
+    --line-height-body: 1.65;
+    --line-height-tight: 1.4;
+    --letter-spacing-body: 0.01em;
+    --card-padding: 28px;
+    --card-padding-sm: 20px;
 
     /* Theme meta */
     --theme-color: #faf9f7;
@@ -131,6 +145,20 @@
     --scale-bar-bg: rgba(255, 255, 255, 0.08);
     --scale-bar-marker: rgba(255, 255, 255, 0.15);
 
+    /* Typography - Dark mode can use slightly smaller typography (irradiation compensates) */
+    --font-size-base: 15px;
+    --font-size-sm: 14px;
+    --font-size-xs: 13px;
+    --font-weight-body: 400;
+    --font-weight-small: 450;
+    --font-weight-muted: 450;
+    --font-weight-data: 500;
+    --line-height-body: 1.5;
+    --line-height-tight: 1.35;
+    --letter-spacing-body: 0;
+    --card-padding: 24px;
+    --card-padding-sm: 16px;
+
     /* Theme meta */
     --theme-color: #0a0e17;
   }
@@ -152,6 +180,10 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -204,6 +236,25 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
   }
+
+  /* Theme-aware text size and weight overrides */
+  .text-xs {
+    font-size: var(--font-size-xs) !important;
+    font-weight: var(--font-weight-small);
+    line-height: var(--line-height-tight);
+  }
+
+  .text-sm {
+    font-size: var(--font-size-sm) !important;
+    font-weight: var(--font-weight-small);
+    line-height: var(--line-height-tight);
+  }
+
+  .text-base {
+    font-size: var(--font-size-base) !important;
+    font-weight: var(--font-weight-body);
+    line-height: var(--line-height-body);
+  }
 }
 
 @layer components {
@@ -216,7 +267,7 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border-default);
     border-radius: 16px;
-    padding: 24px;
+    padding: var(--card-padding);
     box-shadow: var(--shadow-card);
     transition: all 0.3s ease;
   }
@@ -247,7 +298,7 @@
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-subtle);
     border-radius: 16px;
-    padding: 24px;
+    padding: var(--card-padding);
   }
 
   [data-theme="dark"] .card-glass {
@@ -276,7 +327,7 @@
     padding: 12px 24px;
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     border-radius: 10px;
     background: var(--gradient-accent);
     color: var(--text-inverse);
@@ -311,7 +362,7 @@
     padding: 12px 24px;
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     border-radius: 10px;
     background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);
     color: white;
@@ -332,7 +383,7 @@
     padding: 10px 18px;
     font-family: 'Outfit', sans-serif;
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     border-radius: 10px;
     color: var(--text-secondary);
     transition: all 0.2s ease;
@@ -355,7 +406,7 @@
     border-radius: 100px;
     font-family: 'IBM Plex Mono', monospace;
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.02em;
     background: var(--bullish-bg);
     color: var(--bullish);
@@ -374,7 +425,7 @@
     border-radius: 100px;
     font-family: 'IBM Plex Mono', monospace;
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.02em;
     background: var(--bearish-bg);
     color: var(--bearish);
@@ -393,7 +444,7 @@
     border-radius: 100px;
     font-family: 'IBM Plex Mono', monospace;
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.02em;
     background: var(--neutral-bg);
     color: var(--neutral);
@@ -411,7 +462,7 @@
     padding: 8px 14px;
     border-radius: 10px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.02em;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-subtle);
@@ -429,7 +480,7 @@
 
   .data-table {
     width: 100%;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .data-table thead tr {
@@ -437,14 +488,28 @@
   }
 
   .data-table th {
-    padding: 14px 12px;
+    padding: var(--card-padding-sm) 12px;
     text-align: left;
     font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-size: 11px;
+    font-weight: 600;
+    font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-muted);
+  }
+
+  /* Ensure secondary/muted text has appropriate weight */
+  .text-txt-muted {
+    font-weight: var(--font-weight-muted);
+  }
+
+  .text-txt-secondary {
+    font-weight: var(--font-weight-small);
+  }
+
+  /* Bold weight for key data: tickers, prices, numbers */
+  .font-data {
+    font-weight: var(--font-weight-data);
   }
 
   .data-table tbody tr {
@@ -457,8 +522,9 @@
   }
 
   .data-table td {
-    padding: 14px 12px;
+    padding: var(--card-padding-sm) 12px;
     color: var(--text-secondary);
+    font-weight: var(--font-weight-small);
   }
 
   /* ═══════════════════════════════════════════════════════════════

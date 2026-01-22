@@ -13,6 +13,25 @@ interface Props {
 
 const { overall, dxyBias, vixLevel, yieldsBias, dataJson } = Astro.props;
 
+// Regime classification types
+interface RegimeClassification {
+  classification: "normal" | "event" | "stressed" | "crisis";
+  signalDampening: number;
+  recommendedAction: "aggressive" | "normal" | "cautious" | "defensive";
+  riskLevel: "low" | "moderate" | "high" | "critical";
+  phase1_event?: {
+    active: boolean;
+    events: Array<{
+      event: string;
+      name: string;
+      description: string;
+    }>;
+    dampening: number;
+  };
+  upcomingEvents?: string[];
+  summary: string;
+}
+
 // Parse expanded macro data from data_json
 interface ExpandedMacroData {
   fearGreed?: number;
@@ -21,6 +40,7 @@ interface ExpandedMacroData {
   goldPrice?: number;
   goldChange?: number;
   yieldSpread?: number;
+  regime?: RegimeClassification;
 }
 
 let expanded: ExpandedMacroData = {};
@@ -34,9 +54,38 @@ if (dataJson) {
       goldPrice: parsed.goldPrice,
       goldChange: parsed.goldChange,
       yieldSpread: parsed.yieldSpread,
+      regime: parsed.regime,
     };
   } catch {
     // Ignore parse errors
+  }
+}
+
+// Regime display helpers
+function getRegimeColor(classification: string | undefined): string {
+  switch (classification) {
+    case "crisis": return "text-bearish";
+    case "stressed": return "text-mixed";
+    case "event": return "text-accent";
+    default: return "text-bullish";
+  }
+}
+
+function getRegimeLabel(classification: string | undefined): string {
+  switch (classification) {
+    case "crisis": return "Crisis";
+    case "stressed": return "Stressed";
+    case "event": return "Event";
+    default: return "Normal";
+  }
+}
+
+function getRegimeIcon(classification: string | undefined): string {
+  switch (classification) {
+    case "crisis": return "!";
+    case "stressed": return "△";
+    case "event": return "◉";
+    default: return "○";
   }
 }
 
@@ -139,7 +188,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           USD
           <InfoTip text="US Dollar strength. When the dollar is Strong, it typically hurts assets priced in USD (like crypto and commodities). Weak dollar often means risk-on." position="top" />
         </span>
-        <span class="text-txt-primary font-medium">{dxy.label}</span>
+        <span class="text-txt-primary font-semibold">{dxy.label}</span>
         <span class="font-mono text-cyber">{dxy.icon}</span>
       </div>
 
@@ -149,7 +198,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           Volatility
           <InfoTip text="Market fear gauge (VIX). Low volatility = calm markets, good for investing. High volatility = fearful markets, prices may swing wildly." position="top" />
         </span>
-        <span class:list={["font-medium", vix.color]}>{vix.label}</span>
+        <span class:list={["font-semibold", vix.color]}>{vix.label}</span>
       </div>
 
       <!-- 10Y Treasury Yield -->
@@ -158,7 +207,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           10Y Rate
           <InfoTip text="US Treasury bond yields. Rising rates compete with stocks for investor money. Falling rates are generally bullish for risk assets." position="top" />
         </span>
-        <span class="text-txt-primary font-medium">{yields.label}</span>
+        <span class="text-txt-primary font-semibold">{yields.label}</span>
         <span class="font-mono text-cyber">{yields.icon}</span>
       </div>
 
@@ -180,9 +229,51 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
             Rate Spread
             <InfoTip text="Difference between 10-year and 2-year Treasury yields. When negative (inverted), it historically warns of recession. Positive is normal and healthy." position="top" />
           </span>
-          <span class:list={["font-medium font-mono", spread.color]}>{spread.label}</span>
+          <span class:list={["font-semibold font-mono", spread.color]}>{spread.label}</span>
+        </div>
+      )}
+
+      {/* Regime Classification - Phase 1 */}
+      {expanded.regime && (
+        <div class="macro-chip">
+          <span class="text-txt-muted inline-flex items-center gap-1">
+            Regime
+            <InfoTip
+              text={expanded.regime.summary || "Market regime classification based on events, sentiment, and volatility."}
+              position="top"
+            />
+          </span>
+          <span class:list={["font-semibold", getRegimeColor(expanded.regime.classification)]}>
+            {getRegimeLabel(expanded.regime.classification)}
+          </span>
+          <span class="font-mono text-cyber">{getRegimeIcon(expanded.regime.classification)}</span>
         </div>
       )}
     </div>
   </div>
+
+  {/* Event Window Alert - show when active economic event */}
+  {expanded.regime?.phase1_event?.active && (
+    <div class="mt-3 pt-3 border-t" style="border-color: var(--border-divider);">
+      <div class="flex items-center gap-2 text-sm">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent/20 text-accent text-xs font-bold">!</span>
+        <span class="text-accent font-medium">
+          Active Event: {expanded.regime.phase1_event.events.map(e => e.name).join(", ")}
+        </span>
+        <span class="text-txt-muted text-xs">
+          (signals dampened {Math.round((1 - expanded.regime.signalDampening) * 100)}%)
+        </span>
+      </div>
+    </div>
+  )}
+
+  {/* Upcoming Events - show next 7 days */}
+  {expanded.regime?.upcomingEvents && expanded.regime.upcomingEvents.length > 0 && !expanded.regime.phase1_event?.active && (
+    <div class="mt-3 pt-3 border-t" style="border-color: var(--border-divider);">
+      <div class="flex items-center gap-2 text-sm text-txt-muted">
+        <span class="font-mono text-xs">📅</span>
+        <span>Upcoming: {expanded.regime.upcomingEvents.slice(0, 3).join(" | ")}</span>
+      </div>
+    </div>
+  )}
 </div>

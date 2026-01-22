@@ -1,219 +1,70 @@
 # Task Plan: EverInvests Implementation
 
-## Goal
-Build a complete market signal broadcast site with automated daily signals for Crypto, Forex, and Stocks.
+## Current Task: Phase 1 Regime Detection - Economic Calendar (2026-01-22)
 
-## Current Phase
-**Tier 1 IC Fixes - IN PROGRESS**
+### Goal
+Implement Phase 1 of 4-phase regime detection: Economic Calendar Event Windows.
+Dampen signal confidence during high-impact events (FOMC, CPI, NFP) to reduce false signals.
 
----
+### Why This Matters
+Markets behave erratically around scheduled events. Signals generated during FOMC announcements or CPI releases have lower predictive value. By detecting event windows and dampening signal confidence, we improve overall signal quality.
 
-## Tier 2 IC Fixes (2026-01-21) - PARTIAL
+### Phases Overview
+| Phase | Feature | Effort | API Cost | Status |
+|-------|---------|--------|----------|--------|
+| **1** | Economic Calendar Events | 2h | $0 | `complete` |
+| 2 | F&G Extreme Regime | 1.5h | $0 | `pending` |
+| 3 | VIX Regime Thresholds | 2h | $0 | `pending` |
+| 4 | GDELT Geopolitical | 4h | $0 | `future` |
 
-### Problem Statement
-Agent critique revealed stocks could benefit from relative strength analysis:
-- Compare individual stocks to SPY (broad market)
-- Compare individual stocks to sector ETF (XLK/XLE)
+### Phase 1 Tasks
+- [x] Create `worker/src/data/economic-calendar.ts` - Static FOMC/CPI/NFP dates
+- [x] Create `worker/src/signals/regime.ts` - Classification logic
+- [x] Add regime types to `worker/src/types.ts`
+- [x] Update `worker/src/signals/macro.ts` - Integrate regime
+- [x] Update `src/components/MacroBar.astro` - Display regime/events
+- [x] Test and verify (TypeScript + Build pass)
 
-### Implementation Status
+### Key Files
+| File | Change |
+|------|--------|
+| `worker/src/data/economic-calendar.ts` | NEW: Static calendar + event window logic |
+| `worker/src/signals/regime.ts` | NEW: Phase 1 classification |
+| `worker/src/types.ts` | ADD: RegimeClassification, EventWindowData |
+| `worker/src/signals/macro.ts` | MODIFY: Call classifyRegime() |
+| `src/components/MacroBar.astro` | MODIFY: Show regime + upcoming events |
 
-| Task | Status | Notes |
-|------|--------|-------|
-| 1. Sector ETF mapping | ✅ complete | XLK for tech, XLE for energy |
-| 2. Relative strength calculation | ✅ complete | RS = (stock vs MA) / (benchmark vs MA) |
-| 3. 4-indicator bias model | ✅ complete | Trend + Volume + RSI + RS |
-| 4. Benchmark data fetch | ⚠️ blocked | TwelveData rate limit exceeded |
-
-### Rate Limit Constraint
-TwelveData free tier: 8 API credits/minute
-- Current stocks: 8 symbols × 3 calls = 24 credits (needs 90s total)
-- With benchmarks: 11 symbols × 3 calls = 33 credits (needs 165s total)
-- Cloudflare Worker limit: 30 seconds max execution
-
-### Workaround Options (Future)
-1. **Separate cron for benchmarks** - Fetch SPY/XLK/XLE hourly with longer cache
-2. **Different data source** - Alpha Vantage for ETFs (separate quota)
-3. **Reduce stocks** - Fetch 5 stocks + 3 benchmarks = 8 symbols
-4. **Use macro proxy** - DXY strength as RS proxy (already available)
-
-### Files Changed
-- `worker/src/data/twelvedata.ts` - Sector ETF map, benchmark types, StockFetchResult
-- `worker/src/signals/bias.ts` - BenchmarkPrices, RS calculation, 4-indicator model
-- `worker/src/types.ts` - relativeStrength field on AssetSignal
-- `worker/src/skills/computeBias.ts` - v4 with benchmark context
-- `worker/src/skills/fetchAssetData.ts` - benchmarks output
-- `worker/src/workflows/category.ts` - Pass benchmarks to bias
-
-### Current State
-- Code is complete and type-safe
-- Benchmark fetch disabled due to rate limits
-- Relative strength will be null until workaround implemented
-- Stocks workflow continues to work normally
+### Design Reference
+Full implementation plan: `docs/plans/2026-01-22-regime-detection-implementation.md`
 
 ---
 
-## Tier 1 IC Fixes (2026-01-21) - COMPLETE ✓
+## Previous Task: Performance & Credibility Enhancement (2026-01-21) - COMPLETE
 
-### Verification (2026-01-21)
-- Crypto page: "F&G" column ✓ (shows F&G:24)
-- Forex page: "Curve" column ✓ (shows YC:normal)
-- API v1: crypto uses `fearGreed` type ✓
-- API v1: forex uses `yieldCurve` type ✓
-- All pages render correctly ✓
-
-### Problem Statement
-Agent critique revealed we're using wrong indicators for each asset class:
-- Forex: RSI is meaningless (forex trends, doesn't oscillate)
-- Crypto: 20D MA too slow for 24/7 market, F&G not per-asset
-- All: DXY strength not linked to forex bias
-
-### Tier 1 Tasks (Zero API cost, high impact)
-
-| Task | Status | IC Gain |
-|------|--------|---------|
-| 1. Forex: Replace RSI with yield curve signal | ✅ complete | +15-25% |
-| 2. Forex: Link DXY strength to USD pair bias | ✅ complete | +15-20% |
-| 3. Crypto: F&G per-asset override | ✅ complete | +10-15% |
-| 4. Crypto: Use 7D MA instead of 20D | ✅ complete | +5-10% |
-| 5. Update tests and verify consistency | ✅ complete | - |
-| 6. Build, test, deploy | ✅ complete | - |
-
-### Implementation Details
-
-**Forex yield curve signal:**
-- Replaced RSI strength with yield curve interpretation
-- Inverted curve → bearish (risk-off)
-- Normal curve → bullish (risk-on)
-- Flat → neutral
-
-**DXY link to forex:**
-- USD/JPY, USD/CAD: Strong DXY → bullish (USD appreciates)
-- EUR/USD, AUD/USD: Strong DXY → bearish (inverse pairs)
-- Replaces volume signal for forex (no meaningful OTC volume)
-
-**Crypto F&G per-asset:**
-- F&G used directly for crypto strength signal
-- F&G < 30 → bullish (fear = buying opportunity)
-- F&G > 70 → bearish (greed = selling opportunity)
-
-**Crypto 7D MA:**
-- Crypto now uses 7D MA (faster mean-reversion for 24/7 market)
-- Field still named "ma20" for API compatibility
-
-### Files Changed
-- `worker/src/signals/bias.ts` - Asset-class specific indicators, BiasContext
-- `worker/src/skills/computeBias.ts` - v3 with macroData pass-through
-- `worker/src/skills/fetchMacroData.ts` - Export macroData
-- `worker/src/workflows/category.ts` - Pass macroData to bias
-- `worker/src/data/binance.ts` - 7D MA for crypto
-- `worker/src/signals/index.ts` - Export BiasContext
-
-### Verification
-- Crypto reasoning now shows: "Trend: X, Volume: X, Strength: bullish" (F&G-based)
-- Forex reasoning now shows: "Trend: X, DXY: X, Strength: bullish" (yield curve)
-- Tests: 87/87 passing
-- Deployed: Live on everinvests.com
+Bold messaging update completed. "We ran money. Now we share our edge."
 
 ---
 
-## Previous Phase: Volume-Based Independent Metrics - COMPLETE
+## Previous Phases (All Complete)
 
-- Pages: https://everinvests.com
-- Worker: https://everinvests-worker.duyuefeng0708.workers.dev
+### Tier 2 IC Fixes - PARTIAL
+- Relative strength for stocks: Code ready, blocked by TwelveData rate limits
 
-### Status (2026-01-21)
-- **Free Tier: FULLY OPERATIONAL**
-- **Volume Model: DEPLOYED** - Truly independent indicator confluence
+### Tier 1 IC Fixes - COMPLETE
+- Forex: Yield curve + DXY linkage
+- Crypto: F&G per-asset, 7D MA
 
----
+### Volume-Based Independent Metrics - COMPLETE
+- Trend + Volume + Strength model deployed
 
-## Volume-Based Independent Metrics (2026-01-21) - COMPLETE
+### Enhanced Macro Indicators - COMPLETE
+- BBW, F&G contrarian, yield curve
 
-### The Problem Statement
-User asked for truly **independent** metrics, not just price-derived indicators.
+### VIP Bridge - COMPLETE
+- Waitlist funnel on all pages
 
-### First Principles Analysis
-MA10 vs MA20 crossover was NOT truly independent - all price-derived indicators have ~0.7-0.9 correlation.
-
-**Truly independent information sources:**
-- Price action (baseline)
-- **Volume** (participation/conviction) - HIGH independence
-- **Sentiment** (crowd psychology) - HIGH independence
-- Flow data (expensive)
-- Positioning (expensive)
-
-### Solution Implemented
-Replace MA10/MA20 crossover with **Volume** (zero additional API calls!)
-
-#### New 3-Indicator Confluence Model
-| Indicator | Source | Interpretation |
-|-----------|--------|----------------|
-| **Trend** | Price vs MA20 | Position in trend (above/below) |
-| **Volume** | Vol vs Avg Vol | Confirms or diverges from trend |
-| **Strength** | RSI/Funding | Overbought/oversold |
-
-**Volume logic:**
-- High (>1.2x avg) → confirms trend direction
-- Low (<0.8x avg) → diverges (weak conviction)
-- Normal → neutral
-
-**Bias rule:** 2+ of 3 signals agree → that direction, else Neutral
-
----
-
-## Enhanced Macro Indicators (2026-01-21) - COMPLETE
-
-### Agent-Driven Analysis
-Spawned agents to analyze from first principles what metrics we use and miss.
-
-**Key insight:** Real blind spot was macro regime awareness - we had F&G and yield spread data but weren't using them actively to influence bias.
-
-### Top 3 Additions
-
-| Indicator | Source | Purpose |
-|-----------|--------|---------|
-| **BBW** | Calculated | Breakout/volatility detection |
-| **F&G Contrarian** | Alternative.me | Override at sentiment extremes |
-| **Yield Curve** | FRED T10Y2Y | Recession/expansion regime |
-
-### FRED Bridge for Shock Detection
-
-| Series | What It Detects |
-|--------|-----------------|
-| **DCOILWTICO** | Oil price shocks (tariffs, supply) |
-| **T5YIE** | Inflation expectation spikes |
-
-### Files Changed (Enhancement):
-- `worker/src/types.ts` - bbWidth, oilPrice, inflationExpectation, stressLevel, yieldCurve, contrarian, shockDetected
-- `worker/src/data/binance.ts` - BBW calculation for crypto
-- `worker/src/data/twelvedata.ts` - BBW calculation for forex/stocks
-- `worker/src/data/freesources.ts` - fetchOilPrice, fetchInflationExpectation
-- `worker/src/data/alphavantage.ts` - Fetch oil and inflation from FRED
-- `worker/src/signals/macro.ts` - analyzeFearGreed, analyzeYieldCurve, detectShock, calculateStressLevel
-- `worker/src/signals/bias.ts` - Contrarian override in calculateCategoryBias
-- `worker/src/skills/computeBias.ts` - v2 with macro signal support
-- `worker/src/workflows/category.ts` - Bias depends on macro for contrarian
-
-### Verification:
-- TypeScript: ✅ All checks pass
-- Tests: ✅ 87/87 passing
-- Build: ✅ Frontend builds successfully
-- Deployed: ✅ Live on everinvests.com
-- API shows: BBW, Oil $59.39, Inflation 2.4%, F&G 24 (Fear)
-
----
-
-## Previous Phases (Complete)
-
-### VIP Bridge: Waitlist Funnel + Expanded Free Sources - COMPLETE
-See: `docs/plans/2026-01-20-vip-bridge-design.md` for architecture
-
-### Growth Plan Phases 1-5 - COMPLETE
-- Phase 1: Measurement Foundation
-- Phase 2: Content Automation
-- Phase 3: Social Proof
-- Phase 4: Distribution Expansion
-- Phase 5: Agent-Native Features (MCP + Structured API)
+### Phase 5: Agent-Native Features - COMPLETE
+- MCP Server + v1 API deployed
 
 ---
 
@@ -223,11 +74,3 @@ See: `docs/plans/2026-01-20-vip-bridge-design.md` for architecture
 | TwelveData | 800 req/day, 8/min | ~6 calls/run (batch) |
 | Alpha Vantage | 25 req/day | ~3 calls/run |
 | CoinGecko | Soft limit | ~2 calls/run |
-| Binance | None (blocked, using fallback) | 0 |
-
----
-
-## Notes
-- Update phase status as you progress: pending → in_progress → complete
-- Re-read this plan before major decisions
-- Log ALL errors - they help avoid repetition

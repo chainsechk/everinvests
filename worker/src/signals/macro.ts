@@ -1,8 +1,10 @@
 // Macro context calculation
 // DXY, VIX, 10Y yields → Risk-on / Risk-off / Mixed
 // Enhanced with: Fear & Greed contrarian, Yield curve, Shock detection
+// + 4-Phase Regime Detection (Event, F&G, VIX, GDELT)
 
 import type { MacroData, MacroSignal, MacroOverall } from "../types";
+import { classifyRegime } from "./regime";
 
 // DXY (Dollar Index) analysis
 // Strong dollar = bearish for risk assets, weak = bullish
@@ -152,7 +154,11 @@ function calculateOverall(
   return "Mixed";
 }
 
-export function calculateMacroSignal(data: MacroData): MacroSignal {
+export function calculateMacroSignal(
+  data: MacroData,
+  date?: string,
+  timeSlot?: string
+): MacroSignal {
   const dxyBias = analyzeDXY(data.dxy, data.dxyMa20);
   const vixLevel = analyzeVIX(data.vix);
   const yieldsBias = analyzeYields(data.us10y);
@@ -165,6 +171,17 @@ export function calculateMacroSignal(data: MacroData): MacroSignal {
   const overall = calculateOverall(dxyBias, vixLevel, yieldsBias, yieldCurve);
   const stressLevel = calculateStressLevel(vixLevel, yieldCurve, fearGreedSignal, shockDetected);
 
+  // Phase 1-4: Regime Classification
+  const regime = date && timeSlot
+    ? classifyRegime({
+        date,
+        timeSlot,
+        fearGreed: data.fearGreed,
+        vix: data.vix,
+        stressLevel,
+      })
+    : undefined;
+
   return {
     dxyBias,
     vixLevel,
@@ -176,6 +193,8 @@ export function calculateMacroSignal(data: MacroData): MacroSignal {
     fearGreedSignal,
     contrarian,
     shockDetected,
+    // Regime classification
+    regime,
   };
 }
 

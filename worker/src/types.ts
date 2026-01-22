@@ -89,6 +89,86 @@ export interface MacroSignal {
   fearGreedSignal?: "extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed";
   contrarian?: "bullish" | "bearish" | null; // Override signal from sentiment extremes
   shockDetected?: boolean; // Tariff/policy shock detected
+  // Regime classification (Phase 1-4)
+  regime?: RegimeClassification;
+}
+
+// ============================================================================
+// REGIME DETECTION TYPES (4-Phase System)
+// ============================================================================
+
+export type RegimeClassificationType =
+  | "normal"
+  | "event"
+  | "stressed"
+  | "crisis";
+
+export type EconomicEvent = "FOMC" | "CPI" | "NFP" | "Fed_Speech" | "ECB" | "BOJ";
+
+export interface EventWindowData {
+  event: EconomicEvent;
+  name: string;
+  description: string;
+  active: boolean;
+  dampening: number;
+}
+
+export type FearGreedRegime =
+  | "extreme_fear"
+  | "fear"
+  | "neutral"
+  | "greed"
+  | "extreme_greed";
+
+export interface FearGreedRegimeData {
+  regime: FearGreedRegime;
+  value: number;
+  contrarian: boolean;
+  confidence: number;
+}
+
+export type VixRegimeType =
+  | "apathy"
+  | "complacent"
+  | "normal"
+  | "stressed"
+  | "crisis";
+
+export interface VixRegimeData {
+  regime: VixRegimeType;
+  vixValue: number;
+  action: "aggressive" | "normal" | "cautious" | "defensive";
+  signalDampening: number;
+}
+
+export interface GdeltRegimeData {
+  score: number;
+  trend: "rising" | "stable" | "falling";
+  topThreats: string[];
+  lastUpdated: string;
+}
+
+export interface RegimeClassification {
+  // Overall regime state
+  classification: RegimeClassificationType;
+  confidence: number;
+  signalDampening: number;
+  recommendedAction: "aggressive" | "normal" | "cautious" | "defensive";
+  riskLevel: "low" | "moderate" | "high" | "critical";
+
+  // Individual phase data
+  phase1_event?: {
+    active: boolean;
+    events: EventWindowData[];
+    dampening: number;
+  };
+  phase2_fearGreed?: FearGreedRegimeData;
+  phase3_vix?: VixRegimeData;
+  phase4_gdelt?: GdeltRegimeData;
+
+  // Display helpers
+  upcomingEvents?: string[];
+  summary: string;
 }
 
 export interface CategorySignal {

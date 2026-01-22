@@ -72,7 +72,8 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
         macroFallback = true;
         fallbackReason = "Macro fetch returned invalid data";
       } else {
-        macroSignal = calculateMacroSignal(macroData);
+        // Pass date and timeSlot for regime classification
+        macroSignal = calculateMacroSignal(macroData, input.date, input.timeSlot);
       }
     }
 

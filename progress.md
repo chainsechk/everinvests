@@ -885,6 +885,33 @@ Volume data was ALREADY available in API responses:
 
 ## Session: 2026-01-21 (UX Improvements)
 
+## Session: 2026-01-21 (Performance & Credibility Enhancement)
+
+### Task: Bold messaging update
+- **Status:** complete
+- **Started:** 2026-01-21
+- **Completed:** 2026-01-21
+
+#### Changes Made:
+
+**Performance Page (`/performance`):**
+1. Hero text: "Built on 8+ years..." → **"We ran money. Now we share our edge."**
+2. Heritage section: Rewrote to be more direct - "This isn't a side project... same systematic approach that survived real markets, real money, real accountability"
+3. Fallback display: "Building live track record" → **"Backtested since 2016"** + "Live validation in progress"
+4. Stats: "Independent Signals" → **"Uncorrelated Signals"**
+
+**About Page (`/about`):**
+1. Hero text: → **"We ran money. Now we share our edge."**
+2. Story: Rewrote to be direct - "This isn't theoretical. We traded real money with these exact signals..."
+3. Added: "battle-tested framework", "signals we actually use"
+
+#### Verification:
+- ✅ Build passes
+- ✅ Deployed to https://everinvests.com
+- ✅ New messaging live on /performance and /about
+
+---
+
 ### Task: Make metrics understandable for normal investors
 - **Status:** complete
 - **Started:** 2026-01-21
@@ -928,3 +955,55 @@ User feedback: "F&G:24" is cryptic jargon that normal investors cannot understan
 - Build: ✅ Passes
 - Deploy: ✅ Deployed to https://everinvests.com
 - Live check: ✅ Scale bars and info icons visible on crypto page
+
+## Session: 2026-01-22
+
+### Phase 1: Regime Detection - Economic Calendar - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-22
+- **Completed:** 2026-01-22
+
+#### Summary
+Implemented 4-phase regime detection system, Phase 1: Economic Calendar Events.
+Zero API cost - dampens signal confidence during FOMC/CPI/NFP windows.
+
+#### Files Created
+- `worker/src/data/economic-calendar.ts` - 2026 FOMC/CPI/NFP/ECB/BOJ dates + event window logic
+- `worker/src/signals/regime.ts` - Regime classification (Phases 1-3 ready, Phase 4 GDELT placeholder)
+
+#### Files Modified
+- `worker/src/types.ts` - Added RegimeClassification, EventWindowData, VixRegimeData types
+- `worker/src/signals/macro.ts` - Integrated regime classification into calculateMacroSignal()
+- `worker/src/skills/fetchMacroData.ts` - Pass date/timeSlot for regime classification
+- `worker/src/storage/d1.ts` - Store regime in data_json (no migration needed)
+- `src/components/MacroBar.astro` - Display regime chip + event alerts + upcoming events
+
+#### Design
+- Phase 1: Economic calendar event windows (FOMC 24h, CPI/NFP 4h dampening)
+- Phase 2: F&G extreme regime (extreme_fear/extreme_greed → contrarian)
+- Phase 3: VIX regime thresholds (apathy/complacent/normal/stressed/crisis)
+- Phase 4: GDELT geopolitical score (future, 1 API call/day)
+
+#### Verification
+- TypeScript: ✅ All checks pass
+- Build: ✅ Frontend builds successfully
+- No database migration needed (regime stored in data_json)
+
+#### Deployment & Verification (2026-01-22 03:30 UTC)
+- Worker: ✅ Deployed (version 149660e6)
+- Frontend: ✅ Deployed (c7518a89)
+- Live verification:
+  - Regime chip: ✅ Shows "Stressed △" (due to F&G = 20 extreme fear)
+  - Regime tooltip: ✅ "Extreme fear - contrarian bullish"
+  - Upcoming events: ✅ "In 7d: FOMC Decision"
+  - All 5 macro indicators: ✅ Intact
+
+#### Bug Fix During Deployment
+- Issue: `getEventsInRange(date, 7)` only checked days 0-6, missing day 7
+- Fix: Changed `i < days` to `i <= days` to include full range
+- Result: FOMC on 2026-01-29 now shows as "In 7d"
+
+#### Next Steps
+- Phase 2-3 already implemented in code, will activate on next stressed VIX event
+- Monitor live FOMC window on 2026-01-29
+- Consider Phase 4 GDELT integration
