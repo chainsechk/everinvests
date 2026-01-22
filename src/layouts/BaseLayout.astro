@@ -83,7 +83,7 @@ const organizationSchema = {
     <link rel="dns-prefetch" href="https://t.me" />
 
     <!-- Theme color - will be updated by JS based on theme -->
-    <meta name="theme-color" content="#faf9f7" />
+    <meta name="theme-color" content="#0a0e17" />
 
     <title>{fullTitle}</title>
 
@@ -96,8 +96,8 @@ const organizationSchema = {
     <script is:inline>
       (function() {
         const saved = localStorage.getItem('theme');
-        // Default to light theme for conservative appeal
-        const theme = saved || 'light';
+        // Default to dark theme
+        const theme = saved || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
         // Update meta theme-color immediately
         const meta = document.querySelector('meta[name="theme-color"]');

@@ -35,14 +35,14 @@
   const themeToggle = document.getElementById('theme-toggle');
   const html = document.documentElement;
 
-  // Get saved theme - default to light for conservative appeal
+  // Get saved theme - default to dark
   function getPreferredTheme(): 'light' | 'dark' {
     const saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
-    // Default to light theme
-    return 'light';
+    // Default to dark theme
+    return 'dark';
   }
 
   // Apply theme

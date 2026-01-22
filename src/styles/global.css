@@ -459,10 +459,10 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 14px;
+    padding: 10px 16px;
     border-radius: 10px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     letter-spacing: 0.02em;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-subtle);
