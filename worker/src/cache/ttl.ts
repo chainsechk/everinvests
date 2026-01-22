@@ -131,40 +131,6 @@ export async function cachedFetch<T>(
   return { data, cached: false };
 }
 
-// Get remaining TTL for a cached item (for debugging/monitoring)
-export async function getCacheTTL(url: string): Promise<number | null> {
-  const cache = getDefaultCache();
-  const cacheKey = getCacheKey(url);
-  const cacheRequest = new Request(cacheKey);
-
-  const cachedResponse = await cache.match(cacheRequest);
-  if (!cachedResponse) {
-    return null;
-  }
-
-  const cachedAt = cachedResponse.headers.get("X-Cached-At");
-  const ttl = cachedResponse.headers.get("X-Cache-TTL");
-
-  if (!cachedAt || !ttl) {
-    return null;
-  }
-
-  const cachedTime = new Date(cachedAt).getTime();
-  const ttlMs = parseInt(ttl, 10) * 1000;
-  const remaining = Math.max(0, (cachedTime + ttlMs - Date.now()) / 1000);
-
-  return Math.round(remaining);
-}
-
-// Invalidate cache for a specific URL
-export async function invalidateCache(url: string): Promise<boolean> {
-  const cache = getDefaultCache();
-  const cacheKey = getCacheKey(url);
-  const cacheRequest = new Request(cacheKey);
-
-  return await cache.delete(cacheRequest);
-}
-
 // Helper to get timestamp age in minutes
 export function getTimestampAgeMinutes(timestamp: string): number {
   const cachedTime = new Date(timestamp).getTime();

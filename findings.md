@@ -343,14 +343,3 @@ An agent analyzed indicators from first principles. Key finding: **We're using w
 | **Forex** | Rate differentials + DXY | Using RSI (meaningless) |
 | **Stocks** | Sector rotation | Ignoring sector context |
 
----
-
-## Previous Analysis (Superseded)
-
-The MA10 vs MA20 crossover implementation was a step forward but not truly independent.
-The new model focuses on:
-- **Price action** (what the market is doing)
-- **Volume** (conviction behind the move)
-- **Sentiment** (crowd psychology)
-
-These three measure fundamentally different market phenomena.

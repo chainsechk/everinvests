@@ -118,27 +118,3 @@ export function computeDelta(
   };
 }
 
-// Format delta for display in Telegram/UI
-export function formatDeltaSummary(delta: SignalDelta): string {
-  const parts: string[] = [];
-
-  if (delta.biasChanged && delta.previousBias) {
-    parts.push(`Bias: ${delta.previousBias} → ${delta.currentBias}`);
-  }
-
-  if (delta.priceMovers.biggest_gainer) {
-    const { ticker, delta: pct } = delta.priceMovers.biggest_gainer;
-    parts.push(`${ticker} +${pct.toFixed(1)}%`);
-  }
-
-  if (delta.priceMovers.biggest_loser) {
-    const { ticker, delta: pct } = delta.priceMovers.biggest_loser;
-    parts.push(`${ticker} ${pct.toFixed(1)}%`);
-  }
-
-  if (delta.changedAssets > 0) {
-    parts.push(`${delta.changedAssets}/${delta.totalAssets} assets changed bias`);
-  }
-
-  return parts.length > 0 ? parts.join(" | ") : "No significant changes";
-}

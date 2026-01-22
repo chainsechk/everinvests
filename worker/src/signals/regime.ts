@@ -2,98 +2,26 @@
  * Regime Classification System
  *
  * 4-Phase regime detection for signal quality improvement:
- * - Phase 1: Economic Calendar Events (this file)
- * - Phase 2: Fear & Greed Extreme Regime (future)
- * - Phase 3: VIX Regime Thresholds (future)
- * - Phase 4: GDELT Geopolitical Score (future)
+ * - Phase 1: Economic Calendar Events
+ * - Phase 2: Fear & Greed Extreme Regime
+ * - Phase 3: VIX Regime Thresholds
+ * - Phase 4: GDELT Geopolitical Score
  */
 
 import {
   getEventDampening,
   getActiveEventWindows,
-  getEventsInRange,
   formatUpcomingEvents,
-  type EconomicEvent,
-  type ActiveEventWindow,
 } from "../data/economic-calendar";
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-export type RegimeClassificationType =
-  | "normal"
-  | "event"
-  | "stressed"
-  | "crisis";
-
-export type FearGreedRegime =
-  | "extreme_fear"
-  | "fear"
-  | "neutral"
-  | "greed"
-  | "extreme_greed";
-
-export type VixRegimeType =
-  | "apathy"
-  | "complacent"
-  | "normal"
-  | "stressed"
-  | "crisis";
-
-export interface EventWindowData {
-  event: EconomicEvent;
-  name: string;
-  description: string;
-  active: boolean;
-  dampening: number;
-}
-
-export interface FearGreedRegimeData {
-  regime: FearGreedRegime;
-  value: number;
-  contrarian: boolean;
-  confidence: number;
-}
-
-export interface VixRegimeData {
-  regime: VixRegimeType;
-  vixValue: number;
-  action: "aggressive" | "normal" | "cautious" | "defensive";
-  signalDampening: number;
-}
-
-export interface GdeltRegimeData {
-  score: number;
-  trend: "rising" | "stable" | "falling";
-  topThreats: string[];
-  lastUpdated: string;
-  regime: "calm" | "elevated" | "high" | "critical";
-  signalDampening: number;
-}
-
-export interface RegimeClassification {
-  // Overall regime state
-  classification: RegimeClassificationType;
-  confidence: number;
-  signalDampening: number;
-  recommendedAction: "aggressive" | "normal" | "cautious" | "defensive";
-  riskLevel: "low" | "moderate" | "high" | "critical";
-
-  // Individual phase data
-  phase1_event?: {
-    active: boolean;
-    events: EventWindowData[];
-    dampening: number;
-  };
-  phase2_fearGreed?: FearGreedRegimeData;
-  phase3_vix?: VixRegimeData;
-  phase4_gdelt?: GdeltRegimeData;
-
-  // Display helpers
-  upcomingEvents?: string[];
-  summary: string;
-}
+import type {
+  RegimeClassificationType,
+  EventWindowData,
+  FearGreedRegimeData,
+  VixRegimeData,
+  GdeltRegimeData,
+  RegimeClassification,
+} from "../types";
 
 // ============================================================================
 // PHASE 1: ECONOMIC CALENDAR EVENTS
