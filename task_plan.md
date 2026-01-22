@@ -1,38 +1,29 @@
 # Task Plan: EverInvests Implementation
 
-## Current Task: Phase 3 Regime Detection - VIX Thresholds (2026-01-22)
+## Current Task: All Phases Complete (2026-01-22)
 
-### Goal
-Implement Phase 3 of 4-phase regime detection: VIX Regime Thresholds.
-Add granular VIX classification (apathy/complacent/normal/stressed/crisis) with action recommendations.
-
-### Why This Matters
-VIX provides direct measure of market fear. VIX >30 is crisis mode (defensive), VIX <10 is complacency (potential danger). Granular thresholds allow for more nuanced signal dampening.
+Regime detection system fully implemented (Phases 1-3). Phase 4 (GDELT) is future work.
 
 ### Phases Overview
 | Phase | Feature | Effort | API Cost | Status |
 |-------|---------|--------|----------|--------|
 | 1 | Economic Calendar Events | 2h | $0 | `complete` ✓ |
 | 2 | F&G Extreme Regime | 1.5h | $0 | `complete` ✓ |
-| **3** | VIX Regime Thresholds | 2h | $0 | `pending` |
+| 3 | VIX Regime Thresholds | 2h | $0 | `complete` ✓ |
 | 4 | GDELT Geopolitical | 4h | $0 | `future` |
-
-### Phase 3 Tasks
-- [ ] Verify VixRegimeData type in `worker/src/types.ts`
-- [ ] Verify `classifyRegimePhase3()` in `worker/src/signals/regime.ts`
-- [ ] Verify Phase 3 integration in `calculateMacroSignal()`
-- [ ] Update `MacroBar.astro` to display VIX regime state
-- [ ] Test and verify (TypeScript + Build pass)
-
-### Key Files
-| File | Change |
-|------|--------|
-| `worker/src/types.ts` | VERIFY: VixRegimeData type |
-| `worker/src/signals/regime.ts` | VERIFY: classifyRegimePhase3() |
-| `src/components/MacroBar.astro` | MODIFY: Show VIX regime alerts |
 
 ### Design Reference
 Full implementation plan: `docs/plans/2026-01-22-regime-detection-implementation.md`
+
+---
+
+## Completed: Phase 3 Regime Detection - VIX Thresholds (2026-01-22) ✓
+
+Backend already implemented (VixRegimeData type, classifyRegimePhase3, integration).
+Added frontend display in MacroBar.astro:
+- Added `phase3_vix` to RegimeClassification interface
+- Added helper function: `getVixRegimeAlert()`
+- Added VIX regime alert UI (shows for crisis/stressed/apathy states)
 
 ---
 
