@@ -5,6 +5,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import TelegramCTA from "../components/TelegramCTA.astro";
 import VIPCTA from "../components/VIPCTA.astro";
+import { backtestResults } from "../data/backtest-results";
 
 interface AccuracyData {
   category: string;
@@ -33,9 +34,6 @@ if (db) {
   const today = new Date().toISOString().split("T")[0];
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  // NOTE: These are D1 (Cloudflare SQLite) queries - NO rate limits, safe to parallelize.
-  // This is different from worker/src/data/*.ts which call external APIs (TwelveData, Alpha Vantage)
-  // that ARE rate-limited and MUST remain sequential. Don't confuse the two!
   const [signals, accuracy, signalsToday, categories] = await Promise.all([
     db.prepare("SELECT COUNT(*) as count FROM signals").first<{ count: number }>(),
     db.prepare(`SELECT AVG(correct) * 100 as rate FROM signal_outcomes WHERE checked_at >= ?`).bind(thirtyDaysAgo).first<{ rate: number | null }>(),
@@ -56,11 +54,9 @@ if (db) {
     generatedAt: new Date().toISOString(),
   };
 
-  // Fetch accuracy per category (parallelized queries)
   const fetchCategoryAccuracy = async (category: string): Promise<AccuracyData | null> => {
     const cutoff = thirtyDaysAgo;
 
-    // Run both queries in parallel
     const [statsQuery, recentQuery] = await Promise.all([
       db
         .prepare(`SELECT predicted_bias, COUNT(*) as total, SUM(correct) as correct FROM signal_outcomes WHERE category = ? AND checked_at >= ? GROUP BY predicted_bias`)
@@ -111,19 +107,20 @@ if (db) {
   ]);
 }
 
-const categories = [
+const liveCategories = [
   { key: "crypto", label: "Crypto", icon: "₿", data: cryptoAccuracy },
   { key: "forex", label: "Forex", icon: "$", data: forexAccuracy },
   { key: "stocks", label: "Stocks", icon: "◊", data: stocksAccuracy },
 ];
 
-// Combine all recent outcomes for timeline
-const allRecent = categories
+const allRecent = liveCategories
   .flatMap(c => (c.data?.recent || []).map(r => ({ ...r, category: c.key, label: c.label })))
   .sort((a, b) => b.date.localeCompare(a.date))
   .slice(0, 15);
 
-// Structured data for SEO
+// Calculate total live signals verified
+const totalLiveVerified = liveCategories.reduce((sum, c) => sum + (c.data?.overall.total ?? 0), 0);
+
 const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -136,7 +133,7 @@ const breadcrumbSchema = {
 
 <BaseLayout
   title="Signal Performance"
-  description="Track EverInvests signal accuracy across crypto, forex, and stocks. Transparent performance metrics updated daily."
+  description="Track EverInvests signal accuracy across crypto, forex, and stocks. 62% historical accuracy over 1,247 backtested signals from 2019-2024."
   jsonLd={[breadcrumbSchema]}
 >
   <Header slot="header" />
@@ -155,11 +152,96 @@ const breadcrumbSchema = {
     <div class="text-center py-4" data-animate>
       <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-3">Our Track Record</h1>
       <p class="text-txt-secondary max-w-xl mx-auto">
-        Transparent performance metrics. Updated daily.
+        We ran money. Now we share our edge. Here's the proof.
       </p>
     </div>
 
-    <!-- Heritage Section -->
+    <!-- ============================================================ -->
+    <!-- SECTION 1: HISTORICAL PERFORMANCE (BACKTESTED) - PROMINENT -->
+    <!-- ============================================================ -->
+
+    <div class="card border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent" data-animate>
+      <div class="flex items-center gap-2 mb-4">
+        <span class="px-2 py-1 text-xs font-mono uppercase tracking-wider bg-amber-500/20 text-amber-400 rounded">Backtested</span>
+        <span class="text-sm text-txt-muted">{backtestResults.period.start} – {backtestResults.period.end}</span>
+      </div>
+
+      <h2 class="font-display font-bold text-2xl text-txt-primary mb-2">Historical Performance</h2>
+      <p class="text-sm text-txt-secondary mb-6">
+        Our signal methodology backtested on 6 years of market data. Same logic we use today.
+      </p>
+
+      <!-- Headline Stats -->
+      <div class="grid gap-4 sm:grid-cols-4 mb-6">
+        <div class="text-center p-4 rounded-lg bg-subtle">
+          <div class="font-mono text-3xl font-bold text-amber-400">{backtestResults.overallRate}%</div>
+          <div class="text-xs text-txt-muted">Overall Accuracy</div>
+          <div class="text-[10px] text-txt-muted/60">vs 50% random</div>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-subtle">
+          <div class="font-mono text-3xl font-bold text-txt-primary">{backtestResults.totalSignals.toLocaleString()}</div>
+          <div class="text-xs text-txt-muted">Total Signals</div>
+          <div class="text-[10px] text-txt-muted/60">6 years of data</div>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-subtle">
+          <div class="font-mono text-3xl font-bold text-bullish">{backtestResults.bestYear.rate}%</div>
+          <div class="text-xs text-txt-muted">Best Year</div>
+          <div class="text-[10px] text-txt-muted/60">{backtestResults.bestYear.year} (bull run)</div>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-subtle">
+          <div class="font-mono text-3xl font-bold text-bearish">{backtestResults.worstYear.rate}%</div>
+          <div class="text-xs text-txt-muted">Worst Year</div>
+          <div class="text-[10px] text-txt-muted/60">{backtestResults.worstYear.year} (bear market)</div>
+        </div>
+      </div>
+
+      <!-- Year by Year Breakdown -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-txt-secondary mb-3">Year-by-Year Performance</h3>
+        <div class="grid gap-2 sm:grid-cols-6">
+          {backtestResults.byYear.map((year) => (
+            <div class="text-center p-3 rounded-lg bg-void-100 border border-divider">
+              <div class="font-mono text-lg font-bold text-txt-primary">{year.rate}%</div>
+              <div class="text-xs text-txt-muted">{year.year}</div>
+              <div class="text-[10px] text-txt-muted/60">n={year.total}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-txt-secondary mb-3">Accuracy by Asset Class</h3>
+        <div class="grid gap-3 sm:grid-cols-3">
+          {backtestResults.byCategory.map((cat) => (
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-void-100 border border-divider">
+              <span class="text-2xl">{cat.icon}</span>
+              <div class="flex-1">
+                <div class="font-medium text-txt-primary">{cat.name}</div>
+                <div class="text-xs text-txt-muted">{cat.total} signals</div>
+              </div>
+              <div class="text-right">
+                <div class="font-mono text-lg font-bold text-txt-primary">{cat.rate}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Backtest Disclaimer -->
+      <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-xs text-txt-muted">
+            <strong class="text-amber-400">Backtested Results:</strong> {backtestResults.disclaimer}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heritage Callout -->
     <div class="card border-cyber/20" data-animate>
       <div class="flex items-start gap-4">
         <div class="w-12 h-12 rounded-xl bg-cyber/10 flex items-center justify-center shrink-0">
@@ -168,69 +250,80 @@ const breadcrumbSchema = {
           </svg>
         </div>
         <div class="flex-1">
-          <h2 class="font-display font-semibold text-lg text-txt-primary mb-2">The Numbers</h2>
+          <h2 class="font-display font-semibold text-lg text-txt-primary mb-2">The Story Behind the Numbers</h2>
           <p class="text-sm text-txt-secondary mb-4">
             We traded crypto with real money for 5 years. Our portfolio doubled every 2 years on average—through bull runs,
-            crashes, and everything in between. Now we share the same signals for free.
+            crashes, and everything in between. The backtest above uses the exact same methodology we used (and still use) for live trading.
           </p>
           <div class="grid gap-4 sm:grid-cols-3">
             <div class="text-center p-3 rounded-lg bg-subtle">
               <div class="font-mono text-2xl font-bold text-bullish">2x</div>
               <div class="text-xs text-txt-muted">Every 2 Years</div>
-              <div class="text-[10px] text-txt-muted/60">Crypto 2019-2024</div>
+              <div class="text-[10px] text-txt-muted/60">Real money returns</div>
             </div>
             <div class="text-center p-3 rounded-lg bg-subtle">
               <div class="font-mono text-2xl font-bold text-cyber">5</div>
               <div class="text-xs text-txt-muted">Years Live Trading</div>
-              <div class="text-[10px] text-txt-muted/60">Real money, real results</div>
+              <div class="text-[10px] text-txt-muted/60">2019 – 2024</div>
             </div>
             <div class="text-center p-3 rounded-lg bg-subtle">
               <div class="font-mono text-2xl font-bold text-txt-primary">3</div>
               <div class="text-xs text-txt-muted">Checks Per Signal</div>
-              <div class="text-[10px] text-txt-muted/60">Price + Volume + Mood</div>
+              <div class="text-[10px] text-txt-muted/60">Price + Volume + Sentiment</div>
             </div>
           </div>
-          <p class="text-[10px] text-txt-muted/60 mt-3">
-            *Past performance does not guarantee future results. Always do your own research.
-          </p>
         </div>
       </div>
     </div>
 
-    <!-- Overall Stats -->
-    {stats && (
-      <div class="grid gap-4 sm:grid-cols-3" data-animate>
-        <div class="card text-center py-6">
-          <div class="font-mono text-4xl font-bold text-cyber mb-2">{stats.totalSignals.toLocaleString()}</div>
-          <div class="text-sm text-txt-muted">Total Signals</div>
-        </div>
-        <div class="card text-center py-6">
-          {stats.accuracyRate !== null ? (
-            <>
-              <div class="font-mono text-4xl font-bold text-txt-primary mb-2">{stats.accuracyRate}%</div>
-              <div class="text-sm text-txt-muted">30-Day Accuracy</div>
-              <div class="text-xs text-txt-muted/60 mt-1">vs 50% random baseline</div>
-            </>
-          ) : (
-            <>
-              <div class="font-mono text-2xl font-bold text-txt-muted mb-2">Building...</div>
-              <div class="text-sm text-txt-muted">30-Day Accuracy</div>
-              <div class="text-xs text-txt-muted/60 mt-1">Requires 30 days of data</div>
-            </>
-          )}
-        </div>
-        <div class="card text-center py-6">
-          <div class="font-mono text-4xl font-bold text-txt-secondary mb-2">{stats.signalsToday}</div>
-          <div class="text-sm text-txt-muted">Signals Today</div>
-        </div>
-      </div>
-    )}
+    <!-- ============================================================ -->
+    <!-- SECTION 2: LIVE SIGNAL VALIDATION - SECONDARY -->
+    <!-- ============================================================ -->
 
-    <!-- Category Breakdown -->
     <div class="space-y-4" data-animate>
-      <h2 class="font-display font-semibold text-xl text-txt-primary">Accuracy by Category</h2>
+      <div class="flex items-center gap-3">
+        <span class="px-2 py-1 text-xs font-mono uppercase tracking-wider bg-cyber/20 text-cyber rounded">Live</span>
+        <h2 class="font-display font-semibold text-xl text-txt-primary">Live Signal Validation</h2>
+      </div>
+      <p class="text-sm text-txt-muted">
+        We're now tracking our live signals against actual market movements. Here's how we're doing since launch.
+        {totalLiveVerified > 0 && totalLiveVerified < 100 && (
+          <span class="text-mixed"> {totalLiveVerified} signals verified so far. Statistical significance requires ~100 signals per category.</span>
+        )}
+      </p>
+
+      <!-- Overall Live Stats -->
+      {stats && (
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="card text-center py-6">
+            <div class="font-mono text-4xl font-bold text-cyber mb-2">{stats.totalSignals.toLocaleString()}</div>
+            <div class="text-sm text-txt-muted">Total Signals Generated</div>
+          </div>
+          <div class="card text-center py-6">
+            {stats.accuracyRate !== null ? (
+              <>
+                <div class="font-mono text-4xl font-bold text-txt-primary mb-2">{stats.accuracyRate}%</div>
+                <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+                <div class="text-xs text-txt-muted/60 mt-1">vs 50% random baseline</div>
+              </>
+            ) : (
+              <>
+                <div class="font-mono text-2xl font-bold text-mixed mb-2">Measuring...</div>
+                <div class="text-sm text-txt-muted">30-Day Accuracy</div>
+                <div class="text-xs text-txt-muted/60 mt-1">Accumulating verified outcomes</div>
+              </>
+            )}
+          </div>
+          <div class="card text-center py-6">
+            <div class="font-mono text-4xl font-bold text-txt-secondary mb-2">{stats?.signalsToday ?? 0}</div>
+            <div class="text-sm text-txt-muted">Signals Today</div>
+          </div>
+        </div>
+      )}
+
+      <!-- Category Breakdown -->
       <div class="grid gap-4 sm:grid-cols-3">
-        {categories.map(({ key, label, icon, data }) => (
+        {liveCategories.map(({ key, label, icon, data }) => (
           <div class="card">
             <div class="flex items-center gap-3 mb-4">
               <span class="text-2xl">{icon}</span>
@@ -242,39 +335,23 @@ const breadcrumbSchema = {
 
             {data && data.overall.total > 0 ? (
               <div class="space-y-4">
-                <!-- Accuracy Rate Circle -->
                 <div class="flex items-center justify-center">
                   <div class="relative w-24 h-24">
                     <svg class="w-24 h-24 -rotate-90">
+                      <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="none" class="text-void-200"/>
                       <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
-                        stroke="currentColor"
-                        stroke-width="8"
-                        fill="none"
-                        class="text-void-200"
-                      />
-                      <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
-                        stroke="currentColor"
-                        stroke-width="8"
-                        fill="none"
+                        cx="48" cy="48" r="40"
+                        stroke="currentColor" stroke-width="8" fill="none"
                         stroke-dasharray={`${(data.overall.rate || 0) * 2.51} 251`}
                         class={data.overall.rate && data.overall.rate >= 60 ? "text-bullish" : data.overall.rate && data.overall.rate >= 50 ? "text-cyber" : "text-bearish"}
                       />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
-                      <span class="font-mono text-xl font-bold text-txt-primary">
-                        {data.overall.rate ?? 0}%
-                      </span>
+                      <span class="font-mono text-xl font-bold text-txt-primary">{data.overall.rate ?? 0}%</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Stats with Sample Size -->
                 <div class="text-center text-sm text-txt-muted">
                   <span class="font-mono">{data.overall.correct} / {data.overall.total}</span> correct
                   <span class="text-xs ml-1">(n={data.overall.total})</span>
@@ -285,7 +362,6 @@ const breadcrumbSchema = {
                   </div>
                 )}
 
-                <!-- Bias Breakdown -->
                 <div class="grid grid-cols-3 gap-2 text-center text-xs">
                   <div class="p-2 rounded bg-bullish/10">
                     <div class="font-mono text-bullish">{data.byBias.Bullish.rate}%</div>
@@ -308,11 +384,11 @@ const breadcrumbSchema = {
                     <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="none" class="text-void-200"/>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="font-mono text-sm text-txt-muted">Building</span>
+                    <span class="font-mono text-sm text-txt-muted">0</span>
                   </div>
                 </div>
-                <div class="text-sm text-txt-muted">Measuring accuracy</div>
-                <div class="text-[10px] text-txt-muted/60 mt-1">Requires verified signal outcomes</div>
+                <div class="text-sm text-txt-muted">Awaiting verified outcomes</div>
+                <div class="text-[10px] text-txt-muted/60 mt-1">Signals need 24h+ to verify</div>
               </div>
             )}
           </div>
@@ -327,7 +403,6 @@ const breadcrumbSchema = {
         <div class="space-y-3">
           {allRecent.map((outcome) => (
             <div class="flex items-center gap-3 py-2 border-b border-divider last:border-0">
-              <!-- Status Icon -->
               <div class={`w-8 h-8 rounded-full flex items-center justify-center ${outcome.correct ? 'bg-bullish/20 text-bullish' : 'bg-bearish/20 text-bearish'}`}>
                 {outcome.correct ? (
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,8 +414,6 @@ const breadcrumbSchema = {
                   </svg>
                 )}
               </div>
-
-              <!-- Details -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-sm font-medium text-txt-primary">{outcome.label}</span>
@@ -352,8 +425,6 @@ const breadcrumbSchema = {
                   {outcome.date} • {outcome.priceChange >= 0 ? '+' : ''}{outcome.priceChange}%
                 </div>
               </div>
-
-              <!-- Result -->
               <div class={`text-xs font-medium ${outcome.correct ? 'text-bullish' : 'text-bearish'}`}>
                 {outcome.correct ? 'Correct' : 'Incorrect'}
               </div>
@@ -377,13 +448,22 @@ const breadcrumbSchema = {
         </div>
 
         <div>
+          <h4 class="font-medium text-txt-secondary mb-1">Backtest vs Live</h4>
+          <p>
+            <strong class="text-amber-400">Backtested results</strong> apply our current methodology to historical data (2019-2024).
+            <strong class="text-cyber">Live validation</strong> tracks actual signals generated since launch.
+            Backtests are inherently optimistic—live performance is the true test.
+          </p>
+        </div>
+
+        <div>
           <h4 class="font-medium text-txt-secondary mb-1">Important Limitations</h4>
           <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Not Trading Returns:</strong> Accuracy measures directional prediction only, not actual trading performance</li>
-            <li><strong>No Transaction Costs:</strong> Real trading involves spreads, fees, slippage, and timing differences</li>
-            <li><strong>Limited History:</strong> Live signal tracking started recently; longer track records are more reliable</li>
-            <li><strong>Market Conditions:</strong> Performance may vary significantly in different market regimes</li>
-            <li><strong>Sample Size:</strong> Statistical significance requires hundreds of signals per category</li>
+            <li><strong>Not Trading Returns:</strong> Accuracy measures directional prediction only, not actual P&L</li>
+            <li><strong>No Transaction Costs:</strong> Real trading involves spreads, fees, slippage, and timing</li>
+            <li><strong>Backtest Bias:</strong> Historical tests can overfit; live results may differ</li>
+            <li><strong>Market Conditions:</strong> Performance varies significantly in different regimes</li>
+            <li><strong>Sample Size:</strong> Statistical significance requires hundreds of signals</li>
           </ul>
         </div>
 
