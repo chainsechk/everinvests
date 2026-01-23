@@ -1,9 +1,8 @@
 // src/lib/og.ts
-// OG Image generation utilities using satori
-// Generates SVG images that can be served for OG tags
-// Note: Some platforms (Twitter/X) may not render SVG properly
-// Future enhancement: Add resvg-wasm for PNG conversion
+// OG Image generation utilities using satori + resvg for PNG output
+// PNG format ensures compatibility with Twitter/X and Facebook
 import satori from "satori";
+import { Resvg } from "@cf-wasm/resvg";
 
 // Inter font (fetched at runtime)
 const fontCache: { bold?: ArrayBuffer; regular?: ArrayBuffer } = {};
@@ -159,6 +158,21 @@ export async function generateOGImage(options: OGImageOptions): Promise<string> 
   });
 
   return svg;
+}
+
+// Convert SVG to PNG for Twitter/Facebook compatibility
+export async function generateOGImagePNG(options: OGImageOptions): Promise<Uint8Array> {
+  const svg = await generateOGImage(options);
+
+  const resvg = new Resvg(svg, {
+    fitTo: {
+      mode: "width",
+      value: 1200,
+    },
+  });
+
+  const pngData = resvg.render();
+  return pngData.asPng();
 }
 
 // Bias-specific colors

@@ -1,6 +1,19 @@
 # Task Plan: EverInvests Growth Optimization
 
-## Current Task: Growth Optimization for User Acquisition (2026-01-23)
+## Current Task: Tighten Growth Loop (2026-01-23)
+
+### New Phase: Analytics & OG Enhancement
+| Task | Description | Status |
+|------|-------------|--------|
+| T1 | Verify analytics events are flowing | `complete` |
+| T2 | Track header/footer Telegram clicks | `complete` |
+| T3 | Track widget_view with document.referrer | `complete` |
+| T4 | Add 90-day retention cleanup to worker cron | `complete` |
+| T5 | Convert OG images SVG → PNG for Twitter/Facebook | `complete` |
+
+---
+
+## Previous Task: Growth Optimization for User Acquisition (2026-01-23)
 
 **Goal:** Attract more users with $0 budget by optimizing for:
 1. Google discovery (SEO)

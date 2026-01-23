@@ -55,6 +55,15 @@ export default {
           console.error("[Accuracy] Check failed:", err)
         )
       );
+
+      // Run monthly analytics cleanup (first day of month at 01:00 UTC)
+      if (now.getUTCDate() === 1) {
+        ctx.waitUntil(
+          cleanupOldAnalytics(env).catch((err) =>
+            console.error("[Cleanup] Analytics cleanup failed:", err)
+          )
+        );
+      }
     }
 
     // G5 Enhancement: Fetch GDELT every 6 hours (01:00, 07:00, 13:00, 19:00 UTC)
@@ -273,6 +282,26 @@ async function runBenchmarkFetch(env: Env): Promise<{
     const msg = error instanceof Error ? error.message : String(error);
     console.error(`[Benchmarks] Error: ${msg}`);
     return { success: false, benchmarks: { spy: false, xlk: false, xle: false } };
+  }
+}
+
+// Delete analytics events older than 90 days to keep D1 small
+async function cleanupOldAnalytics(env: Env): Promise<{ deleted: number }> {
+  console.log("[Cleanup] Deleting analytics events older than 90 days...");
+
+  try {
+    const result = await env.DB.prepare(
+      `DELETE FROM analytics_events WHERE created_at < datetime('now', '-90 days')`
+    ).run();
+
+    const deleted = result.meta?.changes ?? 0;
+    console.log(`[Cleanup] Deleted ${deleted} old analytics events`);
+
+    return { deleted };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[Cleanup] Error: ${msg}`);
+    return { deleted: 0 };
   }
 }
 

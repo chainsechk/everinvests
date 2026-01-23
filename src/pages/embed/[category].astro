@@ -354,5 +354,26 @@ function formatTime(date: string, time: string): string {
       </a>
     </div>
   </div>
+
+  <script>
+    // Track widget view with referrer domain
+    const category = document.querySelector('.widget')?.closest('[data-category]')?.getAttribute('data-category')
+      || new URLSearchParams(window.location.search).get('category')
+      || window.location.pathname.split('/').pop();
+
+    fetch('https://everinvests.com/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'widget_view',
+        category: category,
+        source: 'embed',
+        meta: {
+          referrer: document.referrer || 'direct',
+          referrerDomain: document.referrer ? new URL(document.referrer).hostname : 'direct'
+        }
+      })
+    }).catch(() => {});
+  </script>
 </body>
 </html>
