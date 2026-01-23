@@ -1,5 +1,14 @@
 ---
 // src/components/Footer.astro
+import { getLocaleFromUrl, useTranslations, l, type Locale } from "../i18n";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale: explicitLocale } = Astro.props;
+const locale = explicitLocale ?? getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 const year = new Date().getFullYear();
 ---
 
@@ -9,37 +18,37 @@ const year = new Date().getFullYear();
     <div class="grid gap-8 md:grid-cols-3">
       <!-- Brand -->
       <div>
-        <a href="/" class="flex items-center gap-3 mb-4 group">
+        <a href={l("/", locale)} class="flex items-center gap-3 mb-4 group">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber to-bullish flex items-center justify-center">
             <svg class="w-4 h-4 text-void" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M13 7l5 5-5 5M6 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <span class="font-display font-bold text-lg text-txt-primary">EverInvests</span>
+          <span class="font-display font-bold text-lg text-txt-primary">{t("site.name")}</span>
         </a>
         <p class="text-sm text-txt-muted leading-relaxed max-w-xs">
-          Daily market signals for crypto, forex, and stocks. Automated analysis updated multiple times daily.
+          {t("site.description")}
         </p>
       </div>
 
       <!-- Links -->
       <div class="flex gap-12 md:justify-center">
         <div>
-          <h4 class="font-display font-semibold text-sm text-txt-primary mb-3">Markets</h4>
+          <h4 class="font-display font-semibold text-sm text-txt-primary mb-3">{t("category.crypto")}</h4>
           <ul class="space-y-2">
-            <li><a href="/crypto" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Crypto</a></li>
-            <li><a href="/forex" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Forex</a></li>
-            <li><a href="/stocks" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Stocks</a></li>
+            <li><a href={l("/crypto", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.crypto")}</a></li>
+            <li><a href={l("/forex", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.forex")}</a></li>
+            <li><a href={l("/stocks", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.stocks")}</a></li>
           </ul>
         </div>
         <div>
           <h4 class="font-display font-semibold text-sm text-txt-primary mb-3">Info</h4>
           <ul class="space-y-2">
-            <li><a href="/about" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">About</a></li>
-            <li><a href="/performance" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Performance</a></li>
-            <li><a href="/blog" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Blog</a></li>
-            <li><a href="/learn" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Learn</a></li>
-            <li><a href="/terms" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Terms & Risks</a></li>
+            <li><a href={l("/about", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.about")}</a></li>
+            <li><a href={l("/performance", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.performance")}</a></li>
+            <li><a href={l("/blog", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.blog")}</a></li>
+            <li><a href={l("/learn", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("nav.learn")}</a></li>
+            <li><a href={l("/terms", locale)} class="text-sm text-txt-muted hover:text-txt-primary transition-colors">{t("footer.links.terms")}</a></li>
             <li>
               <a href="/rss.xml" class="text-sm text-txt-muted hover:text-txt-primary transition-colors inline-flex items-center gap-1">
                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -59,7 +68,7 @@ const year = new Date().getFullYear();
 
       <!-- CTA -->
       <div class="md:text-right">
-        <p class="font-display font-medium text-sm text-txt-primary mb-3">Get real-time updates</p>
+        <p class="font-display font-medium text-sm text-txt-primary mb-3">{t("cta.telegram.title")}</p>
         <a
           href="https://t.me/everinvests"
           target="_blank"
@@ -69,17 +78,17 @@ const year = new Date().getFullYear();
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
           </svg>
-          Join Channel
+          {t("cta.telegram.button")}
         </a>
       </div>
     </div>
 
     <!-- Bottom bar -->
     <div class="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-txt-muted" style="border-color: var(--border-divider);">
-      <p>&copy; {year} EverInvests. Signals for informational purposes only.</p>
+      <p>{t("footer.copyright", { year })}</p>
       <p>
-        <strong>Not financial advice.</strong> Do your own due diligence.
-        <a href="/terms" class="text-accent hover:underline ml-1">Read full disclaimer →</a>
+        <strong>{t("footer.disclaimer")}</strong>
+        <a href={l("/terms", locale)} class="text-accent hover:underline ml-1">{t("common.learnMore")} →</a>
       </p>
     </div>
   </div>

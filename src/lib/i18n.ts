@@ -1,41 +1,27 @@
 // src/lib/i18n.ts
-// Internationalization utilities - platform layer for i18n-ready code
+// Formatting utilities for internationalized content (dates, numbers, currency)
+// For translations, use src/i18n/index.ts
 
-export const DEFAULT_LOCALE = "en";
-export const SUPPORTED_LOCALES = ["en"] as const; // Extend when adding languages
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
+// Re-export core i18n utilities from the main module
+export {
+  type Locale,
+  locales,
+  defaultLocale,
+  localeNames,
+  getLocaleFromUrl,
+  getDirection,
+  l,
+  t,
+  useTranslations,
+  isValidLocale,
+  getAlternateUrls,
+} from "../i18n";
 
-/**
- * Get the current locale from URL path or default
- * Future: will extract from /[lang]/... path segments
- */
-export function getLocale(pathname?: string): Locale {
-  // For now, always return default locale
-  // Future implementation will parse /{lang}/ from pathname
-  return DEFAULT_LOCALE;
-}
+import { type Locale, defaultLocale } from "../i18n";
 
-/**
- * Build a localized path
- * When locale === DEFAULT_LOCALE, returns path as-is
- * Otherwise prepends /{locale}/ prefix
- *
- * @example
- * l("/crypto") // => "/crypto" (default locale)
- * l("/crypto", "es") // => "/es/crypto" (future)
- */
-export function l(path: string, locale: Locale = DEFAULT_LOCALE): string {
-  // Ensure path starts with /
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-  // Default locale doesn't get prefix (cleaner URLs)
-  if (locale === DEFAULT_LOCALE) {
-    return normalizedPath;
-  }
-
-  // Non-default locales get /{locale} prefix
-  return `/${locale}${normalizedPath}`;
-}
+// Backwards compatibility alias
+export const DEFAULT_LOCALE = defaultLocale;
+export const SUPPORTED_LOCALES = ["en", "es", "zh", "ar", "pt"] as const;
 
 /**
  * Format a date for display
@@ -43,7 +29,7 @@ export function l(path: string, locale: Locale = DEFAULT_LOCALE): string {
  */
 export function formatDate(
   date: Date | string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = defaultLocale,
   options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -61,7 +47,7 @@ export function formatDate(
  */
 export function formatDateFull(
   date: Date | string,
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = defaultLocale
 ): string {
   return formatDate(date, locale, {
     weekday: "long",
@@ -76,7 +62,7 @@ export function formatDateFull(
  */
 export function formatDateShort(
   date: Date | string,
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = defaultLocale
 ): string {
   return formatDate(date, locale, {
     year: "numeric",
@@ -90,7 +76,7 @@ export function formatDateShort(
  */
 export function formatTime(
   date: Date | string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = defaultLocale,
   options: Intl.DateTimeFormatOptions = {
     hour: "2-digit",
     minute: "2-digit",
@@ -108,7 +94,7 @@ export function formatTime(
  */
 export function formatNumber(
   num: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = defaultLocale,
   options?: Intl.NumberFormatOptions
 ): string {
   const intlLocale = localeToIntl(locale);
@@ -121,7 +107,7 @@ export function formatNumber(
 export function formatCurrency(
   amount: number,
   currency: string = "USD",
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = defaultLocale
 ): string {
   const intlLocale = localeToIntl(locale);
   return amount.toLocaleString(intlLocale, {
@@ -138,7 +124,7 @@ export function formatCurrency(
  */
 export function formatPrice(
   price: number,
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = defaultLocale
 ): string {
   const intlLocale = localeToIntl(locale);
 
@@ -167,7 +153,7 @@ export function formatPrice(
  */
 export function formatRelativeTime(
   date: Date | string,
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = defaultLocale
 ): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
@@ -196,32 +182,12 @@ export function formatRelativeTime(
  * Allows for regional variants (e.g., es -> es-ES, pt -> pt-BR)
  */
 function localeToIntl(locale: Locale): string {
-  const mapping: Record<string, string> = {
+  const mapping: Record<Locale, string> = {
     en: "en-US",
-    // Future locales:
-    // es: "es-ES",
-    // zh: "zh-CN",
-    // fr: "fr-FR",
-    // de: "de-DE",
-    // ja: "ja-JP",
-    // pt: "pt-BR",
-    // ru: "ru-RU",
-    // ar: "ar-SA",
-    // hi: "hi-IN",
-    // ko: "ko-KR",
-    // it: "it-IT",
-    // tr: "tr-TR",
-    // pl: "pl-PL",
-    // vi: "vi-VN",
-    // bn: "bn-BD",
+    es: "es-ES",
+    zh: "zh-CN",
+    ar: "ar-SA",
+    pt: "pt-BR",
   };
   return mapping[locale] || locale;
-}
-
-/**
- * Get text direction for a locale
- */
-export function getDirection(locale: Locale): "ltr" | "rtl" {
-  const rtlLocales = ["ar", "he", "fa", "ur"];
-  return rtlLocales.includes(locale) ? "rtl" : "ltr";
 }

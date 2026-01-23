@@ -7,6 +7,10 @@ import MacroBar from "../components/MacroBar.astro";
 import SignalCard from "../components/SignalCard.astro";
 import VIPCTA from "../components/VIPCTA.astro";
 import { getLatestMacro, getLatestSignal, getAssetSignals } from "../lib/db";
+import { getLocaleFromUrl, useTranslations, l } from "../i18n";
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 const db = Astro.locals.runtime?.env?.DB;
 
@@ -89,28 +93,28 @@ function formatLastUpdate(): string {
 }
 ---
 
-<BaseLayout title="EverInvests" description="Free daily market signals for Crypto, Forex, and Stocks. Automated bias analysis with Fear & Greed, macro context, and more. Join VIP for trade directives.">
-  <Header slot="header" />
+<BaseLayout title={t("site.name")}>
+  <Header slot="header" locale={locale} />
 
   <div class="space-y-12">
     <!-- Hero Section -->
     <section class="text-center py-8 sm:py-12" data-animate>
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-subtle border border-divider text-xs text-txt-secondary mb-6">
         <span class="pulse-dot"></span>
-        <span class="font-mono">Live signals updating throughout the day</span>
+        <span class="font-mono">{t("home.hero.badge")}</span>
       </div>
 
       <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-txt-primary mb-4 tracking-tight">
-        We ran money.
-        <span class="text-gradient">Now we share our edge.</span>
+        {t("home.hero.title")}
+        <span class="text-gradient">{t("home.hero.titleHighlight")}</span>
       </h1>
 
       <p class="text-lg text-txt-secondary max-w-2xl mx-auto mb-2">
-        Our crypto strategy doubled money every 2 years for 5 years straight.*
-        Now we're sharing it free—Crypto, Forex, and Stocks signals, updated daily.
+        {t("home.hero.subtitle")}
+        {t("home.hero.subtitleContinued")}
       </p>
       <p class="text-xs text-txt-muted mb-8">
-        *<a href="/performance" class="underline hover:text-txt-secondary">See our track record</a>. Past performance does not guarantee future results.
+        <Fragment set:html={t("home.hero.disclaimer", { link: `<a href="${l("/performance", locale)}" class="underline hover:text-txt-secondary">${t("home.hero.disclaimerLink")}</a>` })} />
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-4">
@@ -118,10 +122,10 @@ function formatLastUpdate(): string {
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
           </svg>
-          Get Free Signals
+          {t("home.hero.ctaPrimary")}
         </a>
-        <a href="/about" class="btn-ghost">
-          Learn more
+        <a href={l("/about", locale)} class="btn-ghost">
+          {t("home.hero.ctaSecondary")}
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
@@ -141,9 +145,9 @@ function formatLastUpdate(): string {
     <!-- Signal Cards Grid -->
     <section>
       <div class="flex items-center justify-between mb-6">
-        <h2 class="font-display font-bold text-xl text-txt-primary">Today's Signals</h2>
+        <h2 class="font-display font-bold text-xl text-txt-primary">{t("signal.todaysSignals")}</h2>
         <div class="text-xs text-txt-muted font-mono">
-          Updated {formatLastUpdate()}
+          {t("signal.updated")} {formatLastUpdate()}
         </div>
       </div>
 
@@ -177,14 +181,14 @@ function formatLastUpdate(): string {
 
     <!-- Features Grid -->
     <section class="grid gap-6 sm:grid-cols-3" data-animate>
-      <a href="/performance" class="card-glass text-center py-6 block hover:border-cyber/30 transition-colors">
+      <a href={l("/performance", locale)} class="card-glass text-center py-6 block hover:border-cyber/30 transition-colors">
         <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 flex items-center justify-center">
           <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
         </div>
-        <h3 class="font-display font-semibold text-txt-primary mb-2">5 Years Live Trading</h3>
-        <p class="text-sm text-txt-muted">See our track record →</p>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.trackRecord.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.trackRecord.description")}</p>
       </a>
 
       <div class="card-glass text-center py-6">
@@ -193,8 +197,8 @@ function formatLastUpdate(): string {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <h3 class="font-display font-semibold text-txt-primary mb-2">Triple-Checked</h3>
-        <p class="text-sm text-txt-muted">We only call bullish when price, volume, AND mood all agree</p>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.tripleChecked.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.tripleChecked.description")}</p>
       </div>
 
       <div class="card-glass text-center py-6">
@@ -203,8 +207,8 @@ function formatLastUpdate(): string {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <h3 class="font-display font-semibold text-txt-primary mb-2">Always Free</h3>
-        <p class="text-sm text-txt-muted">Core signals free forever. VIP adds entries, exits & alerts.</p>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.alwaysFree.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.alwaysFree.description")}</p>
       </div>
     </section>
 
@@ -214,10 +218,10 @@ function formatLastUpdate(): string {
     <!-- Update Schedule -->
     <div class="text-center text-sm text-txt-muted" data-animate>
       <p class="font-mono">
-        Next update: <span class="text-cyber">{formatNextUpdate()}</span>
+        {t("signal.nextUpdate")}: <span class="text-cyber">{formatNextUpdate()}</span>
       </p>
     </div>
   </div>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 </BaseLayout>
