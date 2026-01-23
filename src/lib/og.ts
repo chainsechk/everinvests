@@ -166,7 +166,7 @@ export async function generateOGImagePNG(options: OGImageOptions): Promise<Uint8
   const svg = await generateOGImage(options);
 
   // Use async static method for Cloudflare Workers compatibility
-  const resvg = await Resvg.create(svg, {
+  const resvg = await Resvg.async(svg, {
     fitTo: {
       mode: "width",
       value: 1200,
