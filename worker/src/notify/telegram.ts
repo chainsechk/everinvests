@@ -35,7 +35,7 @@ function buildInlineKeyboard(
   // Second row: CTA button based on mode
   if (ctaMode === "waitlist") {
     buttons.push([
-      { text: "🚀 Join VIP Waitlist", url: "https://t.me/EverInvestsBot?start=waitlist" },
+      { text: "🚀 Join VIP Waitlist", url: "https://t.me/everinvests" },
     ]);
   } else if (ctaMode === "live") {
     buttons.push([

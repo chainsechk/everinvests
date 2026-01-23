@@ -17,12 +17,12 @@ export const CTA_CONFIG: Record<CTAMode, CTAConfig> = {
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 EverInvests VIP launching soon
 Regime analysis • Confidence scores • Directives
-👉 Join waitlist: t.me/EverInvestsBot?start=waitlist`,
+👉 Join waitlist: t.me/everinvests`,
     website: {
       title: '🚀 EverInvests VIP Launching Soon',
       subtitle: "We're building professional-grade signals with:",
       cta: 'Join VIP Waitlist →',
-      url: 'https://t.me/EverInvestsBot?start=waitlist',
+      url: 'https://t.me/everinvests',
       subtext: 'Be first to know when we launch',
     },
   },

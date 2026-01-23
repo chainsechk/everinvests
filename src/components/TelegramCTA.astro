@@ -10,7 +10,7 @@ const { variant = "full", vipMode = "waitlist" } = Astro.props;
 const freeChannelUrl = "https://t.me/everinvests";
 const vipConfig = vipMode === "live"
   ? { label: "VIP Group", url: "https://t.me/everinvests_premium" }
-  : { label: "VIP Waitlist", url: "https://t.me/EverInvestsBot?start=waitlist_telegram_cta" };
+  : { label: "VIP Waitlist", url: "https://t.me/everinvests" };
 ---
 
 {variant === "full" ? (
