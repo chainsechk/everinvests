@@ -141,6 +141,11 @@ export interface VixRegimeData {
   signalDampening: number;
 }
 
+export interface GdeltHeadline {
+  title: string;
+  url: string;
+}
+
 export interface GdeltRegimeData {
   score: number;
   trend: "rising" | "stable" | "falling";
@@ -148,6 +153,9 @@ export interface GdeltRegimeData {
   lastUpdated: string;
   regime: "calm" | "elevated" | "high" | "critical";
   signalDampening: number;
+  // G5 Enhancement fields
+  topHeadlines?: GdeltHeadline[];
+  spikeRatio?: number;
 }
 
 export interface RegimeClassification {

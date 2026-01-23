@@ -154,11 +154,14 @@ function calculateOverall(
   return "Mixed";
 }
 
-// GDELT result from database (Phase 4)
+// GDELT result from database (Phase 4, G5 enhanced)
 interface GdeltInput {
   score: number;
   trend: "rising" | "stable" | "falling";
   topThreats: string[];
+  // G5 Enhancement fields
+  topHeadlines?: Array<{ title: string; url: string }>;
+  spikeRatio?: number;
 }
 
 export function calculateMacroSignal(
@@ -179,7 +182,7 @@ export function calculateMacroSignal(
   const overall = calculateOverall(dxyBias, vixLevel, yieldsBias, yieldCurve);
   const stressLevel = calculateStressLevel(vixLevel, yieldCurve, fearGreedSignal, shockDetected);
 
-  // Phase 1-4: Regime Classification
+  // Phase 1-4: Regime Classification (G5: now with headlines and spike ratio)
   const regime = date && timeSlot
     ? classifyRegime({
         date,
@@ -191,6 +194,9 @@ export function calculateMacroSignal(
         gdeltScore: gdeltData?.score,
         gdeltTrend: gdeltData?.trend,
         gdeltTopThreats: gdeltData?.topThreats,
+        // G5 Enhancement fields
+        gdeltTopHeadlines: gdeltData?.topHeadlines,
+        gdeltSpikeRatio: gdeltData?.spikeRatio,
       })
     : undefined;
 

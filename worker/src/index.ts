@@ -3,7 +3,7 @@ import type { Env } from "./env";
 import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
-import { logRun, saveBenchmarkData, saveGdeltScore, getPreviousGdeltScore } from "./storage/d1";
+import { logRun, saveBenchmarkData, saveGdeltScore, getPreviousGdeltScore, getGdelt7DayAvgArticles } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
 import { generateWeeklyBlogPosts } from "./blog";
 import { sendDailyDigest } from "./digest";
@@ -55,8 +55,12 @@ export default {
           console.error("[Accuracy] Check failed:", err)
         )
       );
+    }
 
-      // Fetch GDELT geopolitical score daily at 01:00 UTC (Phase 4 Regime)
+    // G5 Enhancement: Fetch GDELT every 6 hours (01:00, 07:00, 13:00, 19:00 UTC)
+    // This catches midday breaking news instead of just daily at 01:00
+    const gdeltHours = [1, 7, 13, 19];
+    if (gdeltHours.includes(utcHour)) {
       ctx.waitUntil(
         runGdeltFetch(env).catch((err) =>
           console.error("[GDELT] Fetch failed:", err)
@@ -171,12 +175,14 @@ export default {
 };
 
 // Fetch and store GDELT geopolitical score (Phase 4 Regime Detection)
-// Runs daily at 01:00 UTC
+// G5 Enhancement: Runs every 6 hours (01:00, 07:00, 13:00, 19:00 UTC)
 async function runGdeltFetch(env: Env): Promise<{
   success: boolean;
   score: number;
   trend: string;
   topThreats: string[];
+  spikeRatio: number;
+  headlines: number;
 }> {
   const now = new Date();
   const date = now.toISOString().split("T")[0];
@@ -187,14 +193,17 @@ async function runGdeltFetch(env: Env): Promise<{
     // Get previous score for trend calculation
     const previousScore = await getPreviousGdeltScore({ db: env.DB });
 
-    // Fetch new score from GDELT
-    const result = await fetchGdeltScore(previousScore);
+    // G5: Get 7-day average article count for spike detection
+    const avg7dArticles = await getGdelt7DayAvgArticles({ db: env.DB });
+
+    // Fetch new score from GDELT with spike baseline
+    const result = await fetchGdeltScore(previousScore, avg7dArticles);
 
     // Store in database
     await saveGdeltScore({ db: env.DB, date, result });
 
     console.log(
-      `[GDELT] Score: ${result.score}, Trend: ${result.trend}, Articles: ${result.articles}, Top: ${result.topThreats.join(", ")}`
+      `[GDELT] Score: ${result.score}, Trend: ${result.trend}, Articles: ${result.articles}, Spike: ${result.spikeRatio}x, Headlines: ${result.topHeadlines.length}, Top: ${result.topThreats.join(", ")}`
     );
 
     return {
@@ -202,6 +211,8 @@ async function runGdeltFetch(env: Env): Promise<{
       score: result.score,
       trend: result.trend,
       topThreats: result.topThreats,
+      spikeRatio: result.spikeRatio,
+      headlines: result.topHeadlines.length,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -211,6 +222,8 @@ async function runGdeltFetch(env: Env): Promise<{
       score: 0,
       trend: "stable",
       topThreats: [],
+      spikeRatio: 1.0,
+      headlines: 0,
     };
   }
 }

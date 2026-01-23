@@ -32,6 +32,11 @@ export interface GdeltArticle {
   tone: number; // -100 to +100, negative = negative tone
 }
 
+export interface GdeltHeadline {
+  title: string;
+  url: string;
+}
+
 export interface GdeltResult {
   score: number; // 0-100 aggregated tension score
   trend: "rising" | "stable" | "falling";
@@ -39,6 +44,9 @@ export interface GdeltResult {
   articles: number; // Number of matching articles
   avgTone: number; // Average article tone
   lastUpdated: string;
+  // G5 Enhancement fields
+  topHeadlines: GdeltHeadline[]; // Top 3 most relevant headlines
+  spikeRatio: number; // Current articles vs 7-day avg (1.0 = normal, 2.0 = 2x spike)
 }
 
 interface GdeltApiResponse {
@@ -56,9 +64,13 @@ interface GdeltApiResponse {
  *
  * Queries for high-impact geopolitical keywords in the last 24 hours,
  * aggregates article counts and sentiment into a 0-100 tension score.
+ *
+ * @param previousScore - Previous score for trend calculation
+ * @param avg7dArticles - 7-day average article count for spike detection
  */
 export async function fetchGdeltScore(
-  previousScore?: number
+  previousScore?: number,
+  avg7dArticles?: number
 ): Promise<GdeltResult> {
   const now = new Date();
   const lastUpdated = now.toISOString();
@@ -71,6 +83,8 @@ export async function fetchGdeltScore(
     articles: 0,
     avgTone: 0,
     lastUpdated,
+    topHeadlines: [],
+    spikeRatio: 1.0,
   };
 
   try {
@@ -108,6 +122,8 @@ export async function fetchGdeltScore(
         articles: 0,
         avgTone: 0,
         lastUpdated,
+        topHeadlines: [],
+        spikeRatio: avg7dArticles ? 0 : 1.0,
       };
     }
 
@@ -132,13 +148,26 @@ export async function fetchGdeltScore(
       .slice(0, 3)
       .map(([keyword]) => keyword);
 
+    // Extract top 3 headlines (most relevant by hybridrel sort)
+    const topHeadlines: GdeltHeadline[] = articles
+      .slice(0, 3)
+      .map((a) => ({ title: a.title, url: a.url }));
+
+    // Calculate spike ratio vs 7-day baseline
+    const spikeRatio = avg7dArticles && avg7dArticles > 0
+      ? Math.round((articleCount / avg7dArticles) * 100) / 100
+      : 1.0;
+
     // Calculate tension score (0-100)
     // Based on: article count (0-50 pts) + negative tone (0-30 pts) + threat diversity (0-20 pts)
+    // G5: Add spike bonus (0-20 pts) for unusual activity
     const countScore = Math.min(50, (articleCount / 250) * 50);
     const toneScore = avgTone < 0 ? Math.min(30, Math.abs(avgTone) / 10 * 30) : 0;
     const diversityScore = Math.min(20, topThreats.length * 7);
+    // Spike bonus: 2x = +10pts, 3x = +20pts
+    const spikeBonus = spikeRatio >= 3 ? 20 : spikeRatio >= 2 ? 10 : spikeRatio >= 1.5 ? 5 : 0;
 
-    const score = Math.round(countScore + toneScore + diversityScore);
+    const score = Math.round(countScore + toneScore + diversityScore + spikeBonus);
 
     // Determine trend
     let trend: "rising" | "stable" | "falling" = "stable";
@@ -155,6 +184,8 @@ export async function fetchGdeltScore(
       articles: articleCount,
       avgTone: Math.round(avgTone * 10) / 10,
       lastUpdated,
+      topHeadlines,
+      spikeRatio,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

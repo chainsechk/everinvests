@@ -158,7 +158,9 @@ export function classifyRegimePhase3(vix: number): VixRegimeData {
 export function classifyRegimePhase4(
   gdeltScore: number | undefined,
   gdeltTrend?: "rising" | "stable" | "falling",
-  topThreats?: string[]
+  topThreats?: string[],
+  topHeadlines?: Array<{ title: string; url: string }>,
+  spikeRatio?: number
 ): GdeltRegimeData | undefined {
   if (gdeltScore === undefined) return undefined;
 
@@ -186,6 +188,9 @@ export function classifyRegimePhase4(
     lastUpdated: new Date().toISOString(),
     regime,
     signalDampening,
+    // G5 Enhancement fields
+    topHeadlines: topHeadlines ?? [],
+    spikeRatio: spikeRatio ?? 1.0,
   };
 }
 
@@ -203,10 +208,13 @@ export interface ClassifyRegimeInput {
   gdeltScore?: number;
   gdeltTrend?: "rising" | "stable" | "falling";
   gdeltTopThreats?: string[];
+  // G5 Enhancement fields
+  gdeltTopHeadlines?: Array<{ title: string; url: string }>;
+  gdeltSpikeRatio?: number;
 }
 
 export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification {
-  const { date, timeSlot, fearGreed, vix, stressLevel, gdeltScore, gdeltTrend, gdeltTopThreats } = input;
+  const { date, timeSlot, fearGreed, vix, stressLevel, gdeltScore, gdeltTrend, gdeltTopThreats, gdeltTopHeadlines, gdeltSpikeRatio } = input;
 
   // Phase 1: Economic Events
   const phase1 = classifyRegimePhase1(date, timeSlot);
@@ -217,8 +225,8 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   // Phase 3: VIX Thresholds
   const phase3 = vix !== undefined ? classifyRegimePhase3(vix) : undefined;
 
-  // Phase 4: GDELT Geopolitical
-  const phase4 = classifyRegimePhase4(gdeltScore, gdeltTrend, gdeltTopThreats);
+  // Phase 4: GDELT Geopolitical (G5: now with headlines and spike ratio)
+  const phase4 = classifyRegimePhase4(gdeltScore, gdeltTrend, gdeltTopThreats, gdeltTopHeadlines, gdeltSpikeRatio);
 
   // Calculate combined dampening (use most restrictive)
   let signalDampening = 1.0;

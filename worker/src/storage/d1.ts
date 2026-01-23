@@ -390,15 +390,17 @@ export async function saveGdeltScore(args: {
 
   await db
     .prepare(
-      `INSERT INTO gdelt_scores (date, score, trend, top_threats, articles, avg_tone, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO gdelt_scores (date, score, trend, top_threats, articles, avg_tone, fetched_at, top_headlines, spike_ratio)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(date) DO UPDATE SET
          score = excluded.score,
          trend = excluded.trend,
          top_threats = excluded.top_threats,
          articles = excluded.articles,
          avg_tone = excluded.avg_tone,
-         fetched_at = excluded.fetched_at`
+         fetched_at = excluded.fetched_at,
+         top_headlines = excluded.top_headlines,
+         spike_ratio = excluded.spike_ratio`
     )
     .bind(
       date,
@@ -407,7 +409,9 @@ export async function saveGdeltScore(args: {
       JSON.stringify(result.topThreats),
       result.articles,
       result.avgTone,
-      result.lastUpdated
+      result.lastUpdated,
+      JSON.stringify(result.topHeadlines),
+      result.spikeRatio
     )
     .run();
 }
@@ -419,7 +423,7 @@ export async function getLatestGdeltScore(args: {
 
   const row = await db
     .prepare(
-      `SELECT score, trend, top_threats, articles, avg_tone, fetched_at
+      `SELECT score, trend, top_threats, articles, avg_tone, fetched_at, top_headlines, spike_ratio
        FROM gdelt_scores
        ORDER BY date DESC
        LIMIT 1`
@@ -431,6 +435,8 @@ export async function getLatestGdeltScore(args: {
       articles: number;
       avg_tone: number;
       fetched_at: string;
+      top_headlines: string | null;
+      spike_ratio: number | null;
     }>();
 
   if (!row) return null;
@@ -442,6 +448,8 @@ export async function getLatestGdeltScore(args: {
     articles: row.articles,
     avgTone: row.avg_tone,
     lastUpdated: row.fetched_at,
+    topHeadlines: row.top_headlines ? JSON.parse(row.top_headlines) : [],
+    spikeRatio: row.spike_ratio ?? 1.0,
   };
 }
 
@@ -457,4 +465,25 @@ export async function getPreviousGdeltScore(args: {
     .first<{ score: number }>();
 
   return row?.score;
+}
+
+/**
+ * Get 7-day average article count for spike detection (G5 Enhancement)
+ */
+export async function getGdelt7DayAvgArticles(args: {
+  db: D1Database;
+}): Promise<number | undefined> {
+  const { db } = args;
+
+  const row = await db
+    .prepare(
+      `SELECT AVG(articles) as avg_articles
+       FROM gdelt_scores
+       WHERE date >= date('now', '-7 days')
+       ORDER BY date DESC
+       LIMIT 7`
+    )
+    .first<{ avg_articles: number | null }>();
+
+  return row?.avg_articles ?? undefined;
 }
