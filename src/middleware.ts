@@ -27,8 +27,8 @@ const CACHE_CONFIG: Record<string, number> = {
 
 // Pattern-based cache rules
 const CACHE_PATTERNS: Array<{ pattern: RegExp; ttl: number }> = [
-  // Historical signal pages: /crypto/2026-01-23/0800 - long TTL (never changes)
-  { pattern: /^\/(crypto|forex|stocks)\/\d{4}-\d{2}-\d{2}\/\d{4}$/, ttl: 604800 }, // 1 week
+  // Historical signal pages: /crypto/2026-01-23/08:00 - long TTL (never changes)
+  { pattern: /^\/(crypto|forex|stocks)\/\d{4}-\d{2}-\d{2}\/\d{2}:\d{2}$/, ttl: 604800 }, // 1 week
 
   // Ticker/pair pages: /crypto/BTC, /forex/USD-JPY
   { pattern: /^\/(crypto|forex|stocks)\/[A-Z-]+$/, ttl: 300 }, // 5 min
