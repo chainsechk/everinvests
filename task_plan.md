@@ -16,7 +16,7 @@
 | G3 | Distribution: Embeddable Widget | MEDIUM-HIGH | `complete` |
 | G4 | Conversion: Next Update Teaser + VIP Value + CTA Tracking | HIGH | `complete` |
 | G5 | Core Web Vitals: Eliminate Render-Blocking Resources | HIGH | `complete` |
-| G6 | Trust/Compliance: Bigger Disclaimer + Methodology + Accuracy Display | MEDIUM | `pending` |
+| G6 | Trust/Compliance: Bigger Disclaimer + Methodology + Accuracy Display | MEDIUM | `complete` |
 
 **Execution Order:** G5 (speed baseline) → G1 → G2 → G4 → G3 → G6
 
@@ -148,22 +148,25 @@
 
 ---
 
-## Phase G6: Trust/Compliance Enhancement [status: pending]
+## Phase G6: Trust/Compliance Enhancement [status: complete]
 **Priority: MEDIUM (reduces bounce, increases shares)**
 
-- [ ] G6.1 Bigger disclaimer banner
-  - Already exists but ensure visibility
-  - Consider sticky footer on mobile
+- [x] G6.1 Bigger disclaimer banner
+  - DisclaimerBanner at top with 7-day dismissal
+  - Footer has "Not financial advice" + link to /terms
+  - Sticky mobile footer not needed (would harm UX)
 
-- [ ] G6.2 Methodology page enhancement
-  - Sample sizes for accuracy stats
-  - Time period coverage
-  - Limitations and caveats
+- [x] G6.2 Methodology page enhancement
+  - /learn/methodology has full 3-indicator model explanation
+  - Data sources listed (CoinGecko, Binance, TwelveData, Alpha Vantage)
+  - Limitations section (timing, magnitude, black swans, past performance)
+  - Update schedule table
 
-- [ ] G6.3 Accuracy display with confidence
-  - Show "62% accuracy (n=47, 30 days)"
-  - Warning for small samples
-  - Benchmark vs random baseline
+- [x] G6.3 Accuracy display with confidence
+  - Performance page shows "(n=X)" on all accuracy figures
+  - Statistical significance warning for samples < 30
+  - Benchmark comparison vs 50% random baseline
+  - Year-by-year breakdown with sample sizes
 
 ---
 
