@@ -3,6 +3,7 @@
 import BiasIndicator from "./BiasIndicator.astro";
 import InfoTip from "./InfoTip.astro";
 import ScaleBar from "./ScaleBar.astro";
+import { formatNumber, DEFAULT_LOCALE } from "../lib/i18n";
 
 interface Asset {
   id: number;
@@ -92,8 +93,8 @@ function getAssetStatus(ticker: string): { isStale: boolean; outliers: OutlierIn
 function formatPrice(price: number | null, cat: string): string {
   if (price === null) return "--";
   if (cat === "forex") return price.toFixed(4);
-  if (price > 1000) return price.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  return price.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (price > 1000) return formatNumber(price, DEFAULT_LOCALE, { maximumFractionDigits: 0 });
+  return formatNumber(price, DEFAULT_LOCALE, { maximumFractionDigits: 2 });
 }
 
 // Extract numeric value from secondary indicator (for scale bar)

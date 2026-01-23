@@ -5,6 +5,7 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import BiasIndicator from "../../components/BiasIndicator.astro";
+import { absoluteUrl } from "../../lib/site";
 
 const terms = [
   {
@@ -116,9 +117,9 @@ const breadcrumbLd = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: "https://everinvests.com" },
-    { "@type": "ListItem", position: 2, name: "Learn", item: "https://everinvests.com/learn" },
-    { "@type": "ListItem", position: 3, name: "Glossary", item: "https://everinvests.com/learn/glossary" }
+    { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+    { "@type": "ListItem", position: 2, name: "Learn", item: absoluteUrl("/learn") },
+    { "@type": "ListItem", position: 3, name: "Glossary", item: absoluteUrl("/learn/glossary") }
   ]
 };
 ---

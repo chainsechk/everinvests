@@ -1,6 +1,7 @@
 ---
 // src/components/SignalDetail.astro
 import BiasIndicator from "./BiasIndicator.astro";
+import { formatDateShort, DEFAULT_LOCALE } from "../lib/i18n";
 
 interface Props {
   signal: {
@@ -33,15 +34,6 @@ const levelsTitle = levelKeys.length > 0 && levelKeys.every((key) => key.toLower
   ? "Latest Prices"
   : "Key Levels";
 
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
 function getMacroColor(macro: string | null): string {
   if (!macro) return "text-txt-muted";
   const lower = macro.toLowerCase();
@@ -69,7 +61,7 @@ function getMacroColor(macro: string | null): string {
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
       </svg>
-      {formatDate(signal.date)} at {signal.time_slot} UTC
+      {formatDateShort(signal.date, DEFAULT_LOCALE)} at {signal.time_slot} UTC
     </div>
   </div>
 

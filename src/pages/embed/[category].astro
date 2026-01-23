@@ -3,6 +3,9 @@
 // Embeddable widget for third-party sites (iframe-friendly)
 import { getLatestSignal, getAssetSignals } from "../../lib/db";
 import type { Category } from "../../lib/db";
+import { SITE_URL } from "../../lib/site";
+
+const siteUrl = SITE_URL || "https://everinvests.com";
 
 const { category: catParam } = Astro.params;
 const theme = Astro.url.searchParams.get("theme") || "dark";
@@ -307,7 +310,7 @@ function formatTime(date: string, time: string): string {
       <div class="signal-list">
         {signals.map((signal) => (
           <a
-            href={`https://everinvests.com/${signal.category}?utm_source=widget&utm_medium=embed`}
+            href={`${siteUrl}/${signal.category}?utm_source=widget&utm_medium=embed`}
             target="_blank"
             rel="noopener"
             class="signal-item"
@@ -334,7 +337,7 @@ function formatTime(date: string, time: string): string {
 
     <div class="widget-footer">
       <a
-        href="https://everinvests.com?utm_source=widget&utm_medium=embed"
+        href={`${siteUrl}?utm_source=widget&utm_medium=embed`}
         target="_blank"
         rel="noopener"
         class="powered-by"
@@ -345,7 +348,7 @@ function formatTime(date: string, time: string): string {
         Powered by EverInvests
       </a>
       <a
-        href="https://everinvests.com?utm_source=widget&utm_medium=embed"
+        href={`${siteUrl}?utm_source=widget&utm_medium=embed`}
         target="_blank"
         rel="noopener"
         class="view-all"
@@ -355,13 +358,13 @@ function formatTime(date: string, time: string): string {
     </div>
   </div>
 
-  <script>
+  <script define:vars={{ siteUrl }}>
     // Track widget view with referrer domain
     const category = document.querySelector('.widget')?.closest('[data-category]')?.getAttribute('data-category')
       || new URLSearchParams(window.location.search).get('category')
       || window.location.pathname.split('/').pop();
 
-    fetch('https://everinvests.com/api/track', {
+    fetch(`${siteUrl}/api/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

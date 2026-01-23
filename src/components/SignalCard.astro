@@ -1,5 +1,7 @@
 ---
 // src/components/SignalCard.astro
+import { formatTime as formatTimeI18n, DEFAULT_LOCALE } from "../lib/i18n";
+
 interface Props {
   category: "crypto" | "forex" | "stocks";
   bias: string | null;
@@ -71,8 +73,7 @@ function getBiasIcon(bias: string | null): string {
 function formatTime(isoString: string | null): string {
   if (!isoString) return "--:--";
   try {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+    return formatTimeI18n(isoString, DEFAULT_LOCALE, { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
   } catch {
     return "--:--";
   }

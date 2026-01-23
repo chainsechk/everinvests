@@ -2,6 +2,7 @@
 // Dynamic OG image for individual signal pages (PNG for Twitter/Facebook)
 import type { APIRoute } from "astro";
 import { generateOGImagePNG, getBiasColor } from "../../../../../lib/og";
+import { formatDateShort, DEFAULT_LOCALE } from "../../../../../lib/i18n";
 
 const categoryLabels: Record<string, string> = {
   crypto: "Crypto",
@@ -9,22 +10,13 @@ const categoryLabels: Record<string, string> = {
   stocks: "Stocks",
 };
 
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
 export const GET: APIRoute = async ({ params, locals }) => {
   const { category, date, time } = params;
   const categoryLabel = categoryLabels[category || ""] || "Market";
 
   // Default values
   let bias: string | null = null;
-  let subtitle = `Signal for ${formatDate(date || "")} at ${time || "00:00"} UTC`;
+  let subtitle = `Signal for ${formatDateShort(date || "", DEFAULT_LOCALE)} at ${time || "00:00"} UTC`;
   let summary = "";
 
   // Try to get signal data from DB
@@ -59,7 +51,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
 
         // Build subtitle with bias
-        subtitle = summary || `${categoryLabel} is ${bias} on ${formatDate(date)}`;
+        subtitle = summary || `${categoryLabel} is ${bias} on ${formatDateShort(date, DEFAULT_LOCALE)}`;
       }
     }
   } catch {

@@ -1,6 +1,7 @@
 ---
 // src/components/HistoryMini.astro
 import BiasIndicator from "./BiasIndicator.astro";
+import { formatDateShort, DEFAULT_LOCALE } from "../lib/i18n";
 
 interface Signal {
   id: number;
@@ -15,15 +16,6 @@ interface Props {
 }
 
 const { signals, category } = Astro.props;
-
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
 ---
 
 <div class="space-y-4">
@@ -45,7 +37,7 @@ function formatDate(dateStr: string): string {
           class="flex items-center justify-between px-3 py-2 rounded-lg bg-subtle border border-subtle hover:border-cyber/30 transition-colors"
         >
           <div class="text-xs text-txt-muted font-mono">
-            {formatDate(signal.date)} <span class="text-txt-muted/60">{signal.time_slot}</span>
+            {formatDateShort(signal.date, DEFAULT_LOCALE)} <span class="text-txt-muted/60">{signal.time_slot}</span>
           </div>
           <BiasIndicator bias={signal.bias} size="sm" />
         </a>

@@ -4,8 +4,9 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
+import { SITE_URL } from "../../lib/site";
 
-const baseUrl = "https://everinvests.com";
+const baseUrl = SITE_URL || "https://everinvests.com";
 
 const snippets = {
   all: {

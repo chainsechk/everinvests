@@ -9,6 +9,7 @@ import TelegramCTA from "../../components/TelegramCTA.astro";
 import { getAssetHistory, getDistinctTickers, getLatestSignal, getAssetSignals } from "../../lib/db";
 import type { Category } from "../../lib/db";
 import { absoluteUrl } from "../../lib/site";
+import { formatDateShort, formatPrice as formatPriceI18n, DEFAULT_LOCALE } from "../../lib/i18n";
 
 const category: Category = "stocks";
 const { ticker } = Astro.params;
@@ -41,18 +42,9 @@ if (latestSignal) {
   currentAsset = assets.find(a => a.ticker === normalizedTicker) || null;
 }
 
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
-  return price.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatPriceI18n(price, DEFAULT_LOCALE);
 }
 
 const pageTitle = `${normalizedTicker} Stock Signals`;
@@ -159,7 +151,7 @@ const financialProductSchema = {
                 <tr class:list={["border-b border-divider hover:bg-subtle", index === 0 && "bg-subtle"]}>
                   <td class="py-2 px-3">
                     <a href={`/stocks/${row.date}/${row.time_slot}`} class="text-txt-primary hover:text-cyber transition-colors">
-                      {formatDate(row.date)}
+                      {formatDateShort(row.date, DEFAULT_LOCALE)}
                     </a>
                   </td>
                   <td class="py-2 px-3 text-txt-secondary font-mono text-xs">{row.time_slot}</td>

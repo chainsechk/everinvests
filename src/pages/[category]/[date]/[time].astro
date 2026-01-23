@@ -21,6 +21,7 @@ import {
 } from "../../../lib/db";
 import type { Category } from "../../../lib/db";
 import { absoluteUrl } from "../../../lib/site";
+import { formatDateFull, formatDateShort, DEFAULT_LOCALE } from "../../../lib/i18n";
 import RelatedSignals from "../../../components/RelatedSignals.astro";
 import DeltaBadge from "../../../components/DeltaBadge.astro";
 import ShareBlock from "../../../components/ShareBlock.astro";
@@ -87,26 +88,8 @@ const categoryMeta: Record<Category, { title: string; icon: string }> = {
 
 const { title: categoryTitle, icon: categoryIcon } = categoryMeta[category];
 
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatShortDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
-const pageTitle = `${categoryTitle} Signal - ${formatShortDate(date)} at ${time} UTC`;
-const pageDescription = `${categoryTitle} market signal for ${formatDate(date)} at ${time} UTC. Bias: ${signal.bias}.`;
+const pageTitle = `${categoryTitle} Signal - ${formatDateShort(date, DEFAULT_LOCALE)} at ${time} UTC`;
+const pageDescription = `${categoryTitle} market signal for ${formatDateFull(date, DEFAULT_LOCALE)} at ${time} UTC. Bias: ${signal.bias}.`;
 
 // Parse summary for JSON-LD
 let summary = "";
@@ -165,7 +148,7 @@ const articleSchema = {
       <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
-      <span class="text-txt-primary font-medium">{formatShortDate(date)} {time}</span>
+      <span class="text-txt-primary font-medium">{formatDateShort(date, DEFAULT_LOCALE)} {time}</span>
     </nav>
 
     <!-- Page Header -->
@@ -177,7 +160,7 @@ const articleSchema = {
             {categoryTitle} Signal
           </h1>
         </div>
-        <p class="text-txt-secondary">{formatDate(date)} at {time} UTC</p>
+        <p class="text-txt-secondary">{formatDateFull(date, DEFAULT_LOCALE)} at {time} UTC</p>
       </div>
       <TelegramCTA variant="compact" />
     </div>
@@ -256,7 +239,7 @@ const articleSchema = {
           <div>
             <div class="text-xs text-txt-muted uppercase tracking-wide">Previous</div>
             <div class="flex items-center gap-2">
-              <span class="text-txt-primary font-medium">{formatShortDate(prevSignal.date)} {prevSignal.time_slot}</span>
+              <span class="text-txt-primary font-medium">{formatDateShort(prevSignal.date, DEFAULT_LOCALE)} {prevSignal.time_slot}</span>
               <BiasIndicator bias={prevSignal.bias} size="sm" />
             </div>
           </div>
@@ -274,7 +257,7 @@ const articleSchema = {
             <div class="text-xs text-txt-muted uppercase tracking-wide">Next</div>
             <div class="flex items-center justify-end gap-2">
               <BiasIndicator bias={nextSignal.bias} size="sm" />
-              <span class="text-txt-primary font-medium">{formatShortDate(nextSignal.date)} {nextSignal.time_slot}</span>
+              <span class="text-txt-primary font-medium">{formatDateShort(nextSignal.date, DEFAULT_LOCALE)} {nextSignal.time_slot}</span>
             </div>
           </div>
           <svg class="w-5 h-5 text-txt-muted group-hover:text-cyber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,7 +290,7 @@ const articleSchema = {
               <div class="flex items-center gap-3">
                 <BiasIndicator bias={s.bias} size="sm" />
                 <span class="text-txt-secondary text-sm">
-                  {formatShortDate(s.date)} at {s.time_slot}
+                  {formatDateShort(s.date, DEFAULT_LOCALE)} at {s.time_slot}
                 </span>
               </div>
               {s.id === signal.id && (

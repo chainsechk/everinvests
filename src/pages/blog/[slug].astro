@@ -6,6 +6,7 @@ import Footer from "../../components/Footer.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import BiasIndicator from "../../components/BiasIndicator.astro";
 import { absoluteUrl } from "../../lib/site";
+import { formatDateFull, DEFAULT_LOCALE } from "../../lib/i18n";
 
 interface BlogPost {
   id: number;
@@ -59,12 +60,7 @@ if (post.signal_id) {
   ).bind(post.signal_id).first<Signal>();
 }
 
-const publishedDate = new Date(post.published_at);
-const formattedDate = publishedDate.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-});
+const formattedDate = formatDateFull(post.published_at, DEFAULT_LOCALE);
 
 const categoryColors: Record<string, string> = {
   crypto: "text-cyber",

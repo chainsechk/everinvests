@@ -1,6 +1,9 @@
 // src/pages/api/v1/signals.ts
 // Structured API v1 - Consolidated signal endpoint for programmatic access
 import type { APIContext } from "astro";
+import { SITE_URL, absoluteUrl } from "../../../lib/site";
+
+const siteUrl = SITE_URL || "https://everinvests.com";
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -244,7 +247,7 @@ export async function GET(context: APIContext) {
           risks: output.risks,
           assets: parsedAssets,
           qualityFlags: data.qualityFlags || [],
-          url: `https://everinvests.com/${category}/${signal.date}/${signal.time_slot}`,
+          url: absoluteUrl(`/${category}/${signal.date}/${signal.time_slot}`),
         };
       }
     }
@@ -273,8 +276,8 @@ export async function GET(context: APIContext) {
             stocks: ["17:00", "21:00"],
           },
           links: {
-            website: "https://everinvests.com",
-            rss: "https://everinvests.com/rss.xml",
+            website: siteUrl,
+            rss: absoluteUrl("/rss.xml"),
             mcp: "https://everinvests-mcp.duyuefeng0708.workers.dev/mcp",
             telegram: "https://t.me/everinvests",
           },

@@ -1,6 +1,9 @@
 // src/pages/api/v1/index.ts
 // API Documentation endpoint
 import type { APIContext } from "astro";
+import { SITE_URL, absoluteUrl } from "../../../lib/site";
+
+const siteUrl = SITE_URL || "https://everinvests.com";
 
 export async function GET(_context: APIContext) {
   return Response.json(
@@ -8,7 +11,7 @@ export async function GET(_context: APIContext) {
       name: "EverInvests API",
       version: "1.0",
       description: "Programmatic access to EverInvests market signals",
-      baseUrl: "https://everinvests.com/api/v1",
+      baseUrl: absoluteUrl("/api/v1"),
       endpoints: {
         "GET /signals": {
           description: "Get latest signals for specified categories",
@@ -69,11 +72,11 @@ export async function GET(_context: APIContext) {
         },
         rss: {
           description: "RSS feed for signal updates",
-          url: "https://everinvests.com/rss.xml",
+          url: absoluteUrl("/rss.xml"),
           categoryFeeds: {
-            crypto: "https://everinvests.com/rss.xml?category=crypto",
-            forex: "https://everinvests.com/rss.xml?category=forex",
-            stocks: "https://everinvests.com/rss.xml?category=stocks",
+            crypto: absoluteUrl("/rss.xml?category=crypto"),
+            forex: absoluteUrl("/rss.xml?category=forex"),
+            stocks: absoluteUrl("/rss.xml?category=stocks"),
           },
         },
         webhooks: {
@@ -82,9 +85,9 @@ export async function GET(_context: APIContext) {
         },
       },
       links: {
-        website: "https://everinvests.com",
+        website: siteUrl,
         telegram: "https://t.me/everinvests",
-        performance: "https://everinvests.com/performance",
+        performance: absoluteUrl("/performance"),
       },
     },
     {
