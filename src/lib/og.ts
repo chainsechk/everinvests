@@ -2,7 +2,8 @@
 // OG Image generation utilities using satori + resvg for PNG output
 // PNG format ensures compatibility with Twitter/X and Facebook
 import satori from "satori";
-import { Resvg } from "@cf-wasm/resvg";
+// Use workerd-specific import for Cloudflare Pages/Workers
+import { Resvg } from "@cf-wasm/resvg/workerd";
 
 // Inter font (fetched at runtime)
 const fontCache: { bold?: ArrayBuffer; regular?: ArrayBuffer } = {};
@@ -164,7 +165,8 @@ export async function generateOGImage(options: OGImageOptions): Promise<string> 
 export async function generateOGImagePNG(options: OGImageOptions): Promise<Uint8Array> {
   const svg = await generateOGImage(options);
 
-  const resvg = new Resvg(svg, {
+  // Use async static method for Cloudflare Workers compatibility
+  const resvg = await Resvg.create(svg, {
     fitTo: {
       mode: "width",
       value: 1200,
