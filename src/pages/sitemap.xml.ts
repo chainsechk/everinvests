@@ -28,36 +28,44 @@ const staticPages = [
   { url: "/forex/history", priority: "0.7", changefreq: "daily" },
   { url: "/stocks/history", priority: "0.7", changefreq: "daily" },
   { url: "/blog", priority: "0.8", changefreq: "daily" },
+  { url: "/guides/how-to-use-signals", priority: "0.8", changefreq: "monthly" },
+  { url: "/guides/bullish-vs-bearish", priority: "0.8", changefreq: "monthly" },
+  { url: "/guides/fear-and-greed", priority: "0.8", changefreq: "monthly" },
+  { url: "/terms", priority: "0.4", changefreq: "monthly" },
   { url: "/about", priority: "0.5", changefreq: "monthly" },
 ];
 
 export async function GET(context: APIContext) {
   const today = new Date().toISOString().split("T")[0];
-  const db = context.locals.runtime.env.DB;
+  const db = context.locals.runtime?.env?.DB;
 
   // Fetch all blog posts for dynamic URLs
   let blogPosts: BlogPost[] = [];
-  try {
-    const result = await db.prepare(
-      "SELECT slug, published_at FROM blog_posts ORDER BY published_at DESC LIMIT 100"
-    ).all<BlogPost>();
-    blogPosts = result.results || [];
-  } catch {
-    // Blog table may not exist yet
+  if (db) {
+    try {
+      const result = await db.prepare(
+        "SELECT slug, published_at FROM blog_posts ORDER BY published_at DESC LIMIT 100"
+      ).all<BlogPost>();
+      blogPosts = result.results || [];
+    } catch {
+      // Blog table may not exist yet
+    }
   }
 
   // Fetch recent signal pages (last 90 days worth)
   let signalPages: SignalPage[] = [];
-  try {
-    const result = await db.prepare(
-      `SELECT category, date, time_slot
-       FROM signals
-       ORDER BY date DESC, time_slot DESC
-       LIMIT 500`
-    ).all<SignalPage>();
-    signalPages = result.results || [];
-  } catch {
-    // Signals table may not exist
+  if (db) {
+    try {
+      const result = await db.prepare(
+        `SELECT category, date, time_slot
+         FROM signals
+         ORDER BY date DESC, time_slot DESC
+         LIMIT 500`
+      ).all<SignalPage>();
+      signalPages = result.results || [];
+    } catch {
+      // Signals table may not exist
+    }
   }
 
   // Fetch distinct tickers for each category
@@ -65,29 +73,31 @@ export async function GET(context: APIContext) {
   let forexPairs: string[] = [];
   let stockTickers: string[] = [];
 
-  try {
-    const [cryptoResult, forexResult, stocksResult] = await Promise.all([
-      db.prepare(
-        `SELECT DISTINCT a.ticker FROM asset_signals a
-         JOIN signals s ON a.signal_id = s.id
-         WHERE s.category = 'crypto' ORDER BY a.ticker`
-      ).all<AssetTicker>(),
-      db.prepare(
-        `SELECT DISTINCT a.ticker FROM asset_signals a
-         JOIN signals s ON a.signal_id = s.id
-         WHERE s.category = 'forex' ORDER BY a.ticker`
-      ).all<AssetTicker>(),
-      db.prepare(
-        `SELECT DISTINCT a.ticker FROM asset_signals a
-         JOIN signals s ON a.signal_id = s.id
-         WHERE s.category = 'stocks' ORDER BY a.ticker`
-      ).all<AssetTicker>(),
-    ]);
-    cryptoTickers = cryptoResult.results?.map(r => r.ticker) || [];
-    forexPairs = forexResult.results?.map(r => r.ticker) || [];
-    stockTickers = stocksResult.results?.map(r => r.ticker) || [];
-  } catch {
-    // Asset tables may not exist
+  if (db) {
+    try {
+      const [cryptoResult, forexResult, stocksResult] = await Promise.all([
+        db.prepare(
+          `SELECT DISTINCT a.ticker FROM asset_signals a
+           JOIN signals s ON a.signal_id = s.id
+           WHERE s.category = 'crypto' ORDER BY a.ticker`
+        ).all<AssetTicker>(),
+        db.prepare(
+          `SELECT DISTINCT a.ticker FROM asset_signals a
+           JOIN signals s ON a.signal_id = s.id
+           WHERE s.category = 'forex' ORDER BY a.ticker`
+        ).all<AssetTicker>(),
+        db.prepare(
+          `SELECT DISTINCT a.ticker FROM asset_signals a
+           JOIN signals s ON a.signal_id = s.id
+           WHERE s.category = 'stocks' ORDER BY a.ticker`
+        ).all<AssetTicker>(),
+      ]);
+      cryptoTickers = cryptoResult.results?.map((r) => r.ticker) || [];
+      forexPairs = forexResult.results?.map((r) => r.ticker) || [];
+      stockTickers = stocksResult.results?.map((r) => r.ticker) || [];
+    } catch {
+      // Asset tables may not exist
+    }
   }
 
   const staticUrls = staticPages.map(

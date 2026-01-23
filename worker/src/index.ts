@@ -99,8 +99,40 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    // Health check (public)
     if (url.pathname === "/health") {
       return new Response("ok");
+    }
+
+    // Admin routes require authentication
+    const adminRoutes = [
+      "/trigger",
+      "/check-accuracy",
+      "/generate-weekly-blog",
+      "/send-daily-digest",
+      "/fetch-benchmarks",
+      "/fetch-gdelt",
+    ];
+
+    if (adminRoutes.includes(url.pathname)) {
+      // Verify bearer token
+      const authHeader = request.headers.get("Authorization");
+      const token = authHeader?.replace("Bearer ", "");
+
+      if (!env.WORKER_AUTH_TOKEN) {
+        console.error("[Auth] WORKER_AUTH_TOKEN not configured");
+        return Response.json(
+          { error: "Server misconfiguration" },
+          { status: 500 }
+        );
+      }
+
+      if (!token || token !== env.WORKER_AUTH_TOKEN) {
+        return Response.json(
+          { error: "Unauthorized" },
+          { status: 401, headers: { "WWW-Authenticate": "Bearer" } }
+        );
+      }
     }
 
     if (url.pathname === "/trigger") {

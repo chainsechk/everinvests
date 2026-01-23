@@ -1,0 +1,255 @@
+---
+// src/pages/guides/bullish-vs-bearish.astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import BiasIndicator from "../../components/BiasIndicator.astro";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "What Does Bullish vs Bearish Mean?",
+  description: "A practical guide to understanding market bias signals and how to use them for your investment decisions.",
+  author: { "@type": "Organization", name: "EverInvests" }
+};
+---
+
+<BaseLayout
+  title="What Does Bullish vs Bearish Mean?"
+  description="A practical guide to understanding market bias signals and what they mean for your trading decisions."
+  jsonLd={jsonLd}
+>
+  <Header slot="header" />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <!-- Header -->
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">
+        What Does Bullish vs Bearish Mean?
+      </h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">
+        Not just definitions—what these signals mean for your actual decisions.
+      </p>
+    </header>
+
+    <!-- What You'll Learn -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">What you'll learn</h2>
+      <ul class="space-y-2 text-txt-secondary">
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">1.</span>
+          <span>The difference between bullish, bearish, and neutral bias</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">2.</span>
+          <span>How we calculate bias (it's not a guess)</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">3.</span>
+          <span>What to actually DO when you see each signal</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- The Three Biases -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">The Three Bias Types</h2>
+
+      <!-- Bullish -->
+      <div class="card border-bullish/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Bullish" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Bullish</h3>
+        </div>
+        <div class="space-y-3 text-txt-secondary">
+          <p>
+            <strong class="text-txt-primary">What it means:</strong> The asset is trending up, with volume and momentum confirming the move. Buyers are in control.
+          </p>
+          <p>
+            <strong class="text-txt-primary">How we calculate it:</strong> 2 of 3 indicators (trend, volume, strength) must agree on upward direction.
+          </p>
+          <div class="p-4 rounded-lg bg-bullish/5 border border-bullish/20">
+            <div class="font-medium text-bullish mb-2">What to consider:</div>
+            <ul class="text-sm space-y-1">
+              <li>• Look for entry points on pullbacks</li>
+              <li>• Add to existing positions if risk allows</li>
+              <li>• Set stop losses below recent support</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Neutral -->
+      <div class="card border-txt-muted/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Neutral" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Neutral</h3>
+        </div>
+        <div class="space-y-3 text-txt-secondary">
+          <p>
+            <strong class="text-txt-primary">What it means:</strong> Indicators disagree. The market is undecided—could go either way.
+          </p>
+          <p>
+            <strong class="text-txt-primary">How we calculate it:</strong> No clear majority among indicators. Mixed signals = no signal.
+          </p>
+          <div class="p-4 rounded-lg bg-void-200/50 border border-divider">
+            <div class="font-medium text-txt-primary mb-2">What to consider:</div>
+            <ul class="text-sm space-y-1">
+              <li>• Wait for clarity before taking new positions</li>
+              <li>• Hold existing positions with tighter stops</li>
+              <li>• Focus on other assets with clearer signals</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bearish -->
+      <div class="card border-bearish/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Bearish" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Bearish</h3>
+        </div>
+        <div class="space-y-3 text-txt-secondary">
+          <p>
+            <strong class="text-txt-primary">What it means:</strong> The asset is trending down, with volume and momentum confirming the decline. Sellers are in control.
+          </p>
+          <p>
+            <strong class="text-txt-primary">How we calculate it:</strong> 2 of 3 indicators must agree on downward direction.
+          </p>
+          <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20">
+            <div class="font-medium text-bearish mb-2">What to consider:</div>
+            <ul class="text-sm space-y-1">
+              <li>• Avoid new long positions</li>
+              <li>• Consider taking profits on existing holdings</li>
+              <li>• Wait for reversal signals before buying dips</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Strength Modifiers -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Signal Strength</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
+          Not all signals are equal. We show modifiers when conviction is especially high or low:
+        </p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-4">
+            <BiasIndicator bias="Strong Bullish" size="md" />
+            <span class="text-txt-secondary">All 3 indicators agree, with high volume. Highest conviction.</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <BiasIndicator bias="Bullish" size="md" />
+            <span class="text-txt-secondary">2 of 3 indicators agree. Standard signal.</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <BiasIndicator bias="Weak Bullish" size="md" />
+            <span class="text-txt-secondary">Direction is up, but volume is low. Proceed with caution.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Common Mistakes -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Common Mistakes</h2>
+      <div class="card">
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20">
+            <div class="font-medium text-bearish mb-1">Buying the dip on a bearish signal</div>
+            <div class="text-sm text-txt-muted">
+              "It's down 20%, must be a deal!" Not if the trend is still down. Wait for the signal to flip.
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20">
+            <div class="font-medium text-bearish mb-1">Fighting the macro</div>
+            <div class="text-sm text-txt-muted">
+              A bullish BTC signal during risk-off macro often underperforms. Check the big picture first.
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20">
+            <div class="font-medium text-bearish mb-1">Expecting instant results</div>
+            <div class="text-sm text-txt-muted">
+              Signals indicate direction, not timing. A bullish signal might take days or weeks to play out.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Reference -->
+    <section class="card border-cyber/20" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Quick Reference</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-divider">
+              <th class="text-left py-2 text-txt-muted font-medium">Signal</th>
+              <th class="text-left py-2 text-txt-muted font-medium">Meaning</th>
+              <th class="text-left py-2 text-txt-muted font-medium">Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-txt-secondary">
+            <tr class="border-b border-subtle">
+              <td class="py-3"><BiasIndicator bias="Bullish" size="sm" /></td>
+              <td class="py-3">Trend up, confirmed</td>
+              <td class="py-3">Look for entries</td>
+            </tr>
+            <tr class="border-b border-subtle">
+              <td class="py-3"><BiasIndicator bias="Neutral" size="sm" /></td>
+              <td class="py-3">Mixed signals</td>
+              <td class="py-3">Wait for clarity</td>
+            </tr>
+            <tr>
+              <td class="py-3"><BiasIndicator bias="Bearish" size="sm" /></td>
+              <td class="py-3">Trend down, confirmed</td>
+              <td class="py-3">Avoid new longs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CTA: See Signals -->
+    <section class="text-center space-y-4" data-animate>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href="/crypto" class="btn-primary inline-flex items-center gap-2">
+          Crypto Signals
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </a>
+        <a href="/forex" class="btn-secondary inline-flex items-center gap-2">
+          Forex Signals
+        </a>
+        <a href="/stocks" class="btn-secondary inline-flex items-center gap-2">
+          Stock Signals
+        </a>
+      </div>
+      <p class="text-sm text-txt-muted">See live bias signals updated 3x daily</p>
+    </section>
+
+    <!-- Telegram CTA -->
+    <TelegramCTA variant="full" />
+
+    <!-- Related Guides -->
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">Related Guides</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href="/guides/how-to-use-signals" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+        <a href="/guides/fear-and-greed" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">Fear & Greed Index Explained</div>
+          <div class="text-sm text-txt-muted">How we use crowd sentiment as a contrarian signal.</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" />
+</BaseLayout>

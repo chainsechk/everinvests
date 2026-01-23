@@ -124,7 +124,7 @@ const articleSchema = {
   "@type": "Article",
   headline: pageTitle,
   description: pageDescription,
-  datePublished: `${date}T${time.replace(":", "")}:00Z`,
+  datePublished: `${date}T${time}:00Z`,
   dateModified: signal.generated_at,
   author: {
     "@type": "Organization",

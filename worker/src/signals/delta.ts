@@ -118,3 +118,36 @@ export function computeDelta(
   };
 }
 
+/**
+ * Format a delta into a human-readable summary string
+ */
+export function formatDeltaSummary(delta: SignalDelta): string {
+  // First signal - no previous data
+  if (delta.previousBias === null) {
+    return "No significant changes";
+  }
+
+  const parts: string[] = [];
+
+  // Bias change
+  if (delta.biasChanged) {
+    parts.push(`${delta.previousBias} → ${delta.currentBias}`);
+  }
+
+  // Biggest movers
+  const { biggest_gainer, biggest_loser } = delta.priceMovers;
+  if (biggest_gainer) {
+    parts.push(`${biggest_gainer.ticker} +${biggest_gainer.delta.toFixed(1)}%`);
+  }
+  if (biggest_loser) {
+    parts.push(`${biggest_loser.ticker} ${biggest_loser.delta.toFixed(1)}%`);
+  }
+
+  // If nothing significant happened
+  if (parts.length === 0) {
+    return "No significant changes";
+  }
+
+  return parts.join(". ");
+}
+

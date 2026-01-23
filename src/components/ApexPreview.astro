@@ -1,0 +1,147 @@
+---
+// src/components/ApexPreview.astro
+// Blurred teaser preview of VIP features to encourage upgrades
+
+interface Props {
+  category?: string;
+}
+
+const { category = "crypto" } = Astro.props;
+
+// Sample VIP-only data (blurred/teaser)
+const whaleAlerts = [
+  { type: "options", icon: "🐋", text: "Large call volume detected on SPY..." },
+  { type: "onchain", icon: "⛓️", text: "2,500 BTC moved to exchange cold..." },
+  { type: "flow", icon: "💰", text: "Unusual institutional activity in..." },
+];
+
+const aiDebate = {
+  bull: "Price above 20D MA with volume confirms...",
+  bear: "RSI showing divergence, caution on...",
+  verdict: "Moderate confidence on bullish bias",
+};
+
+const directives = [
+  { action: "HOLD", asset: "BTC", reason: "Await confirmation above..." },
+  { action: "TRIM", asset: "ETH", reason: "Take partial profits at..." },
+];
+---
+
+<div class="card border-vip/20" data-animate>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-display font-semibold text-lg text-txt-primary flex items-center gap-2">
+      <span class="text-vip">🔒</span>
+      VIP Intelligence Preview
+    </h3>
+    <span class="text-xs px-2 py-1 rounded-full bg-vip/10 text-vip font-medium">VIP Only</span>
+  </div>
+
+  <div class="space-y-4">
+    <!-- Whale Alerts (blurred) -->
+    <div class="relative">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm font-medium text-txt-secondary">Whale Alerts</span>
+        <span class="text-xs text-txt-muted">(Real-time)</span>
+      </div>
+      <div class="space-y-2 blur-[6px] select-none pointer-events-none" aria-hidden="true">
+        {whaleAlerts.map((alert) => (
+          <div class="flex items-center gap-2 p-2 rounded bg-surface text-sm">
+            <span>{alert.icon}</span>
+            <span class="text-txt-muted">{alert.text}</span>
+          </div>
+        ))}
+      </div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="bg-surface/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <span class="text-sm text-txt-secondary">Upgrade to see whale movements</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Debate Room (blurred) -->
+    <div class="relative">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm font-medium text-txt-secondary">AI Debate Room</span>
+        <span class="text-xs text-txt-muted">(Bull vs Bear)</span>
+      </div>
+      <div class="blur-[6px] select-none pointer-events-none space-y-2" aria-hidden="true">
+        <div class="flex gap-3 p-3 rounded bg-bullish/10">
+          <span class="text-bullish font-bold">🐂</span>
+          <p class="text-sm text-txt-muted">{aiDebate.bull}</p>
+        </div>
+        <div class="flex gap-3 p-3 rounded bg-bearish/10">
+          <span class="text-bearish font-bold">🐻</span>
+          <p class="text-sm text-txt-muted">{aiDebate.bear}</p>
+        </div>
+        <div class="flex gap-3 p-3 rounded bg-surface border border-border">
+          <span class="text-cyber font-bold">⚖️</span>
+          <p class="text-sm text-txt-primary font-medium">{aiDebate.verdict}</p>
+        </div>
+      </div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="bg-surface/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <span class="text-sm text-txt-secondary">See the full AI debate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Directives (blurred) -->
+    <div class="relative">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm font-medium text-txt-secondary">Action Directives</span>
+        <span class="text-xs text-txt-muted">(Team consensus)</span>
+      </div>
+      <div class="blur-[6px] select-none pointer-events-none" aria-hidden="true">
+        <div class="grid gap-2">
+          {directives.map((d) => (
+            <div class="flex items-center justify-between p-3 rounded bg-surface">
+              <div class="flex items-center gap-2">
+                <span class={`text-xs font-bold px-2 py-1 rounded ${d.action === "HOLD" ? "bg-mixed/20 text-mixed" : "bg-bearish/20 text-bearish"}`}>
+                  {d.action}
+                </span>
+                <span class="font-mono text-txt-primary">{d.asset}</span>
+              </div>
+              <span class="text-xs text-txt-muted">{d.reason}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="bg-surface/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <span class="text-sm text-txt-secondary">Get specific action guidance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="text-sm text-txt-muted">
+      <strong class="text-txt-primary">VIP members</strong> get whale alerts, AI debates, and action directives in real-time.
+    </div>
+    <a
+      href={`https://t.me/EverInvestsBot?start=preview_${category}`}
+      target="_blank"
+      rel="noopener"
+      class="btn-vip inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+    >
+      Unlock Full Access
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  </div>
+</div>
+
+<style>
+  .btn-vip {
+    background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(233, 69, 96, 0.3);
+  }
+
+  .btn-vip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+  }
+</style>

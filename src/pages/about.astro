@@ -4,6 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import TelegramCTA from "../components/TelegramCTA.astro";
+import TierComparison from "../components/TierComparison.astro";
 ---
 
 <BaseLayout title="About" description="Learn about EverInvests methodology and signal generation process.">
@@ -180,6 +181,9 @@ import TelegramCTA from "../components/TelegramCTA.astro";
       </div>
     </section>
 
+    <!-- Free vs VIP Comparison -->
+    <TierComparison category="all" utmSource="about_page" />
+
     <!-- Schedule -->
     <section class="space-y-6" data-animate>
       <h2 class="font-display font-bold text-2xl text-txt-primary">Update Schedule</h2>
@@ -210,6 +214,25 @@ import TelegramCTA from "../components/TelegramCTA.astro";
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Guides Section -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Learn More</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <a href="/guides/how-to-use-signals" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+        <a href="/guides/bullish-vs-bearish" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">Bullish vs Bearish</div>
+          <div class="text-sm text-txt-muted">What the bias means for your decisions.</div>
+        </a>
+        <a href="/guides/fear-and-greed" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">Fear & Greed Explained</div>
+          <div class="text-sm text-txt-muted">How we use sentiment as a contrarian signal.</div>
+        </a>
       </div>
     </section>
 

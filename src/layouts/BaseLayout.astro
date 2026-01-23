@@ -3,6 +3,7 @@
 import "../styles/global.css";
 import { absoluteUrl, SITE_URL } from "../lib/site";
 import JsonLd from "../components/JsonLd.astro";
+import DisclaimerBanner from "../components/DisclaimerBanner.astro";
 
 interface Props {
   title: string;
@@ -14,7 +15,7 @@ interface Props {
 const {
   title,
   description = "Daily market signals for Crypto, Forex, and Stocks. Free automated analysis updated multiple times daily.",
-  image = "/og-image.svg",
+  image = "/og/default.svg",
   jsonLd,
 } = Astro.props;
 
@@ -101,6 +102,9 @@ const organizationSchema = {
     </script>
   </head>
   <body class="min-h-screen flex flex-col relative">
+    <!-- Compliance disclaimer banner -->
+    <DisclaimerBanner />
+
     <!-- Ambient glow effects (dark theme only) -->
     <div class="ambient-glow fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
       <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl" style="background: var(--accent-bg);"></div>

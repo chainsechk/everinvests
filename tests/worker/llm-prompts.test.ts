@@ -89,8 +89,8 @@ describe("Prompt Registry", () => {
 
       expect(prompt).toBeDefined();
       expect(prompt!.name).toBe("signal_summary");
-      // Version 2 should be latest
-      expect(prompt!.version).toBe("2");
+      // Version 3 should be latest
+      expect(prompt!.version).toBe("3");
     });
 
     it("should return undefined for non-existent prompt name", () => {
@@ -163,7 +163,7 @@ describe("Prompt Registry", () => {
     });
 
     it("should have valid default prompt version", () => {
-      expect(DEFAULT_PROMPT_VERSION).toBe("2");
+      expect(DEFAULT_PROMPT_VERSION).toBe("3");
     });
   });
 });

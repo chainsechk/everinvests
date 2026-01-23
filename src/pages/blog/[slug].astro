@@ -5,6 +5,7 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import BiasIndicator from "../../components/BiasIndicator.astro";
+import { absoluteUrl } from "../../lib/site";
 
 interface BlogPost {
   id: number;
@@ -26,7 +27,11 @@ interface Signal {
 }
 
 const { slug } = Astro.params;
-const db = Astro.locals.runtime.env.DB;
+const db = Astro.locals.runtime?.env?.DB;
+
+if (!db) {
+  return Astro.redirect("/blog");
+}
 
 // Fetch blog post
 const post = await db.prepare(
@@ -38,9 +43,13 @@ if (!post) {
 }
 
 // Increment view count
-await db.prepare(
-  "UPDATE blog_posts SET views = views + 1 WHERE id = ?"
-).bind(post.id).run();
+try {
+  await db.prepare(
+    "UPDATE blog_posts SET views = views + 1 WHERE id = ?"
+  ).bind(post.id).run();
+} catch {
+  // Non-critical
+}
 
 // Fetch associated signal for additional context
 let signal: Signal | null = null;
@@ -65,11 +74,49 @@ const categoryColors: Record<string, string> = {
 
 const categoryColor = categoryColors[post.category] || "text-txt-primary";
 const categoryTitle = post.category.charAt(0).toUpperCase() + post.category.slice(1);
+
+function buildDescription(content: string, maxLen = 160): string {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLen) return normalized;
+  return normalized.slice(0, maxLen - 3).trimEnd() + "...";
+}
+
+const canonicalUrl = absoluteUrl(`/blog/${post.slug}`);
+const metaDescription = buildDescription(post.content);
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+    { "@type": "ListItem", position: 2, name: "Blog", item: absoluteUrl("/blog") },
+    { "@type": "ListItem", position: 3, name: post.title, item: canonicalUrl },
+  ],
+};
+
+const blogPostingSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description: metaDescription,
+  datePublished: post.published_at,
+  dateModified: post.published_at,
+  author: { "@type": "Organization", name: "EverInvests" },
+  publisher: {
+    "@type": "Organization",
+    name: "EverInvests",
+    logo: { "@type": "ImageObject", url: absoluteUrl("/favicon.svg") },
+  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+  articleSection: categoryTitle,
+};
 ---
 
 <BaseLayout
   title={post.title}
-  description={post.content.slice(0, 160) + "..."}
+  description={metaDescription}
+  image={`/og/blog/${post.slug}.svg`}
+  jsonLd={[breadcrumbSchema, blogPostingSchema]}
 >
   <Header slot="header" />
 

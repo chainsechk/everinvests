@@ -1,0 +1,186 @@
+---
+// src/components/TierComparison.astro
+// Side-by-side comparison of Free vs VIP features
+
+interface Props {
+  category?: string;
+  utmSource?: string;
+}
+
+const { category = "crypto", utmSource = "comparison" } = Astro.props;
+
+const features = [
+  {
+    name: "Daily Signals",
+    free: { value: "3 per category", included: true },
+    vip: { value: "3 per category", included: true },
+  },
+  {
+    name: "Asset Coverage",
+    free: { value: "BTC, ETH + 5 forex + 5 stocks", included: true },
+    vip: { value: "25+ assets", included: true },
+  },
+  {
+    name: "Macro Context",
+    free: { value: "Full macro bar", included: true },
+    vip: { value: "Full macro bar", included: true },
+  },
+  {
+    name: "Regime Detection",
+    free: { value: "Event alerts only", included: true },
+    vip: { value: "Full 4-phase regime", included: true },
+  },
+  {
+    name: "Signal Reasoning",
+    free: { value: "Basic summary", included: true },
+    vip: { value: "Full reasoning + confidence", included: true },
+  },
+  {
+    name: "Whale Alerts",
+    free: { value: "Not included", included: false },
+    vip: { value: "Real-time options flow & on-chain", included: true },
+  },
+  {
+    name: "AI Debate Room",
+    free: { value: "Not included", included: false },
+    vip: { value: "Bull vs Bear AI analysis", included: true },
+  },
+  {
+    name: "Action Directives",
+    free: { value: "Not included", included: false },
+    vip: { value: "Specific entry/exit guidance", included: true },
+  },
+  {
+    name: "Private Telegram",
+    free: { value: "Public channel", included: true },
+    vip: { value: "Private group + team access", included: true },
+  },
+  {
+    name: "Mobile Alerts",
+    free: { value: "Telegram notifications", included: true },
+    vip: { value: "Priority alerts + custom triggers", included: true },
+  },
+];
+---
+
+<div class="card" data-animate>
+  <div class="text-center mb-6">
+    <h3 class="font-display font-bold text-xl text-txt-primary mb-2">Free vs VIP Comparison</h3>
+    <p class="text-sm text-txt-muted">Everything in Free, plus premium intelligence</p>
+  </div>
+
+  <!-- Desktop Table -->
+  <div class="hidden md:block overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border">
+          <th class="text-left py-3 px-4 text-txt-muted font-medium">Feature</th>
+          <th class="text-center py-3 px-4 w-1/3">
+            <div class="inline-flex flex-col items-center">
+              <span class="text-txt-primary font-semibold">Free</span>
+              <span class="text-xs text-txt-muted mt-1">$0/mo</span>
+            </div>
+          </th>
+          <th class="text-center py-3 px-4 w-1/3 bg-vip/5 rounded-t-lg">
+            <div class="inline-flex flex-col items-center">
+              <span class="text-vip font-bold">VIP</span>
+              <span class="text-xs text-txt-muted mt-1">Coming soon</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {features.map((feature, i) => (
+          <tr class:list={["border-b border-border/50", i % 2 === 0 ? "bg-surface/30" : ""]}>
+            <td class="py-3 px-4 text-txt-secondary">{feature.name}</td>
+            <td class="text-center py-3 px-4">
+              {feature.free.included ? (
+                <span class="inline-flex items-center gap-1">
+                  <svg class="w-4 h-4 text-bullish" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-txt-muted">{feature.free.value}</span>
+                </span>
+              ) : (
+                <span class="text-txt-muted/50">—</span>
+              )}
+            </td>
+            <td class="text-center py-3 px-4 bg-vip/5">
+              {feature.vip.included ? (
+                <span class="inline-flex items-center gap-1">
+                  <svg class="w-4 h-4 text-vip" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-txt-primary">{feature.vip.value}</span>
+                </span>
+              ) : (
+                <span class="text-txt-muted/50">—</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Cards -->
+  <div class="md:hidden space-y-4">
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="text-center p-3 rounded-lg bg-surface">
+        <div class="font-semibold text-txt-primary">Free</div>
+        <div class="text-xs text-txt-muted">$0/mo</div>
+      </div>
+      <div class="text-center p-3 rounded-lg bg-vip/10 border border-vip/30">
+        <div class="font-bold text-vip">VIP</div>
+        <div class="text-xs text-txt-muted">Coming soon</div>
+      </div>
+    </div>
+
+    {features.map((feature) => (
+      <div class="border-b border-border/50 pb-3">
+        <div class="font-medium text-txt-secondary text-sm mb-2">{feature.name}</div>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div class={feature.free.included ? "text-txt-muted" : "text-txt-muted/50"}>
+            {feature.free.included ? `✓ ${feature.free.value}` : "—"}
+          </div>
+          <div class={feature.vip.included ? "text-txt-primary" : "text-txt-muted/50"}>
+            {feature.vip.included ? `✓ ${feature.vip.value}` : "—"}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <!-- CTA -->
+  <div class="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-center gap-4">
+    <a
+      href={`https://t.me/EverInvestsBot?start=waitlist_${utmSource}_${category}`}
+      target="_blank"
+      rel="noopener"
+      class="btn-vip inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all"
+    >
+      Join VIP Waitlist
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  </div>
+</div>
+
+<style>
+  .btn-vip {
+    background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(233, 69, 96, 0.3);
+  }
+
+  .btn-vip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+</style>

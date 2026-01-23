@@ -38,6 +38,7 @@ const year = new Date().getFullYear();
             <li><a href="/about" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">About</a></li>
             <li><a href="/performance" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Performance</a></li>
             <li><a href="/blog" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Blog</a></li>
+            <li><a href="/terms" class="text-sm text-txt-muted hover:text-txt-primary transition-colors">Terms & Risks</a></li>
             <li>
               <a href="/rss.xml" class="text-sm text-txt-muted hover:text-txt-primary transition-colors inline-flex items-center gap-1">
                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -73,9 +74,12 @@ const year = new Date().getFullYear();
     </div>
 
     <!-- Bottom bar -->
-    <div class="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-txt-muted" style="border-color: var(--border-divider);">
-      <p>&copy; {year} EverInvests. Signals for educational purposes only.</p>
-      <p class="font-mono">Not financial advice • DYOR</p>
+    <div class="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-txt-muted" style="border-color: var(--border-divider);">
+      <p>&copy; {year} EverInvests. Signals for informational purposes only.</p>
+      <p>
+        <strong>Not financial advice.</strong> Do your own due diligence.
+        <a href="/terms" class="text-accent hover:underline ml-1">Read full disclaimer →</a>
+      </p>
     </div>
   </div>
 </footer>

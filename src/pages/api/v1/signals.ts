@@ -2,6 +2,33 @@
 // Structured API v1 - Consolidated signal endpoint for programmatic access
 import type { APIContext } from "astro";
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://everinvests.com",
+  "https://www.everinvests.com",
+  "http://localhost:4321",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+  };
+
+  // Check if origin is allowed
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  } else {
+    // For public API access (no credentials), allow with wildcard
+    // but no cookies/auth will be sent
+    headers["Access-Control-Allow-Origin"] = "*";
+  }
+
+  return headers;
+}
+
 interface SignalRow {
   id: number;
   category: string;
@@ -28,15 +55,26 @@ interface MacroRow {
   data_json: string | null;
 }
 
+// Handle CORS preflight
+export async function OPTIONS(context: APIContext) {
+  const origin = context.request.headers.get("Origin");
+  return new Response(null, {
+    status: 204,
+    headers: getCorsHeaders(origin),
+  });
+}
+
 // GET /api/v1/signals?category=crypto,forex,stocks
 // Returns consolidated signal data for specified categories
 export async function GET(context: APIContext) {
+  const origin = context.request.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
   const db = context.locals.runtime?.env?.DB;
 
   if (!db) {
     return Response.json(
       { error: "database not configured", code: "DB_ERROR" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 
@@ -58,7 +96,7 @@ export async function GET(context: APIContext) {
           error: "Invalid category. Valid options: crypto, forex, stocks",
           code: "INVALID_CATEGORY",
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
   } else {
@@ -231,7 +269,7 @@ export async function GET(context: APIContext) {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "public, max-age=300", // 5 min cache
-          "Access-Control-Allow-Origin": "*",
+          ...corsHeaders,
         },
       }
     );
@@ -239,7 +277,7 @@ export async function GET(context: APIContext) {
     console.error("API error:", e);
     return Response.json(
       { error: "Failed to fetch signals", code: "FETCH_ERROR" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

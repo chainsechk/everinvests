@@ -44,6 +44,23 @@ const cryptoAssetCount = await getAssetCount(cryptoSignal);
 const forexAssetCount = await getAssetCount(forexSignal);
 const stocksAssetCount = await getAssetCount(stocksSignal);
 
+// Extract confluence from first asset's data_json
+async function getConfluence(signal: any): Promise<string | null> {
+  if (!signal || !db) return null;
+  const assets = await getAssetSignals(db, signal.id);
+  if (assets.length === 0) return null;
+  try {
+    const assetData = assets[0].data_json ? JSON.parse(assets[0].data_json) : null;
+    return assetData?.confluence || null;
+  } catch {
+    return null;
+  }
+}
+
+const cryptoConfluence = await getConfluence(cryptoSignal);
+const forexConfluence = await getConfluence(forexSignal);
+const stocksConfluence = await getConfluence(stocksSignal);
+
 function formatNextUpdate(): string {
   const now = new Date();
   const utcHour = now.getUTCHours();
@@ -137,6 +154,7 @@ function formatLastUpdate(): string {
           summary={extractSummary(cryptoSignal)}
           assetCount={cryptoAssetCount}
           updatedAt={cryptoSignal?.generated_at}
+          confluence={cryptoConfluence}
         />
         <SignalCard
           category="forex"
@@ -144,6 +162,7 @@ function formatLastUpdate(): string {
           summary={extractSummary(forexSignal)}
           assetCount={forexAssetCount}
           updatedAt={forexSignal?.generated_at}
+          confluence={forexConfluence}
         />
         <SignalCard
           category="stocks"
@@ -151,6 +170,7 @@ function formatLastUpdate(): string {
           summary={extractSummary(stocksSignal)}
           assetCount={stocksAssetCount}
           updatedAt={stocksSignal?.generated_at}
+          confluence={stocksConfluence}
         />
       </div>
     </section>

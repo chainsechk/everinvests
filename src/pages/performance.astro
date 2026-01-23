@@ -274,10 +274,16 @@ const breadcrumbSchema = {
                   </div>
                 </div>
 
-                <!-- Stats -->
+                <!-- Stats with Sample Size -->
                 <div class="text-center text-sm text-txt-muted">
-                  {data.overall.correct} / {data.overall.total} correct
+                  <span class="font-mono">{data.overall.correct} / {data.overall.total}</span> correct
+                  <span class="text-xs ml-1">(n={data.overall.total})</span>
                 </div>
+                {data.overall.total < 30 && (
+                  <div class="text-[10px] text-mixed text-center mt-1">
+                    ⚠ Small sample—needs 30+ for statistical significance
+                  </div>
+                )}
 
                 <!-- Bias Breakdown -->
                 <div class="grid grid-cols-3 gap-2 text-center text-xs">
@@ -357,14 +363,38 @@ const breadcrumbSchema = {
       </div>
     )}
 
-    <!-- Methodology Link -->
-    <div class="card text-center py-8" data-animate>
-      <h3 class="font-display font-semibold text-lg text-txt-primary mb-2">How We Measure Accuracy</h3>
-      <p class="text-sm text-txt-muted mb-4 max-w-lg mx-auto">
-        Signals are verified against next-day price movements. Bullish signals are correct if price rises,
-        bearish if it falls. Neutral signals are considered correct if price moves less than 0.5%.
-      </p>
-      <a href="/about" class="text-cyber hover:underline text-sm">Learn more about our methodology →</a>
+    <!-- Methodology Section -->
+    <div class="card" data-animate>
+      <h3 class="font-display font-semibold text-lg text-txt-primary mb-4">Methodology & Caveats</h3>
+
+      <div class="space-y-4 text-sm text-txt-muted">
+        <div>
+          <h4 class="font-medium text-txt-secondary mb-1">How We Measure Accuracy</h4>
+          <p>
+            Signals are verified against next-day price movements. Bullish signals are marked correct if price rises,
+            bearish if it falls. Neutral signals are considered correct if price moves less than 0.5%.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-txt-secondary mb-1">Important Limitations</h4>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Not Trading Returns:</strong> Accuracy measures directional prediction only, not actual trading performance</li>
+            <li><strong>No Transaction Costs:</strong> Real trading involves spreads, fees, slippage, and timing differences</li>
+            <li><strong>Limited History:</strong> Live signal tracking started recently; longer track records are more reliable</li>
+            <li><strong>Market Conditions:</strong> Performance may vary significantly in different market regimes</li>
+            <li><strong>Sample Size:</strong> Statistical significance requires hundreds of signals per category</li>
+          </ul>
+        </div>
+
+        <div class="border-t border-divider pt-4 mt-4">
+          <p class="text-xs text-txt-muted/80">
+            <strong>Disclaimer:</strong> Past performance does not guarantee future results.
+            These metrics are for informational purposes only and should not be the sole basis for any investment decision.
+            <a href="/terms" class="text-accent hover:underline">Read full disclaimer →</a>
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- VIP Conviction Teaser -->

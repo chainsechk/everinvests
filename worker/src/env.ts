@@ -9,4 +9,6 @@ export interface Env {
   ALPHAVANTAGE_API_KEY?: string;
   FRED_API_KEY?: string;
   VIP_CTA_MODE?: string;
+  // Security
+  WORKER_AUTH_TOKEN?: string; // Bearer token for admin routes
 }

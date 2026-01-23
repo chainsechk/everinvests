@@ -1,0 +1,300 @@
+---
+// src/pages/guides/fear-and-greed.astro
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import TelegramCTA from "../../components/TelegramCTA.astro";
+import ScaleBar from "../../components/ScaleBar.astro";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Fear & Greed Index Explained",
+  description: "How EverInvests uses the Fear & Greed Index as a contrarian indicator for crypto markets.",
+  author: { "@type": "Organization", name: "EverInvests" }
+};
+---
+
+<BaseLayout
+  title="Fear & Greed Index Explained"
+  description="How we use the Fear & Greed Index as a contrarian indicator for crypto markets. Be greedy when others are fearful."
+  jsonLd={jsonLd}
+>
+  <Header slot="header" />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <!-- Header -->
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">
+        Fear & Greed Index Explained
+      </h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">
+        Be greedy when others are fearful. Here's how we use crowd sentiment.
+      </p>
+    </header>
+
+    <!-- What You'll Learn -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">What you'll learn</h2>
+      <ul class="space-y-2 text-txt-secondary">
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">1.</span>
+          <span>What the Fear & Greed Index actually measures</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">2.</span>
+          <span>Why we use it as a contrarian signal (not a trend follower)</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-cyber mt-1">3.</span>
+          <span>How it affects our crypto signal calculations</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- What Is It -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">What Is the Fear & Greed Index?</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
+          The <strong class="text-txt-primary">Crypto Fear & Greed Index</strong> measures market sentiment on a scale of 0-100. It's calculated daily from:
+        </p>
+        <ul class="space-y-2 text-txt-secondary mb-6">
+          <li class="flex items-start gap-2">
+            <span class="text-cyber">•</span>
+            <span><strong>Volatility</strong> — How much is the market swinging?</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyber">•</span>
+            <span><strong>Volume</strong> — Are people buying or selling heavily?</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyber">•</span>
+            <span><strong>Social media</strong> — What's the mood on Twitter/X?</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyber">•</span>
+            <span><strong>Surveys</strong> — What do traders expect?</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyber">•</span>
+            <span><strong>Bitcoin dominance</strong> — Is money fleeing altcoins?</span>
+          </li>
+        </ul>
+        <p class="text-sm text-txt-muted">
+          Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" class="text-cyber hover:underline">Alternative.me</a> — updated daily, free data.
+        </p>
+      </div>
+    </section>
+
+    <!-- Reading the Scale -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Reading the Scale</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-6">
+          Here's what the index looks like at different levels:
+        </p>
+
+        <!-- Example scales -->
+        <div class="space-y-6">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-bearish">Extreme Fear</span>
+              <span class="text-sm text-txt-muted">0-25</span>
+            </div>
+            <ScaleBar value={15} type="fear-greed" />
+            <p class="text-sm text-txt-muted mt-2">
+              Investors are panicking. Historically, this is when patient buyers find opportunities.
+            </p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-mixed">Fear</span>
+              <span class="text-sm text-txt-muted">26-45</span>
+            </div>
+            <ScaleBar value={35} type="fear-greed" />
+            <p class="text-sm text-txt-muted mt-2">
+              Cautious sentiment. Markets are nervous but not capitulating.
+            </p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-txt-primary">Neutral</span>
+              <span class="text-sm text-txt-muted">46-55</span>
+            </div>
+            <ScaleBar value={50} type="fear-greed" />
+            <p class="text-sm text-txt-muted mt-2">
+              Balanced sentiment. No strong contrarian signal either way.
+            </p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-mixed">Greed</span>
+              <span class="text-sm text-txt-muted">56-75</span>
+            </div>
+            <ScaleBar value={65} type="fear-greed" />
+            <p class="text-sm text-txt-muted mt-2">
+              Optimistic sentiment. Markets are confident but not euphoric.
+            </p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-bullish">Extreme Greed</span>
+              <span class="text-sm text-txt-muted">76-100</span>
+            </div>
+            <ScaleBar value={85} type="fear-greed" />
+            <p class="text-sm text-txt-muted mt-2">
+              Euphoria. Everyone is bullish. Historically, corrections follow.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contrarian Logic -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Why We Use It as a Contrarian Signal</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
+          Most traders use sentiment as confirmation: "Greed is high, so I should buy!" This is backwards.
+        </p>
+        <div class="p-4 rounded-lg bg-cyber/10 border border-cyber/30 mb-4">
+          <blockquote class="text-txt-primary font-medium italic">
+            "Be fearful when others are greedy, and greedy when others are fearful."
+          </blockquote>
+          <div class="text-sm text-txt-muted mt-2">— Warren Buffett</div>
+        </div>
+        <p class="text-txt-secondary mb-4">
+          Here's our logic:
+        </p>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="p-4 rounded-lg border border-bullish/30 bg-bullish/5">
+            <div class="font-medium text-bullish mb-2">Extreme Fear (≤20)</div>
+            <div class="text-sm text-txt-muted">
+              Crowds are capitulating → <strong class="text-bullish">Contrarian bullish</strong>
+            </div>
+            <div class="text-xs text-txt-muted mt-2">
+              We override neutral signals to bullish
+            </div>
+          </div>
+          <div class="p-4 rounded-lg border border-bearish/30 bg-bearish/5">
+            <div class="font-medium text-bearish mb-2">Extreme Greed (≥80)</div>
+            <div class="text-sm text-txt-muted">
+              Crowds are euphoric → <strong class="text-bearish">Contrarian bearish</strong>
+            </div>
+            <div class="text-xs text-txt-muted mt-2">
+              We override neutral signals to bearish
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How We Use It -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">How It Affects Our Signals</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">
+          Fear & Greed acts as a <strong class="text-txt-primary">modifier</strong> on our crypto signals:
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-divider">
+                <th class="text-left py-2 text-txt-muted font-medium">F&G Level</th>
+                <th class="text-left py-2 text-txt-muted font-medium">Technical Signal</th>
+                <th class="text-left py-2 text-txt-muted font-medium">Final Output</th>
+              </tr>
+            </thead>
+            <tbody class="text-txt-secondary">
+              <tr class="border-b border-subtle">
+                <td class="py-3">≤20 (Extreme Fear)</td>
+                <td class="py-3">Neutral</td>
+                <td class="py-3 text-bullish font-medium">→ Bullish</td>
+              </tr>
+              <tr class="border-b border-subtle">
+                <td class="py-3">≤20 (Extreme Fear)</td>
+                <td class="py-3">Bearish</td>
+                <td class="py-3 text-txt-muted font-medium">→ Neutral</td>
+              </tr>
+              <tr class="border-b border-subtle">
+                <td class="py-3">≥80 (Extreme Greed)</td>
+                <td class="py-3">Neutral</td>
+                <td class="py-3 text-bearish font-medium">→ Bearish</td>
+              </tr>
+              <tr class="border-b border-subtle">
+                <td class="py-3">≥80 (Extreme Greed)</td>
+                <td class="py-3">Bullish</td>
+                <td class="py-3 text-txt-muted font-medium">→ Neutral</td>
+              </tr>
+              <tr>
+                <td class="py-3">21-79 (Normal)</td>
+                <td class="py-3">Any</td>
+                <td class="py-3">No change</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-txt-muted mt-4">
+          This is why you might see "Bullish" during a drawdown—if fear is extreme, we're positioning for the recovery.
+        </p>
+      </div>
+    </section>
+
+    <!-- Limitations -->
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Limitations</h2>
+      <div class="card">
+        <div class="space-y-3 text-txt-secondary">
+          <p>
+            <strong class="text-txt-primary">It's not a timing tool.</strong> Markets can stay irrational longer than you can stay solvent. Extreme fear can get more extreme.
+          </p>
+          <p>
+            <strong class="text-txt-primary">Crypto-only.</strong> This index specifically measures Bitcoin/crypto sentiment. It doesn't apply to forex or stocks.
+          </p>
+          <p>
+            <strong class="text-txt-primary">Threshold matters.</strong> We only use it at extremes (≤20 or ≥80). Normal readings (30-70) don't trigger any override.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Current Reading -->
+    <section class="card border-cyber/20" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">See Current Fear & Greed</h2>
+      <p class="text-txt-secondary mb-4">
+        The live Fear & Greed reading is displayed in the macro bar on our crypto page.
+      </p>
+      <a href="/crypto" class="btn-primary inline-flex items-center gap-2">
+        View Crypto Signals
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+    </section>
+
+    <!-- Telegram CTA -->
+    <TelegramCTA variant="full" />
+
+    <!-- Related Guides -->
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">Related Guides</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href="/guides/how-to-use-signals" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+        <a href="/guides/bullish-vs-bearish" class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">What Does Bullish vs Bearish Mean?</div>
+          <div class="text-sm text-txt-muted">Understand what the bias tells you about timing.</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" />
+</BaseLayout>
