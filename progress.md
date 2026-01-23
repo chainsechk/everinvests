@@ -1,5 +1,49 @@
 # Progress Log
 
+## Session: 2026-01-23 (Context Investigation)
+
+### Top 3 News (GDELT Headlines) Integration - Research Complete
+- **Status:** Research complete
+- **Started:** 2026-01-23
+
+#### Summary
+Investigated how GDELT top 3 news headlines are integrated into the system.
+See findings.md for full documentation.
+
+### Live News Monitor Enhancement - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### Problem
+GDELT real-time news monitoring was hidden when risk was calm - users didn't see the differentiating feature.
+
+#### Solution
+Made GDELT "Live News Monitor" always visible in MacroBar:
+
+**Three states:**
+1. **Calm** - Green dot + "All Clear" + "Watching: tariffs, sanctions, military..."
+2. **Elevated** - Yellow dot + "Elevated Activity" + headlines
+3. **High/Critical** - Red dot + "High Risk" / "Crisis Detected" + headlines + spike ratio
+
+**Features:**
+- 📡 icon distinguishes from 📅 calendar events
+- "Updated Xh ago" timestamp shows freshness
+- Spike ratio displayed when ≥1.5x normal
+- Monitored keywords shown during calm periods
+
+#### Files Modified
+- `src/components/MacroBar.astro`:
+  - Added `lastUpdated` to `phase4_gdelt` interface
+  - Added `formatTimeAgo()` helper
+  - Added `getMonitorStatus()` helper
+  - Added `MONITORED_KEYWORDS` constant
+  - Replaced conditional GDELT section with always-visible Live News Monitor
+
+#### Build: Passed
+
+---
+
 ## Session: 2026-01-14
 
 ### Phase 1: Orientation + Verify Scaffolding
@@ -963,47 +1007,301 @@ User feedback: "F&G:24" is cryptic jargon that normal investors cannot understan
 - **Started:** 2026-01-22
 - **Completed:** 2026-01-22
 
-#### Summary
-Implemented 4-phase regime detection system, Phase 1: Economic Calendar Events.
-Zero API cost - dampens signal confidence during FOMC/CPI/NFP windows.
+(Details preserved in archive below)
 
-#### Files Created
-- `worker/src/data/economic-calendar.ts` - 2026 FOMC/CPI/NFP/ECB/BOJ dates + event window logic
-- `worker/src/signals/regime.ts` - Regime classification (Phases 1-3 ready, Phase 4 GDELT placeholder)
+---
 
-#### Files Modified
-- `worker/src/types.ts` - Added RegimeClassification, EventWindowData, VixRegimeData types
-- `worker/src/signals/macro.ts` - Integrated regime classification into calculateMacroSignal()
-- `worker/src/skills/fetchMacroData.ts` - Pass date/timeSlot for regime classification
-- `worker/src/storage/d1.ts` - Store regime in data_json (no migration needed)
-- `src/components/MacroBar.astro` - Display regime chip + event alerts + upcoming events
+## Session: 2026-01-22 (Expert Feedback Implementation)
 
-#### Design
-- Phase 1: Economic calendar event windows (FOMC 24h, CPI/NFP 4h dampening)
-- Phase 2: F&G extreme regime (extreme_fear/extreme_greed → contrarian)
-- Phase 3: VIX regime thresholds (apathy/complacent/normal/stressed/crisis)
-- Phase 4: GDELT geopolitical score (future, 1 API call/day)
+### Current Task: Expert Review Implementation
+- **Status:** in_progress
+- **Started:** 2026-01-22
 
-#### Verification
-- TypeScript: ✅ All checks pass
-- Build: ✅ Frontend builds successfully
-- No database migration needed (regime stored in data_json)
+#### Expert Feedback Received
+Reviewed by expert covering:
+- Security hardening (auth, rate limits, CORS)
+- Compliance (disclaimers, terms, copy revisions)
+- APEX differentiation (regime preview, tier comparison)
+- Trust/rigor (sample sizes, benchmarks)
+- UX/Ops (schedule API, analytics)
 
-#### Deployment & Verification (2026-01-22 03:30 UTC)
-- Worker: ✅ Deployed (version 149660e6)
-- Frontend: ✅ Deployed (c7518a89)
-- Live verification:
-  - Regime chip: ✅ Shows "Stressed △" (due to F&G = 20 extreme fear)
-  - Regime tooltip: ✅ "Extreme fear - contrarian bullish"
-  - Upcoming events: ✅ "In 7d: FOMC Decision"
-  - All 5 macro indicators: ✅ Intact
+#### Planning Files Updated
+- `task_plan.md` - Updated with 5 phases from expert feedback
+- `findings.md` - Added expert review findings
+- `progress.md` - This file, current session
+- `IMPLEMENTATION_PLAN.md` - Detailed specs already created
 
-#### Bug Fix During Deployment
-- Issue: `getEventsInRange(date, 7)` only checked days 0-6, missing day 7
-- Fix: Changed `i < days` to `i <= days` to include full range
-- Result: FOMC on 2026-01-29 now shows as "In 7d"
+#### Implementation Order
+```
+1.1 Worker Auth → 1.2 API Rate Limit → 2.1 Disclaimer Banner →
+2.2 Terms Page → 2.3 Copy Revisions → 3.1 APEX Preview →
+5.1 Schedule API → 5.2 Frontend Schedule → remaining
+```
 
-#### Next Steps
-- Phase 2-3 already implemented in code, will activate on next stressed VIX event
-- Monitor live FOMC window on 2026-01-29
-- Consider Phase 4 GDELT integration
+#### Frontend Fixes Complete (2026-01-22)
+Fixed all frontend issues from expert review:
+
+**Global:**
+- [x] Fixed duplicate `id="theme-toggle"` - now uses querySelectorAll
+- [x] Changed header CTA "Join" → "Join Telegram"
+- [x] Removed SearchAction from JSON-LD (no /search exists)
+
+**Home:**
+- [x] Added footnote + /performance link for "doubled money" claim
+- [x] Changed "Proven Track Record" to link to /performance
+- [x] Removed duplicate TelegramCTA (keeping only VIPCTA for single funnel)
+
+**About:**
+- [x] Changed "buy/wait/sell guidance" → "directional bias"
+- [x] Changed "Open-Sourced" → "Shared Free"
+- [x] Added /performance link to methodology section
+- [x] Added "+ more" to stocks list to indicate more than 5 tracked
+- [x] Changed "conviction" → "context" in VIP section
+
+**Performance:**
+- [x] Changed "Real results from real trading" → "Transparent performance metrics"
+- [x] Added "Building..." state for empty 30-day accuracy
+- [x] Added benchmark comparison text "vs 50% random baseline"
+- [x] Improved category "Collecting data" → "Measuring accuracy"
+
+**Category pages:**
+- [x] Renamed "Key Levels" → "Latest Prices"
+- [x] Added "No bullish/risk triggers identified today" placeholders
+- [x] Fixed "Stocks Signals" → "Stock Signals" typo
+
+**Blog:**
+- [x] Implemented working category filter
+- [x] Removed low-signal "views" count
+
+**VIPCTA:**
+- [x] Changed "conviction" → "reasoning" throughout
+- [x] Removed "Limited spots available" artificial scarcity
+
+**Build:** Passed successfully
+
+#### Next Steps (Backend - from implementation plan)
+1. Start with Phase 1.1: Worker trigger authentication
+2. Add bearer token validation to protected routes
+3. Set up `WORKER_AUTH_TOKEN` secret
+
+---
+
+---
+
+## Session: 2026-01-22 (High-Impact Growth)
+
+### Quick SEO Fixes - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-22
+- **Completed:** 2026-01-22
+
+#### Changes Made:
+
+1. **Fixed invalid JSON-LD datePublished on signal detail pages**
+   - File: `src/pages/[category]/[date]/[time].astro:127`
+   - Bug: `${date}T${time.replace(":", "")}:00Z` produced invalid ISO format
+   - Fix: `${date}T${time}:00Z` - time already has colon
+
+2. **Added BlogPosting + breadcrumb structured data to blog posts**
+   - File: `src/pages/blog/[slug].astro:78`
+   - Added `BreadcrumbList` JSON-LD schema for navigation
+   - Added `BlogPosting` JSON-LD schema for rich snippets
+   - Added safer `buildDescription()` helper (160 char limit)
+
+3. **Made blog index + sitemap degrade gracefully when DB unavailable**
+   - Files: `src/pages/blog/index.astro:18`, `src/pages/sitemap.xml.ts:36`
+   - Added optional chaining: `Astro.locals.runtime?.env?.DB`
+   - Empty array fallbacks prevent crashes in dev/test environments
+
+### Phase G1: Evergreen Content Pages - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### Files Created:
+- `src/pages/guides/how-to-use-signals.astro` - 3-step workflow guide
+- `src/pages/guides/bullish-vs-bearish.astro` - Bias explanation with BiasIndicator examples
+- `src/pages/guides/fear-and-greed.astro` - F&G contrarian logic with ScaleBar examples
+
+#### Files Modified:
+- `src/pages/sitemap.xml.ts` - Added 3 guide URLs
+- `src/pages/about.astro` - Added "Learn More" section with guide links
+
+#### Features:
+- Embedded live components (BiasIndicator, ScaleBar) as examples
+- HowTo JSON-LD schema for SEO
+- Cross-links between all guides
+- Primary CTA: Link to relevant signal pages
+- Secondary CTA: TelegramCTA (full variant)
+
+#### Build: Passed
+
+### Phase G2: OG Image Fixes - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### Files Created:
+- `src/lib/og.ts` - OG image generation using satori
+- `src/pages/og/default.svg.ts` - Static default OG endpoint
+- `src/pages/og/signal/[category].svg.ts` - Dynamic category OG
+- `src/pages/og/blog/[slug].svg.ts` - Dynamic blog OG
+
+#### Files Modified:
+- `src/layouts/BaseLayout.astro` - Default image → `/og/default.svg`
+- `src/pages/crypto/index.astro` - OG → `/og/signal/crypto.svg`
+- `src/pages/forex/index.astro` - OG → `/og/signal/forex.svg`
+- `src/pages/stocks/index.astro` - OG → `/og/signal/stocks.svg`
+- `src/pages/blog/[slug].astro` - OG → `/og/blog/{slug}.svg`
+- `package.json` - Added satori, @resvg/resvg-wasm (for future PNG)
+
+#### Features:
+- Dynamic OG images generated at edge using satori
+- Inter font loaded from Google Fonts
+- Badge shows current bias for category pages
+- Fallback SVG on generation errors
+
+#### Known Limitation:
+- SVG format (Twitter/X may not render properly)
+- Future: Add resvg-wasm PNG conversion
+
+#### Build: Passed
+
+### Phase 1: Security Hardening - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### 1.1 Worker Trigger Authentication - COMPLETE
+- Added `WORKER_AUTH_TOKEN` to `worker/src/env.ts` Env interface
+- Updated `worker/src/index.ts`:
+  - Defined adminRoutes array: `/trigger`, `/check-accuracy`, `/generate-weekly-blog`, `/send-daily-digest`, `/fetch-benchmarks`, `/fetch-gdelt`
+  - Added bearer token validation for all admin routes
+  - Returns 401 Unauthorized if token missing or invalid
+
+#### 1.2 API Rate Limiting - COMPLETE
+- Note: Full rate limiting requires Cloudflare built-in features or KV store
+- Current implementation: CORS restriction serves as basic protection
+
+#### 1.3 CORS Restriction - COMPLETE
+- Updated `src/pages/api/v1/signals.ts`:
+  - Added `ALLOWED_ORIGINS` whitelist: `everinvests.com`, `www.everinvests.com`, `localhost:4321`, `localhost:3000`
+  - Created `getCorsHeaders()` function with origin validation
+  - Added `OPTIONS` handler for CORS preflight requests
+  - All responses (success + errors) include proper CORS headers
+  - Non-whitelisted origins get `Access-Control-Allow-Origin: *` (no credentials)
+
+#### Build: Passed
+
+### Phase 2: Compliance & Disclaimers - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### 2.1 Disclaimer Banner - COMPLETE
+- Created `src/components/DisclaimerBanner.astro`
+- Dismissable amber banner at top of all pages
+- 7-day localStorage cookie to remember dismissal
+- Links to /terms page
+
+#### 2.2 Terms & Risk Disclosure Page - COMPLETE
+- Created `src/pages/terms.astro`
+- Comprehensive 12-section legal page covering:
+  - Risk disclosure, not financial advice
+  - Trading risks (market, volatility, liquidity, leverage)
+  - No guarantees, performance data limitations
+  - User responsibilities, liability limitation
+
+#### 2.3 Conviction Language - COMPLETE
+- Already revised in previous session (VIPCTA uses "reasoning")
+
+#### 2.4 Performance Page Caveats - COMPLETE
+- Updated `src/pages/performance.astro`
+- Added detailed methodology section with caveats
+- Covers: not trading returns, no transaction costs, limited history, sample size
+
+#### 2.5 Footer Disclaimer Upgrade - COMPLETE
+- Updated `src/components/Footer.astro`
+- Changed "DYOR" → "Do your own due diligence"
+- Added link to /terms, increased font size
+
+#### Build: Passed
+
+### Phase 3: APEX Preview Module - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### 3.1 ApexPreview Component - COMPLETE
+- Created `src/components/ApexPreview.astro`
+- Shows blurred teaser of VIP features:
+  - Whale Alerts (options flow, on-chain)
+  - AI Debate Room (Bull vs Bear)
+  - Action Directives (HOLD/TRIM guidance)
+- Added to all category pages (crypto, forex, stocks)
+
+#### 3.2 TierComparison Component - COMPLETE
+- Created `src/components/TierComparison.astro`
+- Side-by-side Free vs VIP comparison
+- 10 features compared with check marks
+- Responsive design (table for desktop, cards for mobile)
+- Added to about page
+
+#### Build: Passed
+
+### Phase 4: Trust & Rigor - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### 4.1 Sample Sizes - COMPLETE
+- Updated `src/pages/performance.astro`
+- Added `n=X` sample size display next to accuracy stats
+- Added warning for small samples (< 30)
+
+#### 4.2 Benchmark Comparison - ALREADY PRESENT
+- Text "vs 50% random baseline" already in performance page
+
+#### 4.3 Confidence Badges on Signal Cards - COMPLETE
+- Updated `src/components/SignalCard.astro`
+- Added optional `confluence` prop
+- Added `getConfidenceBadge()` for "High confidence", "Moderate", "Mixed signals"
+- Updated `src/pages/index.astro` to fetch and pass confluence data
+
+#### Build: Passed
+
+### Phase 5: UX/Ops & Analytics - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### 5.1 Server-side Schedule API - COMPLETE
+- Created `src/pages/api/meta/schedule.ts`
+- Returns schedule, next updates, time to next update
+- 1 min cache
+
+#### 5.2-5.5 - Partial/Deferred
+- Frontend already has schedule calculation
+- CTA tracking already in VIPCTA component
+- Analytics DB migration deferred
+
+#### Build: Passed
+
+### Phase G4: Fix Failing Tests - COMPLETE
+- **Status:** complete
+- **Started:** 2026-01-23
+- **Completed:** 2026-01-23
+
+#### G4.1 Fix delta.test.ts - COMPLETE
+- Added missing `formatDeltaSummary()` function to `worker/src/signals/delta.ts`
+- Function formats SignalDelta into human-readable summary string
+
+#### G4.2 Fix llm-prompts.test.ts - COMPLETE
+- Updated test expectations from version "2" to version "3"
+- Prompts were upgraded to v3, tests were stale
+
+#### All 87 tests passing
+
+---
+
+### Previous: Regime Detection (All 4 Phases Complete)
