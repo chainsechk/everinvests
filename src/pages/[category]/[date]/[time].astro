@@ -23,6 +23,7 @@ import type { Category } from "../../../lib/db";
 import { absoluteUrl } from "../../../lib/site";
 import RelatedSignals from "../../../components/RelatedSignals.astro";
 import DeltaBadge from "../../../components/DeltaBadge.astro";
+import ShareBlock from "../../../components/ShareBlock.astro";
 
 const { category: catParam, date, time } = Astro.params;
 
@@ -150,7 +151,7 @@ const articleSchema = {
 };
 ---
 
-<BaseLayout title={pageTitle} description={pageDescription} jsonLd={articleSchema}>
+<BaseLayout title={pageTitle} description={pageDescription} image={`/og/signal/${category}/${date}/${time}.svg`} jsonLd={articleSchema}>
   <Header slot="header" />
 
   <div class="space-y-8">
@@ -193,6 +194,31 @@ const articleSchema = {
 
     <!-- Signal Detail -->
     <SignalDetail signal={signal} />
+
+    <!-- How This Signal Was Calculated -->
+    <div class="flex flex-wrap items-center gap-4 text-sm" data-animate>
+      <a href="/learn/methodology" class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        How we calculate signals
+      </a>
+      <a href="/learn/glossary#bias" class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        What does {signal.bias} mean?
+      </a>
+    </div>
+
+    <!-- Share Block -->
+    <ShareBlock
+      url={absoluteUrl(`/${category}/${date}/${time}`)}
+      title={pageTitle}
+      description={summary || pageDescription}
+      category={categoryTitle}
+      bias={signal.bias || "Neutral"}
+    />
 
     <!-- Delta vs Previous Signal -->
     {delta && delta.previousBias && (

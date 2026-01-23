@@ -193,28 +193,28 @@ function getAssetUrl(ticker: string, cat: string): string {
         <th>Asset</th>
         <th>Price</th>
         <th>
-          <span class="inline-flex items-center gap-1">
+          <a href="/learn/glossary#ma20" class="inline-flex items-center gap-1 hover:text-cyber transition-colors">
             Trend
-            <InfoTip text="Price compared to the moving average. Above = upward momentum, Below = downward pressure." />
-          </span>
+            <InfoTip text="Price vs 20-day average. Above = uptrend, Below = downtrend." />
+          </a>
         </th>
         <th>
-          <span class="inline-flex items-center gap-1">
+          <a href="/learn/glossary#volume" class="inline-flex items-center gap-1 hover:text-cyber transition-colors">
             Volume
-            <InfoTip text="Trading activity compared to average. High volume confirms the trend, low volume suggests weakness." />
-          </span>
+            <InfoTip text="Trading activity vs average. High = strong conviction, Low = weak move." />
+          </a>
         </th>
         <th>
-          <span class="inline-flex items-center gap-1">
+          <a href={category === "crypto" ? "/learn/glossary#fear-greed" : category === "stocks" ? "/learn/glossary#rsi" : "/learn/glossary#yield-curve"} class="inline-flex items-center gap-1 hover:text-cyber transition-colors">
             {secondaryConfig[category].label}
             <InfoTip text={secondaryConfig[category].tooltip} />
-          </span>
+          </a>
         </th>
         <th>
-          <span class="inline-flex items-center gap-1">
+          <a href="/learn/glossary#bias" class="inline-flex items-center gap-1 hover:text-cyber transition-colors">
             Signal
-            <InfoTip text="Our overall recommendation based on trend, volume, and market sentiment. Bullish = consider buying, Bearish = consider selling, Neutral = wait." />
-          </span>
+            <InfoTip text="Bullish = likely to rise, Bearish = likely to fall, Neutral = no clear direction." />
+          </a>
         </th>
       </tr>
     </thead>

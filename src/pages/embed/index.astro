@@ -1,0 +1,281 @@
+---
+// src/pages/embed/index.astro
+// Widget landing page with instructions for webmasters
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+
+const baseUrl = "https://everinvests.com";
+
+const snippets = {
+  all: {
+    label: "All Signals",
+    description: "Show Crypto, Forex, and Stocks signals",
+    code: `<iframe
+  src="${baseUrl}/embed/all"
+  width="340"
+  height="280"
+  frameborder="0"
+  style="border-radius: 12px;"
+></iframe>`,
+  },
+  crypto: {
+    label: "Crypto Only",
+    description: "Show only Crypto signals",
+    code: `<iframe
+  src="${baseUrl}/embed/crypto"
+  width="340"
+  height="160"
+  frameborder="0"
+  style="border-radius: 12px;"
+></iframe>`,
+  },
+  forex: {
+    label: "Forex Only",
+    description: "Show only Forex signals",
+    code: `<iframe
+  src="${baseUrl}/embed/forex"
+  width="340"
+  height="160"
+  frameborder="0"
+  style="border-radius: 12px;"
+></iframe>`,
+  },
+  stocks: {
+    label: "Stocks Only",
+    description: "Show only Stock signals",
+    code: `<iframe
+  src="${baseUrl}/embed/stocks"
+  width="340"
+  height="160"
+  frameborder="0"
+  style="border-radius: 12px;"
+></iframe>`,
+  },
+};
+
+const customizationOptions = [
+  { param: "theme=dark", description: "Dark theme (default)" },
+  { param: "theme=light", description: "Light theme" },
+  { param: "compact=true", description: "Compact mode (smaller padding)" },
+];
+---
+
+<BaseLayout
+  title="Embed Widget - Free Market Signals for Your Website"
+  description="Add free daily market signals to your website. Copy-paste embed code for Crypto, Forex, and Stock signals."
+>
+  <Header slot="header" />
+
+  <div class="max-w-4xl mx-auto space-y-10">
+    <!-- Header -->
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">
+        Embed Market Signals
+      </h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">
+        Add free daily signals to your website. Updates automatically, no API key required.
+      </p>
+    </header>
+
+    <!-- Live Preview -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-xl text-txt-primary mb-4">Live Preview</h2>
+      <div class="flex flex-col md:flex-row gap-8 items-start">
+        <div class="flex-shrink-0">
+          <iframe
+            src="/embed/all"
+            width="340"
+            height="280"
+            frameborder="0"
+            style="border-radius: 12px; border: 1px solid var(--border-default);"
+            title="EverInvests Widget Preview"
+          ></iframe>
+        </div>
+        <div class="flex-grow">
+          <h3 class="font-semibold text-txt-primary mb-2">What you get:</h3>
+          <ul class="space-y-2 text-txt-secondary text-sm">
+            <li class="flex items-start gap-2">
+              <span class="text-bullish mt-0.5">✓</span>
+              <span>Real-time signal updates (syncs with our site)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-bullish mt-0.5">✓</span>
+              <span>Dark and light theme support</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-bullish mt-0.5">✓</span>
+              <span>Mobile responsive design</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-bullish mt-0.5">✓</span>
+              <span>No JavaScript required (pure iframe)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-bullish mt-0.5">✓</span>
+              <span>Free forever, no API key needed</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Embed Codes -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-xl text-txt-primary">Choose Your Widget</h2>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        {Object.entries(snippets).map(([key, { label, description, code }]) => (
+          <div class="card">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-semibold text-txt-primary">{label}</h3>
+                <p class="text-sm text-txt-muted">{description}</p>
+              </div>
+              <button
+                class="copy-btn px-3 py-1.5 text-xs font-medium bg-cyber/10 text-cyber rounded-lg hover:bg-cyber/20 transition-colors"
+                data-code={code}
+              >
+                Copy
+              </button>
+            </div>
+            <pre class="p-3 bg-void-200 rounded-lg text-xs text-txt-secondary overflow-x-auto"><code>{code}</code></pre>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Customization -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-xl text-txt-primary mb-4">Customization</h2>
+      <p class="text-txt-secondary mb-4">
+        Add URL parameters to customize the widget appearance:
+      </p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-divider">
+              <th class="text-left py-2 text-txt-muted font-medium">Parameter</th>
+              <th class="text-left py-2 text-txt-muted font-medium">Description</th>
+              <th class="text-left py-2 text-txt-muted font-medium">Example</th>
+            </tr>
+          </thead>
+          <tbody class="text-txt-secondary">
+            {customizationOptions.map((opt) => (
+              <tr class="border-b border-subtle">
+                <td class="py-3 font-mono text-cyber">{opt.param}</td>
+                <td class="py-3">{opt.description}</td>
+                <td class="py-3 font-mono text-xs">/embed/all?{opt.param}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 p-3 bg-void-200 rounded-lg">
+        <p class="text-sm text-txt-muted">
+          <strong class="text-txt-secondary">Example with multiple options:</strong>
+          <code class="ml-2 text-cyber">/embed/crypto?theme=light&compact=true</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- Theme Comparison -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-xl text-txt-primary mb-4">Theme Comparison</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 class="text-sm font-medium text-txt-secondary mb-3">Dark Theme (default)</h3>
+          <iframe
+            src="/embed/crypto?theme=dark"
+            width="100%"
+            height="160"
+            frameborder="0"
+            style="border-radius: 12px; border: 1px solid var(--border-default);"
+            title="Dark Theme Preview"
+          ></iframe>
+        </div>
+        <div>
+          <h3 class="text-sm font-medium text-txt-secondary mb-3">Light Theme</h3>
+          <iframe
+            src="/embed/crypto?theme=light"
+            width="100%"
+            height="160"
+            frameborder="0"
+            style="border-radius: 12px; border: 1px solid var(--border-default);"
+            title="Light Theme Preview"
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- Terms -->
+    <section class="card border-txt-muted/20" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">Usage Terms</h2>
+      <ul class="space-y-2 text-sm text-txt-secondary">
+        <li class="flex items-start gap-2">
+          <span class="text-txt-muted">•</span>
+          <span>Free for personal and commercial use</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-txt-muted">•</span>
+          <span>The "Powered by EverInvests" link must remain visible</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-txt-muted">•</span>
+          <span>Do not modify the widget content or remove attribution</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-txt-muted">•</span>
+          <span>Signals are for informational purposes only - not financial advice</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- CTA -->
+    <section class="text-center py-8" data-animate>
+      <p class="text-txt-secondary mb-4">
+        Questions about the widget?
+      </p>
+      <a
+        href="https://t.me/EverInvestsBot"
+        target="_blank"
+        rel="noopener"
+        class="btn-telegram inline-flex items-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        Contact us on Telegram
+      </a>
+    </section>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const code = btn.getAttribute('data-code');
+      if (!code) return;
+
+      try {
+        await navigator.clipboard.writeText(code);
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('bg-bullish/20', 'text-bullish');
+        btn.classList.remove('bg-cyber/10', 'text-cyber');
+
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('bg-bullish/20', 'text-bullish');
+          btn.classList.add('bg-cyber/10', 'text-cyber');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    });
+  });
+</script>

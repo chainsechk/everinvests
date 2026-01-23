@@ -338,7 +338,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 
 <div class="card-glass" data-animate>
   <!-- Market Sentiment Header -->
-  <div class="flex items-center justify-center gap-3 mb-5">
+  <div class="flex items-center justify-center gap-3 mb-3">
     <span class:list={[
       "pulse-dot",
       overall?.toLowerCase().includes("risk-on") ? "pulse-dot-bullish" :
@@ -361,6 +361,14 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
     ]}>
       {overall || "Loading..."}
     </span>
+  </div>
+  <div class="text-center mb-5">
+    <a
+      href={overall?.toLowerCase().includes("risk-on") ? "/learn/glossary#risk-on" : overall?.toLowerCase().includes("risk-off") ? "/learn/glossary#risk-off" : "/learn/glossary#macro-context"}
+      class="text-xs text-txt-muted hover:text-cyber transition-colors"
+    >
+      What does this mean? →
+    </a>
   </div>
 
   <!-- Indicators Grid: 2 rows x 3 columns, centered -->

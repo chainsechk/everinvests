@@ -10,6 +10,7 @@ import HistoryMini from "../../components/HistoryMini.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import VIPCTA from "../../components/VIPCTA.astro";
 import ApexPreview from "../../components/ApexPreview.astro";
+import NextUpdateCountdown from "../../components/NextUpdateCountdown.astro";
 import { getLatestMacro, getLatestSignal, getLatestSignalWithAssets, getAssetSignals, getSignalHistory } from "../../lib/db";
 
 const category = "stocks" as const;
@@ -110,6 +111,9 @@ const serviceSchema = {
       <TelegramCTA variant="compact" />
     </div>
 
+    <!-- Next Update Countdown -->
+    <NextUpdateCountdown category="stocks" />
+
     <!-- Macro Context -->
     <MacroBar
       overall={macro?.overall}
@@ -156,6 +160,41 @@ const serviceSchema = {
     <!-- History Mini -->
     <div class="card" data-animate>
       <HistoryMini signals={history} category={category} />
+    </div>
+
+    <!-- Learn More Section -->
+    <div class="card" data-animate>
+      <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Learn More</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <a href="/guides/bullish-vs-bearish" class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">📊</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">What does Bullish mean?</div>
+            <div class="text-xs text-txt-muted">Understanding our signal types</div>
+          </div>
+        </a>
+        <a href="/learn/glossary#rsi" class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">📈</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">What is RSI?</div>
+            <div class="text-xs text-txt-muted">Momentum indicator explained</div>
+          </div>
+        </a>
+        <a href="/learn/methodology" class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">🔬</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">How We Calculate Signals</div>
+            <div class="text-xs text-txt-muted">Our 3-indicator confluence model</div>
+          </div>
+        </a>
+        <a href="/learn/glossary" class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">📖</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">Trading Glossary</div>
+            <div class="text-xs text-txt-muted">Key terms: VIX, confluence, bias, and more</div>
+          </div>
+        </a>
+      </div>
     </div>
   </div>
 

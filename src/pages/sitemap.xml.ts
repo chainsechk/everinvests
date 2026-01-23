@@ -28,9 +28,16 @@ const staticPages = [
   { url: "/forex/history", priority: "0.7", changefreq: "daily" },
   { url: "/stocks/history", priority: "0.7", changefreq: "daily" },
   { url: "/blog", priority: "0.8", changefreq: "daily" },
+  // Guides
   { url: "/guides/how-to-use-signals", priority: "0.8", changefreq: "monthly" },
   { url: "/guides/bullish-vs-bearish", priority: "0.8", changefreq: "monthly" },
   { url: "/guides/fear-and-greed", priority: "0.8", changefreq: "monthly" },
+  // Learn pages (programmatic SEO)
+  { url: "/learn/glossary", priority: "0.8", changefreq: "monthly" },
+  { url: "/learn/methodology", priority: "0.8", changefreq: "monthly" },
+  // Embed widget
+  { url: "/embed", priority: "0.6", changefreq: "monthly" },
+  // Legal/Info
   { url: "/terms", priority: "0.4", changefreq: "monthly" },
   { url: "/about", priority: "0.5", changefreq: "monthly" },
 ];

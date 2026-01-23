@@ -1,0 +1,175 @@
+---
+// src/components/NextUpdateCountdown.astro
+// Shows countdown to next signal update
+
+interface Props {
+  category: "crypto" | "forex" | "stocks";
+}
+
+const { category } = Astro.props;
+
+// Schedule (UTC hours)
+const schedules: Record<string, number[]> = {
+  crypto: [0, 8, 16],        // 00:00, 08:00, 16:00 daily
+  forex: [0, 8, 14],          // 00:00, 08:00, 14:00 weekdays
+  stocks: [17, 21],           // 17:00, 21:00 weekdays
+};
+
+const schedule = schedules[category] || [0, 8, 16];
+---
+
+<div class="next-update-card" data-category={category} data-schedule={JSON.stringify(schedule)}>
+  <div class="flex items-center gap-3">
+    <div class="pulse-indicator">
+      <span class="pulse-dot pulse-dot-bullish"></span>
+    </div>
+    <div>
+      <div class="text-xs text-txt-muted uppercase tracking-wide mb-0.5">Next Update</div>
+      <div class="countdown-display font-mono font-semibold text-txt-primary">
+        <span class="countdown-text">Calculating...</span>
+      </div>
+    </div>
+  </div>
+  <a
+    href="https://t.me/EverInvestsBot?start=notify_{category}"
+    target="_blank"
+    rel="noopener"
+    class="notify-btn"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    </svg>
+    <span class="hidden sm:inline">Notify me</span>
+  </a>
+</div>
+
+<style>
+  .next-update-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+  }
+
+  .pulse-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--bullish-bg);
+    border-radius: 50%;
+  }
+
+  .countdown-display {
+    font-size: 1.125rem;
+  }
+
+  .notify-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .notify-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  /* Urgent state - less than 30 minutes */
+  .next-update-card.urgent .pulse-indicator {
+    background: var(--vip-bg);
+  }
+
+  .next-update-card.urgent .pulse-dot {
+    background: var(--vip);
+  }
+
+  .next-update-card.urgent .countdown-text {
+    color: var(--vip);
+  }
+</style>
+
+<script>
+  function updateCountdowns() {
+    document.querySelectorAll('.next-update-card').forEach((card) => {
+      const category = card.getAttribute('data-category');
+      const schedule = JSON.parse(card.getAttribute('data-schedule') || '[]');
+      const countdownEl = card.querySelector('.countdown-text');
+      if (!countdownEl || !schedule.length) return;
+
+      const now = new Date();
+      const utcHour = now.getUTCHours();
+      const utcMinute = now.getUTCMinutes();
+      const dayOfWeek = now.getUTCDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      // For forex/stocks, skip weekends
+      const skipWeekend = category === 'forex' || category === 'stocks';
+
+      let nextHour = schedule.find((h: number) => h > utcHour);
+      let daysToAdd = 0;
+
+      if (nextHour === undefined) {
+        // Next update is tomorrow
+        nextHour = schedule[0];
+        daysToAdd = 1;
+      }
+
+      // Adjust for weekends if needed
+      if (skipWeekend) {
+        let targetDay = dayOfWeek + daysToAdd;
+        if (targetDay === 6) daysToAdd += 2; // Saturday -> Monday
+        if (targetDay === 0) daysToAdd += 1; // Sunday -> Monday
+        if (dayOfWeek === 6 && daysToAdd === 0) daysToAdd = 2; // Today is Saturday
+        if (dayOfWeek === 0 && daysToAdd === 0) daysToAdd = 1; // Today is Sunday
+      }
+
+      // Calculate time difference
+      const nextUpdate = new Date(now);
+      nextUpdate.setUTCDate(nextUpdate.getUTCDate() + daysToAdd);
+      nextUpdate.setUTCHours(nextHour, 0, 0, 0);
+
+      const diffMs = nextUpdate.getTime() - now.getTime();
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+
+      let text = '';
+      if (daysToAdd > 1) {
+        text = `${daysToAdd}d ${hours % 24}h`;
+      } else if (hours > 0) {
+        text = `${hours}h ${mins}m`;
+      } else {
+        text = `${mins}m`;
+      }
+
+      countdownEl.textContent = text;
+
+      // Add urgent class if less than 30 minutes
+      if (diffMins <= 30 && daysToAdd === 0) {
+        card.classList.add('urgent');
+      } else {
+        card.classList.remove('urgent');
+      }
+    });
+  }
+
+  // Initial update
+  updateCountdowns();
+
+  // Update every minute
+  setInterval(updateCountdowns, 60000);
+</script>
