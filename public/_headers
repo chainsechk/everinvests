@@ -1,5 +1,7 @@
 # Edge caching headers for Cloudflare Pages
 # https://developers.cloudflare.com/pages/configuration/headers/
+# Note: Uses splat (*) wildcards, not :param syntax
+# Note: SSR responses set their own headers; these are fallbacks/static assets
 
 # Category landing pages - short TTL (updates 3x/day)
 /crypto
@@ -10,11 +12,12 @@
   Cache-Control: public, max-age=300, s-maxage=300
 
 # Historical signal pages - long TTL (never changes)
-/crypto/:date/:time
+# Pattern: /crypto/2026-01-23/0800
+/crypto/*/*
   Cache-Control: public, max-age=604800, s-maxage=604800
-/forex/:date/:time
+/forex/*/*
   Cache-Control: public, max-age=604800, s-maxage=604800
-/stocks/:date/:time
+/stocks/*/*
   Cache-Control: public, max-age=604800, s-maxage=604800
 
 # History pages - medium TTL
@@ -52,21 +55,20 @@
   Cache-Control: public, max-age=3600, s-maxage=3600
 
 # Embed pages - short TTL (shows latest signals)
+/embed
+  Cache-Control: public, max-age=300, s-maxage=300
 /embed/*
   Cache-Control: public, max-age=300, s-maxage=300
 
-# OG images - long TTL (generated once per signal)
-/og/*
-  Cache-Control: public, max-age=604800, s-maxage=604800
-
-# API endpoints - handle their own caching
-/api/*
-  Cache-Control: no-store
-
-# Static assets - very long TTL
+# Static assets only - very long TTL
+# Note: API and OG routes are SSR and set their own Cache-Control headers
 /*.svg
   Cache-Control: public, max-age=31536000, immutable
 /*.png
   Cache-Control: public, max-age=31536000, immutable
 /*.ico
+  Cache-Control: public, max-age=31536000, immutable
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/*.css
   Cache-Control: public, max-age=31536000, immutable

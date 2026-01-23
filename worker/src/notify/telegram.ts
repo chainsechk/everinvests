@@ -7,6 +7,15 @@ import { getCTAConfig, getCTAMode, type CTAMode } from "../config";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const DEFAULT_SITE_URL = "https://everinvests.com";
 
+// Escape HTML entities for Telegram HTML parse_mode
+// Required chars: < > &
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 interface TelegramResponse {
   ok: boolean;
   result?: any;
@@ -104,7 +113,8 @@ export function formatSignalMessage(
   let message = `${biasEmoji} <b>${categoryTitle} Bias: ${bias}</b>\n`;
   message += `📅 ${date} ${timeSlot} UTC\n\n`;
 
-  message += `${summary}\n\n`;
+  // Escape HTML in LLM-generated summary to prevent broken Telegram messages
+  message += `${escapeHtml(summary)}\n\n`;
 
   // Delta section (if available)
   message += formatDeltaSection(delta ?? null);

@@ -45,11 +45,13 @@ export async function POST(context: APIContext) {
 
   // Simple in-memory rate limiting using Cloudflare Cache API
   // This is best-effort rate limiting (not perfect across edge nodes)
-  const cache = caches.default;
+  // Note: caches.default only exists in Cloudflare Workers, not Node.js dev
   const rateLimitKey = `https://rate-limit.everinvests.local/track/${ip}`;
   const rateLimitRequest = new Request(rateLimitKey);
 
   try {
+    const cache = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+    if (!cache) throw new Error("Cache API unavailable");
     const cached = await cache.match(rateLimitRequest);
     if (cached) {
       const count = parseInt(await cached.text()) || 0;
