@@ -286,9 +286,18 @@ const breadcrumbSchema = {
         <h2 class="font-display font-semibold text-xl text-txt-primary">Live Signal Validation</h2>
       </div>
       <p class="text-sm text-txt-muted">
-        We're now tracking our live signals against actual market movements. Here's how we're doing since launch.
-        {totalLiveVerified > 0 && totalLiveVerified < 100 && (
-          <span class="text-mixed"> {totalLiveVerified} signals verified so far. Statistical significance requires ~100 signals per category.</span>
+        {totalLiveVerified === 0 ? (
+          <>
+            We're tracking our live signals against actual market movements.
+            <span class="text-cyber"> {stats?.totalSignals ?? 0} signals generated</span> — verification runs daily at 01:00 UTC after 24h of price data.
+          </>
+        ) : totalLiveVerified < 100 ? (
+          <>
+            We're tracking our live signals against actual market movements. Here's how we're doing since launch.
+            <span class="text-mixed"> {totalLiveVerified} signals verified so far. Statistical significance requires ~100 signals per category.</span>
+          </>
+        ) : (
+          <>We're tracking our live signals against actual market movements. Here's how we're doing since launch.</>
         )}
       </p>
 
@@ -308,9 +317,15 @@ const breadcrumbSchema = {
               </>
             ) : (
               <>
-                <div class="font-mono text-2xl font-bold text-mixed mb-2">Measuring...</div>
+                <div class="flex items-center justify-center gap-2 mb-2">
+                  <svg class="w-5 h-5 text-cyber animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span class="font-mono text-xl font-bold text-cyber">Verifying</span>
+                </div>
                 <div class="text-sm text-txt-muted">30-Day Accuracy</div>
-                <div class="text-xs text-txt-muted/60 mt-1">Accumulating verified outcomes</div>
+                <div class="text-xs text-txt-muted/60 mt-1">First results after 24h</div>
               </>
             )}
           </div>
@@ -382,13 +397,18 @@ const breadcrumbSchema = {
                 <div class="relative w-24 h-24 mx-auto mb-3">
                   <svg class="w-24 h-24 -rotate-90">
                     <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="none" class="text-void-200"/>
+                    <!-- Animated pulse to show activity -->
+                    <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="none" class="text-cyber/30 animate-pulse"/>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="font-mono text-sm text-txt-muted">0</span>
+                    <svg class="w-6 h-6 text-cyber animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                   </div>
                 </div>
-                <div class="text-sm text-txt-muted">Awaiting verified outcomes</div>
-                <div class="text-[10px] text-txt-muted/60 mt-1">Signals need 24h+ to verify</div>
+                <div class="text-sm text-cyber font-medium">Verification in Progress</div>
+                <div class="text-[10px] text-txt-muted/60 mt-1">Results appear after 24h of price data</div>
               </div>
             )}
           </div>

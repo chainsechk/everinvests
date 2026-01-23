@@ -86,24 +86,36 @@ function getCategoryTickers(category: Category): string[] {
 // Calculate average price from the signal's stored data
 function getSignalPrice(signal: SignalToCheck): number | null {
   try {
-    const data = JSON.parse(signal.data_json) as SignalPriceData;
+    const data = JSON.parse(signal.data_json);
 
-    // Category-level signals may have avgPrice or individual asset prices
-    if (typeof data.price === "number") {
-      return data.price;
-    }
-
-    if (typeof data.avgPrice === "number") {
-      return data.avgPrice;
-    }
-
-    // Calculate from assets if available
-    if (Array.isArray(data.assets) && data.assets.length > 0) {
-      const prices = data.assets
-        .map((a) => a.price)
+    // Handle root-level array format (actual stored format from storeSignal)
+    // Format: [{ticker: "BTC", price: 95000, ...}, {ticker: "ETH", price: 3200, ...}]
+    if (Array.isArray(data) && data.length > 0) {
+      const prices = data
+        .map((a: { price?: number }) => a.price)
         .filter((p): p is number => typeof p === "number" && p > 0);
       if (prices.length > 0) {
         return prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      }
+    }
+
+    // Fallback: object format with price/avgPrice at root
+    const objData = data as SignalPriceData;
+    if (typeof objData === "object" && objData !== null) {
+      if (typeof objData.price === "number") {
+        return objData.price;
+      }
+      if (typeof objData.avgPrice === "number") {
+        return objData.avgPrice;
+      }
+      // Nested assets array format
+      if (Array.isArray(objData.assets) && objData.assets.length > 0) {
+        const prices = objData.assets
+          .map((a) => a.price)
+          .filter((p): p is number => typeof p === "number" && p > 0);
+        if (prices.length > 0) {
+          return prices.reduce((sum: number, p: number) => sum + p, 0) / prices.length;
+        }
       }
     }
 
