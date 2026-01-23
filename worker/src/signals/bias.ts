@@ -437,13 +437,25 @@ export function identifyRisks(
   }
 
   // Category-specific risks
+  // Note: secondaryInd can be "F&G:45", "YC:normal", or plain numbers like "52.3"
   if (category === "crypto") {
-    const highFunding = assetSignals.some(s => parseFloat(s.secondaryInd) > 0.05);
-    if (highFunding) {
-      risks.push("Elevated funding rates - squeeze risk");
+    // Check for extreme F&G (greed > 75 = euphoria risk)
+    const highGreed = assetSignals.some(s => {
+      const match = s.secondaryInd.match(/F&G:(\d+)/);
+      if (match) return parseInt(match[1]) > 75;
+      // Fallback: old funding rate format (plain decimal)
+      const val = parseFloat(s.secondaryInd);
+      return !isNaN(val) && val > 0.05;
+    });
+    if (highGreed) {
+      risks.push("Extreme greed / elevated funding - squeeze risk");
     }
   } else if (category === "stocks") {
-    const highRSI = assetSignals.filter(s => parseFloat(s.secondaryInd) > 65).length;
+    // Check for overbought RSI (only for plain numeric values)
+    const highRSI = assetSignals.filter(s => {
+      const val = parseFloat(s.secondaryInd);
+      return !isNaN(val) && val > 65;
+    }).length;
     if (highRSI > assetSignals.length / 2) {
       risks.push("Multiple overbought readings - pullback risk");
     }

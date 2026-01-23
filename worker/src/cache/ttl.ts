@@ -33,7 +33,12 @@ const CACHE_PREFIX = "everinvests-api-cache-v1";
 function getCacheKey(url: string): string {
   // Use a fake domain with the URL encoded to create a valid cache key
   // Strip API keys from the URL to avoid exposing them in cache
-  const sanitizedUrl = url.replace(/apikey=[^&]+/, "apikey=REDACTED");
+  // Handle various API key parameter names: apikey, api_key, key, token
+  const sanitizedUrl = url
+    .replace(/\bapikey=[^&]+/gi, "apikey=REDACTED")
+    .replace(/\bapi_key=[^&]+/gi, "api_key=REDACTED")
+    .replace(/\bkey=[^&]+/gi, "key=REDACTED")
+    .replace(/\btoken=[^&]+/gi, "token=REDACTED");
   return `https://cache.everinvests.local/${CACHE_PREFIX}/${encodeURIComponent(sanitizedUrl)}`;
 }
 

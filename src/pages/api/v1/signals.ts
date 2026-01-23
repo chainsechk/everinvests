@@ -181,15 +181,30 @@ export async function GET(context: APIContext) {
           }
 
           // Count signals for confluence if not already provided
+          // Note: "confirms"/"diverges" are volume confirmations, not directional signals
+          // Only count actual directional signals (bullish/bearish)
           let computedConfluence = confluence;
           if (!computedConfluence) {
-            const signals = [trendSignal, volumeConfirmation, strengthSignal].filter(Boolean);
-            const bullish = signals.filter(s => s === "bullish" || s === "confirms").length;
-            const bearish = signals.filter(s => s === "bearish" || s === "diverges").length;
-            if (bullish > bearish) {
-              computedConfluence = `${bullish}/${signals.length} bullish`;
+            const directionalSignals = [trendSignal, strengthSignal].filter(Boolean);
+            const bullish = directionalSignals.filter(s => s === "bullish").length;
+            const bearish = directionalSignals.filter(s => s === "bearish").length;
+            // Add volume confirmation as a signal only if it confirms the dominant direction
+            if (volumeConfirmation === "confirms" && trendSignal) {
+              if (trendSignal === "bullish") {
+                computedConfluence = `${bullish + 1}/3 bullish`;
+              } else if (trendSignal === "bearish") {
+                computedConfluence = `${bearish + 1}/3 bearish`;
+              } else {
+                computedConfluence = bullish > bearish
+                  ? `${bullish}/3 bullish`
+                  : bearish > bullish
+                    ? `${bearish}/3 bearish`
+                    : "mixed";
+              }
+            } else if (bullish > bearish) {
+              computedConfluence = `${bullish}/3 bullish`;
             } else if (bearish > bullish) {
-              computedConfluence = `${bearish}/${signals.length} bearish`;
+              computedConfluence = `${bearish}/3 bearish`;
             } else {
               computedConfluence = "mixed";
             }

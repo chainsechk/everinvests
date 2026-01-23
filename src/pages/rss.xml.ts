@@ -8,8 +8,8 @@ interface SignalRow {
   date: string;
   time_slot: string;
   bias: string;
-  summary: string;
-  created_at: string;
+  output_json: string | null;
+  generated_at: string;
 }
 
 function escapeXml(text: string): string {
@@ -61,10 +61,10 @@ export async function GET(context: APIContext) {
   if (db) {
     try {
       const query = category
-        ? `SELECT id, category, date, time_slot, bias, summary, created_at
+        ? `SELECT id, category, date, time_slot, bias, output_json, generated_at
            FROM signals WHERE category = ?
            ORDER BY date DESC, time_slot DESC LIMIT 50`
-        : `SELECT id, category, date, time_slot, bias, summary, created_at
+        : `SELECT id, category, date, time_slot, bias, output_json, generated_at
            FROM signals
            ORDER BY date DESC, time_slot DESC LIMIT 50`;
 
@@ -85,7 +85,10 @@ export async function GET(context: APIContext) {
     const title = `${emoji} ${categoryTitle}: ${biasEmoji} ${signal.bias}`;
     const link = `${SITE_URL}/${signal.category}/${signal.date}/${signal.time_slot}`;
     const pubDate = formatRfc822Date(signal.date, signal.time_slot);
-    const description = escapeXml(signal.summary || `${categoryTitle} signal is ${signal.bias} for ${signal.date} ${signal.time_slot} UTC`);
+    // Extract summary from output_json (summary column doesn't exist in schema)
+    const output = signal.output_json ? JSON.parse(signal.output_json) : null;
+    const summary = output?.summary || `${categoryTitle} signal is ${signal.bias} for ${signal.date} ${signal.time_slot} UTC`;
+    const description = escapeXml(summary);
 
     return `    <item>
       <title>${escapeXml(title)}</title>

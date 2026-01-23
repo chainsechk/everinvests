@@ -180,7 +180,7 @@ ${data.yieldSpread ? `**2Y-10Y Spread:** ${data.yieldSpread.toFixed(2)}%` : ""}`
       },
       async ({ category, days }) => {
         const signals = await this.env.DB.prepare(
-          `SELECT s.date, s.time_slot, s.bias, s.summary,
+          `SELECT s.date, s.time_slot, s.bias, s.output_json,
                   o.correct, o.price_change_pct
            FROM signals s
            LEFT JOIN signal_outcomes o ON s.id = o.signal_id
@@ -191,7 +191,7 @@ ${data.yieldSpread ? `**2Y-10Y Spread:** ${data.yieldSpread.toFixed(2)}%` : ""}`
           date: string;
           time_slot: string;
           bias: string;
-          summary: string;
+          output_json: string | null;
           correct: number | null;
           price_change_pct: number | null;
         }>();

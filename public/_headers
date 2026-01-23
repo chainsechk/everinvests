@@ -1,0 +1,72 @@
+# Edge caching headers for Cloudflare Pages
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# Category landing pages - short TTL (updates 3x/day)
+/crypto
+  Cache-Control: public, max-age=300, s-maxage=300
+/forex
+  Cache-Control: public, max-age=300, s-maxage=300
+/stocks
+  Cache-Control: public, max-age=300, s-maxage=300
+
+# Historical signal pages - long TTL (never changes)
+/crypto/:date/:time
+  Cache-Control: public, max-age=604800, s-maxage=604800
+/forex/:date/:time
+  Cache-Control: public, max-age=604800, s-maxage=604800
+/stocks/:date/:time
+  Cache-Control: public, max-age=604800, s-maxage=604800
+
+# History pages - medium TTL
+/crypto/history
+  Cache-Control: public, max-age=3600, s-maxage=3600
+/forex/history
+  Cache-Control: public, max-age=3600, s-maxage=3600
+/stocks/history
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+# Performance page - updates daily at 01:00 UTC
+/performance
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+# Learn/Guide pages - long TTL (static content)
+/learn/*
+  Cache-Control: public, max-age=86400, s-maxage=86400
+/guides/*
+  Cache-Control: public, max-age=86400, s-maxage=86400
+
+# About/Terms - long TTL (static)
+/about
+  Cache-Control: public, max-age=86400, s-maxage=86400
+/terms
+  Cache-Control: public, max-age=86400, s-maxage=86400
+
+# Blog - medium TTL (weekly updates)
+/blog
+  Cache-Control: public, max-age=3600, s-maxage=3600
+/blog/*
+  Cache-Control: public, max-age=86400, s-maxage=86400
+
+# RSS feed - short TTL (matches content freshness)
+/rss.xml
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+# Embed pages - short TTL (shows latest signals)
+/embed/*
+  Cache-Control: public, max-age=300, s-maxage=300
+
+# OG images - long TTL (generated once per signal)
+/og/*
+  Cache-Control: public, max-age=604800, s-maxage=604800
+
+# API endpoints - handle their own caching
+/api/*
+  Cache-Control: no-store
+
+# Static assets - very long TTL
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/*.ico
+  Cache-Control: public, max-age=31536000, immutable
