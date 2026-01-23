@@ -9,6 +9,25 @@ interface TrackEvent {
   meta?: Record<string, unknown>;
 }
 
+function anonymizeIp(ip: string | null): string | null {
+  if (!ip || ip === "unknown") return null;
+
+  // IPv6
+  if (ip.includes(":")) {
+    const parts = ip.split(":").filter(Boolean);
+    if (parts.length === 0) return null;
+    return `${parts.slice(0, 3).join(":")}::`;
+  }
+
+  // IPv4
+  const parts = ip.split(".");
+  if (parts.length === 4) {
+    return `${parts[0]}.${parts[1]}.*.*`;
+  }
+
+  return null;
+}
+
 export async function POST(context: APIContext) {
   const db = context.locals.runtime?.env?.DB;
 
@@ -44,27 +63,29 @@ export async function POST(context: APIContext) {
   const userAgent = context.request.headers.get("user-agent") || "unknown";
   const referer = context.request.headers.get("referer") || "direct";
   const ip = context.request.headers.get("cf-connecting-ip") || "unknown";
+  const ipPrefix = anonymizeIp(ip);
+  const pagePath =
+    typeof meta?.path === "string" ? meta.path :
+    typeof meta?.page_path === "string" ? meta.page_path :
+    null;
 
-  // If DB is available, log to run_logs table
-  // Using existing schema: category, time_slot, run_at, status, duration_ms, error_msg
+  // If DB is available, store analytics event (best-effort; never block user)
   if (db) {
     try {
       await db
         .prepare(
-          `INSERT INTO run_logs (category, time_slot, run_at, status, error_msg)
-           VALUES (?, ?, datetime('now'), ?, ?)`
+          `INSERT INTO analytics_events (event, category, source, page_path, referer, user_agent, ip_prefix, meta_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
         )
         .bind(
-          "analytics",
-          event, // time_slot holds the event type
-          category || "unknown", // status holds the signal category
-          JSON.stringify({
-            source: source || null,
-            meta: meta || null,
-            referer,
-            // Don't store full IP for privacy
-            ipPrefix: ip.split(".").slice(0, 2).join(".") + ".*.*",
-          })
+          event,
+          category || null,
+          source || null,
+          pagePath,
+          referer,
+          userAgent,
+          ipPrefix,
+          meta ? JSON.stringify(meta) : null
         )
         .run();
     } catch (err) {

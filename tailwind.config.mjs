@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+const withAlpha = (value) =>
+  `color-mix(in srgb, ${value} calc(<alpha-value> * 100%), transparent)`;
+
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
   theme: {
@@ -6,64 +9,64 @@ export default {
       colors: {
         // Theme-aware colors using CSS variables
         bg: {
-          primary: "var(--bg-primary)",
-          secondary: "var(--bg-secondary)",
-          tertiary: "var(--bg-tertiary)",
-          elevated: "var(--bg-elevated)",
+          primary: withAlpha("var(--bg-primary)"),
+          secondary: withAlpha("var(--bg-secondary)"),
+          tertiary: withAlpha("var(--bg-tertiary)"),
+          elevated: withAlpha("var(--bg-elevated)"),
         },
         txt: {
-          primary: "var(--text-primary)",
-          secondary: "var(--text-secondary)",
-          muted: "var(--text-muted)",
-          tertiary: "var(--text-muted)",
-          inverse: "var(--text-inverse)",
+          primary: withAlpha("var(--text-primary)"),
+          secondary: withAlpha("var(--text-secondary)"),
+          muted: withAlpha("var(--text-muted)"),
+          tertiary: withAlpha("var(--text-muted)"),
+          inverse: withAlpha("var(--text-inverse)"),
         },
         // Signal colors
         bullish: {
-          DEFAULT: "var(--bullish)",
-          bg: "var(--bullish-bg)",
-          glow: "var(--bullish-bg)",
-          dim: "var(--bullish-bg)",
+          DEFAULT: withAlpha("var(--bullish)"),
+          bg: withAlpha("var(--bullish-bg)"),
+          glow: withAlpha("var(--bullish-bg)"),
+          dim: withAlpha("var(--bullish-bg)"),
         },
         bearish: {
-          DEFAULT: "var(--bearish)",
-          bg: "var(--bearish-bg)",
-          glow: "var(--bearish-bg)",
-          dim: "var(--bearish-bg)",
+          DEFAULT: withAlpha("var(--bearish)"),
+          bg: withAlpha("var(--bearish-bg)"),
+          glow: withAlpha("var(--bearish-bg)"),
+          dim: withAlpha("var(--bearish-bg)"),
         },
         neutral: {
-          DEFAULT: "var(--neutral)",
-          bg: "var(--neutral-bg)",
-          glow: "var(--neutral-bg)",
-          dim: "var(--neutral-bg)",
+          DEFAULT: withAlpha("var(--neutral)"),
+          bg: withAlpha("var(--neutral-bg)"),
+          glow: withAlpha("var(--neutral-bg)"),
+          dim: withAlpha("var(--neutral-bg)"),
         },
         // Accent colors
         accent: {
-          DEFAULT: "var(--accent)",
-          secondary: "var(--accent-secondary)",
-          bg: "var(--accent-bg)",
+          DEFAULT: withAlpha("var(--accent)"),
+          secondary: withAlpha("var(--accent-secondary)"),
+          bg: withAlpha("var(--accent-bg)"),
         },
         cyber: {
-          DEFAULT: "var(--accent)",
-          glow: "var(--accent-bg)",
+          DEFAULT: withAlpha("var(--accent)"),
+          glow: withAlpha("var(--accent-bg)"),
         },
         // VIP colors
         vip: {
-          DEFAULT: "var(--vip)",
-          bg: "var(--vip-bg)",
-          glow: "var(--vip-bg)",
+          DEFAULT: withAlpha("var(--vip)"),
+          bg: withAlpha("var(--vip-bg)"),
+          glow: withAlpha("var(--vip-bg)"),
         },
         // Legacy void colors for backward compatibility
         // Maps to the new theme-aware CSS variables
         void: {
-          DEFAULT: "var(--bg-primary)",
-          50: "var(--bg-secondary)",
-          100: "var(--bg-tertiary)",
-          200: "var(--bg-elevated)",
+          DEFAULT: withAlpha("var(--bg-primary)"),
+          50: withAlpha("var(--bg-secondary)"),
+          100: withAlpha("var(--bg-tertiary)"),
+          200: withAlpha("var(--bg-elevated)"),
         },
         // Macro colors
-        riskon: "var(--bullish)",
-        riskoff: "var(--bearish)",
+        riskon: withAlpha("var(--bullish)"),
+        riskoff: withAlpha("var(--bearish)"),
         mixed: "#fbbf24",
       },
       fontFamily: {

@@ -106,56 +106,53 @@ const schedule = schedules[category] || [0, 8, 16];
   function updateCountdowns() {
     document.querySelectorAll('.next-update-card').forEach((card) => {
       const category = card.getAttribute('data-category');
-      const schedule = JSON.parse(card.getAttribute('data-schedule') || '[]');
+      const schedule = JSON.parse(card.getAttribute('data-schedule') || '[]').slice().sort((a, b) => a - b);
       const countdownEl = card.querySelector('.countdown-text');
       if (!countdownEl || !schedule.length) return;
 
       const now = new Date();
-      const utcHour = now.getUTCHours();
-      const utcMinute = now.getUTCMinutes();
+      const nowMs = now.getTime();
       const dayOfWeek = now.getUTCDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
       // For forex/stocks, skip weekends
       const skipWeekend = category === 'forex' || category === 'stocks';
 
-      let nextHour = schedule.find((h: number) => h > utcHour);
-      let daysToAdd = 0;
+      // Find next update by scanning forward up to 7 days (covers weekend skips)
+      let nextUpdate = null;
+      for (let dayOffset = 0; dayOffset <= 7; dayOffset++) {
+        const candidateDay = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() + dayOffset,
+          0, 0, 0, 0
+        ));
 
-      if (nextHour === undefined) {
-        // Next update is tomorrow
-        nextHour = schedule[0];
-        daysToAdd = 1;
+        const dow = candidateDay.getUTCDay();
+        if (skipWeekend && (dow === 0 || dow === 6)) continue;
+
+        for (const hour of schedule) {
+          const candidate = new Date(candidateDay);
+          candidate.setUTCHours(hour, 0, 0, 0);
+          if (candidate.getTime() > nowMs) {
+            nextUpdate = candidate;
+            break;
+          }
+        }
+
+        if (nextUpdate) break;
       }
 
-      // Adjust for weekends if needed (forex/stocks don't update on weekends)
-      if (skipWeekend) {
-        // Calculate the target day with proper wrapping (0=Sun, 1=Mon, ..., 6=Sat)
-        let targetDay = (dayOfWeek + daysToAdd) % 7;
-
-        // If target lands on Saturday (6), skip to Monday (+2 days)
-        if (targetDay === 6) {
-          daysToAdd += 2;
-        }
-        // If target lands on Sunday (0), skip to Monday (+1 day)
-        else if (targetDay === 0) {
-          daysToAdd += 1;
-        }
-      }
-
-      // Calculate time difference
-      const nextUpdate = new Date(now);
-      nextUpdate.setUTCDate(nextUpdate.getUTCDate() + daysToAdd);
-      nextUpdate.setUTCHours(nextHour, 0, 0, 0);
+      if (!nextUpdate) return;
 
       const diffMs = nextUpdate.getTime() - now.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const hours = Math.floor(diffMins / 60);
+      const diffMins = Math.max(0, Math.floor(diffMs / (1000 * 60)));
+      const days = Math.floor(diffMins / (60 * 24));
+      const hours = Math.floor((diffMins - days * 60 * 24) / 60);
       const mins = diffMins % 60;
 
       let text = '';
-      if (daysToAdd > 1) {
-        text = `${daysToAdd}d ${hours % 24}h`;
+      if (days > 0) {
+        text = `${days}d ${hours}h`;
       } else if (hours > 0) {
         text = `${hours}h ${mins}m`;
       } else {
@@ -165,7 +162,7 @@ const schedule = schedules[category] || [0, 8, 16];
       countdownEl.textContent = text;
 
       // Add urgent class if less than 30 minutes
-      if (diffMins <= 30 && daysToAdd === 0) {
+      if (diffMins <= 30 && days === 0) {
         card.classList.add('urgent');
       } else {
         card.classList.remove('urgent');

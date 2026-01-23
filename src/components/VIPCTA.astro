@@ -124,6 +124,7 @@ const features = [
             event: 'vip_cta_click',
             category,
             source: 'vipcta_component',
+            meta: { path: window.location.pathname },
           }),
         }).catch(() => {}); // Ignore errors
 

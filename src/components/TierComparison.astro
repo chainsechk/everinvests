@@ -91,7 +91,7 @@ const features = [
       </thead>
       <tbody>
         {features.map((feature, i) => (
-          <tr class:list={["border-b border-border/50", i % 2 === 0 ? "bg-surface/30" : ""]}>
+          <tr class:list={["border-b border-subtle", i % 2 === 0 ? "bg-bg-secondary/30" : ""]}>
             <td class="py-3 px-4 text-txt-secondary">{feature.name}</td>
             <td class="text-center py-3 px-4">
               {feature.free.included ? (
@@ -137,7 +137,7 @@ const features = [
     </div>
 
     {features.map((feature) => (
-      <div class="border-b border-border/50 pb-3">
+      <div class="border-b border-subtle pb-3">
         <div class="font-medium text-txt-secondary text-sm mb-2">{feature.name}</div>
         <div class="grid grid-cols-2 gap-4 text-xs">
           <div class={feature.free.included ? "text-txt-muted" : "text-txt-muted/50"}>

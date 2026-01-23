@@ -85,6 +85,7 @@ const vipConfig = vipMode === "live"
         body: JSON.stringify({
           event: 'telegram_cta_click',
           source: ctaType,
+          meta: { path: window.location.pathname },
         }),
       }).catch(() => {});
     });

@@ -159,7 +159,27 @@ const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   }
 </style>
 
-<script>
+<script define:vars={{ category, bias, url }}>
+  function trackShare(shareType) {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'share_click',
+        category,
+        source: shareType,
+        meta: { path: window.location.pathname, bias, url },
+      }),
+    }).catch(() => {});
+  }
+
+  // Track share button clicks (opens in new tab, so fire-and-forget)
+  document.querySelectorAll('.share-btn[data-share]').forEach((btn) => {
+    const shareType = btn.getAttribute('data-share');
+    if (!shareType || shareType === 'copy') return; // copy tracked in the copy handler
+    btn.addEventListener('click', () => trackShare(shareType));
+  });
+
   const copyBtn = document.getElementById('copy-link-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', async () => {
@@ -167,6 +187,7 @@ const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
       if (!url) return;
 
       try {
+        trackShare('copy');
         await navigator.clipboard.writeText(url);
         copyBtn.classList.add('copied');
         const textEl = copyBtn.querySelector('.btn-text');
