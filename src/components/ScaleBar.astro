@@ -53,12 +53,12 @@ const label = getLabel(value, type);
 
 {compact ? (
   <!-- Compact: single row with value, bar, label -->
-  <div class="flex items-center gap-2 min-w-[90px]">
-    <span class="font-mono text-xs font-medium text-txt-primary w-5">{value}</span>
+  <div class="flex items-center gap-2 min-w-[120px]">
+    <span class="font-mono text-xs font-medium text-txt-primary w-7 shrink-0 text-right">{Math.round(value)}</span>
     <div class="flex-1 h-1.5 rounded-full overflow-hidden relative scale-bar-track">
       <div class:list={["absolute left-0 top-0 h-full rounded-full", barColor]} style={`width: ${percentage}%`}></div>
     </div>
-    {label && <span class="text-xs text-txt-muted whitespace-nowrap">{label}</span>}
+    {label && <span class="text-xs text-txt-muted whitespace-nowrap shrink-0">{label}</span>}
   </div>
 ) : (
   <!-- Full: stacked layout with 0-100 scale -->
