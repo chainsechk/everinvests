@@ -45,24 +45,22 @@ export async function POST(context: APIContext) {
   const referer = context.request.headers.get("referer") || "direct";
   const ip = context.request.headers.get("cf-connecting-ip") || "unknown";
 
-  // If DB is available, log to run_logs table with 'analytics' category
+  // If DB is available, log to run_logs table
+  // Using existing schema: category, time_slot, run_at, status, duration_ms, error_msg
   if (db) {
     try {
       await db
         .prepare(
-          `INSERT INTO run_logs (category, status, message, data_json, created_at)
-           VALUES (?, ?, ?, ?, datetime('now'))`
+          `INSERT INTO run_logs (category, time_slot, run_at, status, error_msg)
+           VALUES (?, ?, datetime('now'), ?, ?)`
         )
         .bind(
           "analytics",
-          "info",
-          `${event}: ${category || "unknown"}`,
+          event, // time_slot holds the event type
+          category || "unknown", // status holds the signal category
           JSON.stringify({
-            event,
-            category: category || null,
             source: source || null,
             meta: meta || null,
-            userAgent,
             referer,
             // Don't store full IP for privacy
             ipPrefix: ip.split(".").slice(0, 2).join(".") + ".*.*",

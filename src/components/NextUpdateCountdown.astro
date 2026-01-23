@@ -128,13 +128,19 @@ const schedule = schedules[category] || [0, 8, 16];
         daysToAdd = 1;
       }
 
-      // Adjust for weekends if needed
+      // Adjust for weekends if needed (forex/stocks don't update on weekends)
       if (skipWeekend) {
-        let targetDay = dayOfWeek + daysToAdd;
-        if (targetDay === 6) daysToAdd += 2; // Saturday -> Monday
-        if (targetDay === 0) daysToAdd += 1; // Sunday -> Monday
-        if (dayOfWeek === 6 && daysToAdd === 0) daysToAdd = 2; // Today is Saturday
-        if (dayOfWeek === 0 && daysToAdd === 0) daysToAdd = 1; // Today is Sunday
+        // Calculate the target day with proper wrapping (0=Sun, 1=Mon, ..., 6=Sat)
+        let targetDay = (dayOfWeek + daysToAdd) % 7;
+
+        // If target lands on Saturday (6), skip to Monday (+2 days)
+        if (targetDay === 6) {
+          daysToAdd += 2;
+        }
+        // If target lands on Sunday (0), skip to Monday (+1 day)
+        else if (targetDay === 0) {
+          daysToAdd += 1;
+        }
       }
 
       // Calculate time difference

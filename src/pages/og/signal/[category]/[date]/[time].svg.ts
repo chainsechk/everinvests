@@ -33,15 +33,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
     if (db && category && date && time) {
       const signal = await db
         .prepare(
-          `SELECT overall_bias, output_json FROM signals
+          `SELECT bias, output_json FROM signals
            WHERE category = ? AND date = ? AND time_slot = ?
            LIMIT 1`
         )
         .bind(category, date, time)
-        .first<{ overall_bias: string; output_json: string | null }>();
+        .first<{ bias: string; output_json: string | null }>();
 
       if (signal) {
-        bias = signal.overall_bias;
+        bias = signal.bias;
 
         // Try to extract summary from output_json
         if (signal.output_json) {
