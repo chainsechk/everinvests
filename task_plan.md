@@ -1,5 +1,98 @@
 # Task Plan: EverInvests Growth Optimization
 
+## Current Task: P0/P1 Bug Fixes (2026-01-23)
+
+**Goal:** Fix critical bugs and add protective measures for production stability.
+
+### P0 Fixes (Critical)
+| Task | Description | Status |
+|------|-------------|--------|
+| P0.1 | RSS/MCP schema mismatch: `signals.summary`/`signals.created_at` don't exist | `complete` |
+| P0.2 | Confluence fallback counts "confirms" as bullish (conceptually wrong) | `complete` |
+| P0.3 | Cache key redaction misses `api_key=` (FRED API) | `complete` |
+| P0.4 | Risk heuristics parseFloat on "F&G:xx" / "YC:..." strings | `complete` |
+
+### P1 Fixes (Important)
+| Task | Description | Status |
+|------|-------------|--------|
+| P1.1 | `/api/track` unauthenticated D1 writes - add rate limiting | `complete` |
+| P1.2 | Edge caching for SSR pages (short TTL for latest, long for archived) | `complete` |
+
+---
+
+## Current Task: i18n Implementation (IN PROGRESS)
+
+**Goal:** Add internationalization support starting with 5 core languages.
+
+**Status:** Infrastructure complete, page migration in progress
+
+### Scope Decision
+**UI-only translation** (signal summaries stay English for now - separate project)
+
+### Pre-i18n Fixes (Complete)
+| Issue | Description | Status |
+|-------|-------------|--------|
+| FIX-1 | SSR caching via middleware (not `_headers`) | `complete` |
+| FIX-2 | Centralized `absoluteUrl()` for site URLs | `complete` |
+| FIX-3 | Locale-aware formatting in `src/lib/i18n.ts` | `complete` |
+| FIX-4 | `l(path, locale)` link builder | `complete` |
+
+### Platform Layer (Complete)
+| Utility | Purpose | Status |
+|---------|---------|--------|
+| `getLocaleFromUrl()` | Get current locale from URL | `complete` |
+| `t(key, locale, vars)` | Translation lookup with interpolation | `complete` |
+| `useTranslations(locale)` | Bound translation function for components | `complete` |
+| `l(path, locale)` | Localized link builder | `complete` |
+| `formatDate(date, locale)` | Locale-aware date formatting | `complete` |
+| `formatNumber(num, locale)` | Locale-aware number formatting | `complete` |
+| `formatRelativeTime(date, locale)` | Relative time ("2 hours ago") | `complete` |
+| `getDirection(locale)` | RTL detection for Arabic | `complete` |
+| `getAlternateUrls()` | Generate hreflang URLs | `complete` |
+
+### Implementation Phases
+| Phase | Description | Status |
+|-------|-------------|--------|
+| i18n-0 | Pre-i18n fixes (FIX-1 through FIX-4) | `complete` |
+| i18n-1 | Platform layer: src/i18n/index.ts | `complete` |
+| i18n-2 | Astro i18n config + BaseLayout (lang/dir/hreflang) | `complete` |
+| i18n-3 | Homepage + Header + Footer migration | `complete` |
+| i18n-4 | Category pages migration (crypto, forex, stocks) | `complete` |
+| i18n-5 | Signal detail pages + components | `complete` |
+| i18n-6 | Learn/educational pages | `pending` |
+| i18n-7 | Language switcher component | `pending` |
+| i18n-8 | Localized page routes ([locale]/...) | `pending` |
+| i18n-9 | Additional languages (expand from 5 to 15) | `pending` |
+| i18n-10 | RTL testing + CJK/Cyrillic OG fonts | `pending` |
+
+### Current Languages (5 - Phase 1)
+| Priority | Language | Code | Script | Status |
+|----------|----------|------|--------|--------|
+| 1 | English | en | Latin | Base (default) |
+| 2 | Spanish | es | Latin | Translation complete |
+| 3 | Chinese | zh | Simplified Han | Translation complete |
+| 4 | Arabic | ar | Arabic (RTL) | Translation complete |
+| 5 | Portuguese | pt | Latin | Translation complete |
+
+### Files Created/Modified (2026-01-24)
+- `src/i18n/index.ts` - Translation module (t, l, useTranslations, etc.)
+- `src/i18n/locales/en.json` - English translations (~80 keys)
+- `src/i18n/locales/es.json` - Spanish translations
+- `src/i18n/locales/zh.json` - Chinese translations
+- `src/i18n/locales/ar.json` - Arabic translations
+- `src/i18n/locales/pt.json` - Portuguese translations
+- `src/lib/i18n.ts` - Updated to re-export from i18n module
+- `src/layouts/BaseLayout.astro` - Dynamic lang/dir, hreflang tags
+- `src/components/Header.astro` - Localized nav links
+- `src/components/Footer.astro` - Localized links + copyright
+- `src/pages/index.astro` - Homepage using t() function
+- `astro.config.mjs` - i18n routing configuration
+
+### Commit
+`32c7ad0` - feat: i18n infrastructure with 5-locale support (deployed to prod)
+
+---
+
 ## Current Task: Tighten Growth Loop (2026-01-23)
 
 ### New Phase: Analytics & OG Enhancement

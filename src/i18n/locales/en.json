@@ -72,6 +72,8 @@
   "categoryPage.assetBreakdown": "Asset Breakdown",
   "categoryPage.usingLastData": "Using last available data",
   "categoryPage.recentHistory": "Recent History",
+  "categoryPage.recentSignals": "Recent Signals",
+  "categoryPage.noHistory": "No historical signals available yet.",
   "categoryPage.viewFullHistory": "View full history",
   "categoryPage.learnMore": "Learn More",
 
@@ -107,7 +109,28 @@
   "common.back": "Back",
   "common.previous": "Previous",
   "common.next": "Next",
+  "common.current": "Current",
+  "common.at": "at",
   "common.loading": "Loading...",
   "common.error": "Something went wrong",
-  "common.retry": "Try again"
+  "common.retry": "Try again",
+
+  "signalPage.title": "{category} Signal",
+  "signalPage.recentSignals": "Recent {category} Signals",
+  "signalPage.backTo": "Back to {category} Signals",
+  "signalPage.howWeCalculate": "How we calculate signals",
+  "signalPage.whatDoesMean": "What does {bias} mean?",
+
+  "signalDetail.macro": "Macro:",
+  "signalDetail.latestPrices": "Latest Prices",
+  "signalDetail.keyLevels": "Key Levels",
+  "signalDetail.bullishTriggers": "Bullish Triggers",
+  "signalDetail.riskFactors": "Risk Factors",
+  "signalDetail.noTriggers": "No bullish triggers identified today",
+  "signalDetail.noRisks": "No risk factors identified today",
+  "signalDetail.macroFallback": "Macro data unavailable - using fallback",
+  "signalDetail.macroStale": "Macro data may be stale (cached)",
+  "signalDetail.missingAssets": "Missing assets: {assets}",
+  "signalDetail.staleAssets": "Stale data: {assets}",
+  "signalDetail.outlierValues": "Outlier values detected: {outliers}"
 }

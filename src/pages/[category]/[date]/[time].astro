@@ -21,12 +21,15 @@ import {
 } from "../../../lib/db";
 import type { Category } from "../../../lib/db";
 import { absoluteUrl } from "../../../lib/site";
-import { formatDateFull, formatDateShort, DEFAULT_LOCALE } from "../../../lib/i18n";
+import { formatDateFull, formatDateShort } from "../../../lib/i18n";
+import { getLocaleFromUrl, useTranslations, l } from "../../../i18n";
 import RelatedSignals from "../../../components/RelatedSignals.astro";
 import DeltaBadge from "../../../components/DeltaBadge.astro";
 import ShareBlock from "../../../components/ShareBlock.astro";
 
 const { category: catParam, date, time } = Astro.params;
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 // Validate category
 const category = normalizeCategory(catParam ?? "");
@@ -80,16 +83,17 @@ if (signal.output_json) {
 }
 
 // Category metadata
-const categoryMeta: Record<Category, { title: string; icon: string }> = {
-  crypto: { title: "Crypto", icon: "₿" },
-  forex: { title: "Forex", icon: "$" },
-  stocks: { title: "Stocks", icon: "📈" },
+const categoryMeta: Record<Category, { titleKey: string; icon: string }> = {
+  crypto: { titleKey: "category.crypto", icon: "₿" },
+  forex: { titleKey: "category.forex", icon: "$" },
+  stocks: { titleKey: "category.stocks", icon: "📈" },
 };
 
-const { title: categoryTitle, icon: categoryIcon } = categoryMeta[category];
+const { titleKey, icon: categoryIcon } = categoryMeta[category];
+const categoryTitle = t(titleKey);
 
-const pageTitle = `${categoryTitle} Signal - ${formatDateShort(date, DEFAULT_LOCALE)} at ${time} UTC`;
-const pageDescription = `${categoryTitle} market signal for ${formatDateFull(date, DEFAULT_LOCALE)} at ${time} UTC. Bias: ${signal.bias}.`;
+const pageTitle = `${t("signalPage.title", { category: categoryTitle })} - ${formatDateShort(date, locale)} ${t("common.at")} ${time} UTC`;
+const pageDescription = `${categoryTitle} market signal for ${formatDateFull(date, locale)} ${t("common.at")} ${time} UTC. Bias: ${signal.bias}.`;
 
 // Parse summary for JSON-LD
 let summary = "";
@@ -134,21 +138,21 @@ const articleSchema = {
 };
 ---
 
-<BaseLayout title={pageTitle} description={pageDescription} image={`/og/signal/${category}/${date}/${time}.png`} jsonLd={articleSchema}>
-  <Header slot="header" />
+<BaseLayout title={pageTitle} description={pageDescription} image={`/og/signal/${category}/${date}/${time}.png`} jsonLd={articleSchema} locale={locale}>
+  <Header slot="header" locale={locale} />
 
   <div class="space-y-8">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-sm flex-wrap" data-animate>
-      <a href="/" class="text-txt-muted hover:text-txt-primary transition-colors">Home</a>
+      <a href={l("/", locale)} class="text-txt-muted hover:text-txt-primary transition-colors">{t("nav.home")}</a>
       <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
-      <a href={`/${category}`} class="text-txt-muted hover:text-txt-primary transition-colors">{categoryTitle}</a>
+      <a href={l(`/${category}`, locale)} class="text-txt-muted hover:text-txt-primary transition-colors">{categoryTitle}</a>
       <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
-      <span class="text-txt-primary font-medium">{formatDateShort(date, DEFAULT_LOCALE)} {time}</span>
+      <span class="text-txt-primary font-medium">{formatDateShort(date, locale)} {time}</span>
     </nav>
 
     <!-- Page Header -->
@@ -157,12 +161,12 @@ const articleSchema = {
         <div class="flex items-center gap-3 mb-2">
           <span class="text-3xl">{categoryIcon}</span>
           <h1 class="font-display font-bold text-2xl sm:text-3xl text-txt-primary">
-            {categoryTitle} Signal
+            {t("signalPage.title", { category: categoryTitle })}
           </h1>
         </div>
-        <p class="text-txt-secondary">{formatDateFull(date, DEFAULT_LOCALE)} at {time} UTC</p>
+        <p class="text-txt-secondary">{formatDateFull(date, locale)} {t("common.at")} {time} UTC</p>
       </div>
-      <TelegramCTA variant="compact" />
+      <TelegramCTA variant="compact" locale={locale} />
     </div>
 
     <!-- Macro Context (if available for this signal) -->
@@ -176,21 +180,21 @@ const articleSchema = {
     )}
 
     <!-- Signal Detail -->
-    <SignalDetail signal={signal} />
+    <SignalDetail signal={signal} locale={locale} />
 
     <!-- How This Signal Was Calculated -->
     <div class="flex flex-wrap items-center gap-4 text-sm" data-animate>
-      <a href="/learn/methodology" class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
+      <a href={l("/learn/methodology", locale)} class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        How we calculate signals
+        {t("signalPage.howWeCalculate")}
       </a>
-      <a href="/learn/glossary#bias" class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
+      <a href={l("/learn/glossary#bias", locale)} class="inline-flex items-center gap-1.5 text-txt-muted hover:text-cyber transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        What does {signal.bias} mean?
+        {t("signalPage.whatDoesMean", { bias: signal.bias })}
       </a>
     </div>
 
@@ -213,8 +217,8 @@ const articleSchema = {
     <!-- Asset Table -->
     {assets.length > 0 && (
       <div class="card" data-animate>
-        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">Asset Breakdown</h2>
-        <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} />
+        <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">{t("categoryPage.assetBreakdown")}</h2>
+        <AssetTable assets={assets} category={category} qualityFlags={qualityFlags} locale={locale} />
       </div>
     )}
 
@@ -230,16 +234,16 @@ const articleSchema = {
     <div class="flex flex-col sm:flex-row gap-4 justify-between" data-animate>
       {prevSignal ? (
         <a
-          href={`/${category}/${prevSignal.date}/${prevSignal.time_slot}`}
+          href={l(`/${category}/${prevSignal.date}/${prevSignal.time_slot}`, locale)}
           class="card-glass flex items-center gap-3 px-4 py-3 hover:border-cyber/30 transition-colors group flex-1"
         >
           <svg class="w-5 h-5 text-txt-muted group-hover:text-cyber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
           <div>
-            <div class="text-xs text-txt-muted uppercase tracking-wide">Previous</div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide">{t("common.previous")}</div>
             <div class="flex items-center gap-2">
-              <span class="text-txt-primary font-medium">{formatDateShort(prevSignal.date, DEFAULT_LOCALE)} {prevSignal.time_slot}</span>
+              <span class="text-txt-primary font-medium">{formatDateShort(prevSignal.date, locale)} {prevSignal.time_slot}</span>
               <BiasIndicator bias={prevSignal.bias} size="sm" />
             </div>
           </div>
@@ -250,14 +254,14 @@ const articleSchema = {
 
       {nextSignal ? (
         <a
-          href={`/${category}/${nextSignal.date}/${nextSignal.time_slot}`}
+          href={l(`/${category}/${nextSignal.date}/${nextSignal.time_slot}`, locale)}
           class="card-glass flex items-center justify-end gap-3 px-4 py-3 hover:border-cyber/30 transition-colors group flex-1 text-right"
         >
           <div>
-            <div class="text-xs text-txt-muted uppercase tracking-wide">Next</div>
+            <div class="text-xs text-txt-muted uppercase tracking-wide">{t("common.next")}</div>
             <div class="flex items-center justify-end gap-2">
               <BiasIndicator bias={nextSignal.bias} size="sm" />
-              <span class="text-txt-primary font-medium">{formatDateShort(nextSignal.date, DEFAULT_LOCALE)} {nextSignal.time_slot}</span>
+              <span class="text-txt-primary font-medium">{formatDateShort(nextSignal.date, locale)} {nextSignal.time_slot}</span>
             </div>
           </div>
           <svg class="w-5 h-5 text-txt-muted group-hover:text-cyber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,15 +277,15 @@ const articleSchema = {
     {recentSignals.length > 0 && (
       <div class="card" data-animate>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-display font-semibold text-lg text-txt-primary">Recent {categoryTitle} Signals</h2>
-          <a href={`/${category}/history`} class="text-sm text-cyber hover:text-cyber-light transition-colors">
-            View all &rarr;
+          <h2 class="font-display font-semibold text-lg text-txt-primary">{t("signalPage.recentSignals", { category: categoryTitle })}</h2>
+          <a href={l(`/${category}/history`, locale)} class="text-sm text-cyber hover:text-cyber-light transition-colors">
+            {t("common.viewAll")} &rarr;
           </a>
         </div>
         <div class="grid gap-2">
           {recentSignals.slice(0, 5).map((s) => (
             <a
-              href={`/${category}/${s.date}/${s.time_slot}`}
+              href={l(`/${category}/${s.date}/${s.time_slot}`, locale)}
               class:list={[
                 "flex items-center justify-between px-3 py-2 rounded-lg hover:bg-subtle transition-colors",
                 s.id === signal.id && "bg-subtle border border-cyber/20"
@@ -290,11 +294,11 @@ const articleSchema = {
               <div class="flex items-center gap-3">
                 <BiasIndicator bias={s.bias} size="sm" />
                 <span class="text-txt-secondary text-sm">
-                  {formatDateShort(s.date, DEFAULT_LOCALE)} at {s.time_slot}
+                  {formatDateShort(s.date, locale)} {t("common.at")} {s.time_slot}
                 </span>
               </div>
               {s.id === signal.id && (
-                <span class="text-xs text-cyber font-medium">Current</span>
+                <span class="text-xs text-cyber font-medium">{t("common.current")}</span>
               )}
             </a>
           ))}
@@ -305,16 +309,16 @@ const articleSchema = {
     <!-- Back to Category -->
     <div class="text-center" data-animate>
       <a
-        href={`/${category}`}
+        href={l(`/${category}`, locale)}
         class="inline-flex items-center gap-2 text-txt-muted hover:text-txt-primary transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
-        Back to {categoryTitle} Signals
+        {t("signalPage.backTo", { category: categoryTitle })}
       </a>
     </div>
   </div>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 </BaseLayout>

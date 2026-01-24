@@ -1,7 +1,8 @@
 ---
 // src/components/HistoryMini.astro
 import BiasIndicator from "./BiasIndicator.astro";
-import { formatDateShort, DEFAULT_LOCALE } from "../lib/i18n";
+import { formatDateShort } from "../lib/i18n";
+import { useTranslations, l, type Locale } from "../i18n";
 
 interface Signal {
   id: number;
@@ -13,16 +14,18 @@ interface Signal {
 interface Props {
   signals: Signal[];
   category: "crypto" | "forex" | "stocks";
+  locale?: Locale;
 }
 
-const { signals, category } = Astro.props;
+const { signals, category, locale = "en" } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <h3 class="font-display font-semibold text-sm text-txt-muted uppercase tracking-wider">Recent Signals</h3>
-    <a href={`/${category}/history`} class="flex items-center gap-1.5 text-sm font-medium text-cyber hover:gap-2.5 transition-all">
-      View all
+    <h3 class="font-display font-semibold text-sm text-txt-muted uppercase tracking-wider">{t("categoryPage.recentSignals")}</h3>
+    <a href={l(`/${category}/history`, locale)} class="flex items-center gap-1.5 text-sm font-medium text-cyber hover:gap-2.5 transition-all">
+      {t("common.viewAll")}
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
@@ -33,11 +36,11 @@ const { signals, category } = Astro.props;
     <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
       {signals.slice(0, 7).map((signal) => (
         <a
-          href={`/${category}/${signal.date}/${signal.time_slot}`}
+          href={l(`/${category}/${signal.date}/${signal.time_slot}`, locale)}
           class="flex items-center justify-between px-3 py-2 rounded-lg bg-subtle border border-subtle hover:border-cyber/30 transition-colors"
         >
           <div class="text-xs text-txt-muted font-mono">
-            {formatDateShort(signal.date, DEFAULT_LOCALE)} <span class="text-txt-muted/60">{signal.time_slot}</span>
+            {formatDateShort(signal.date, locale)} <span class="text-txt-muted/60">{signal.time_slot}</span>
           </div>
           <BiasIndicator bias={signal.bias} size="sm" />
         </a>
@@ -45,7 +48,7 @@ const { signals, category } = Astro.props;
     </div>
   ) : (
     <div class="text-center py-8">
-      <p class="text-sm text-txt-muted">No historical signals available yet.</p>
+      <p class="text-sm text-txt-muted">{t("categoryPage.noHistory")}</p>
     </div>
   )}
 </div>

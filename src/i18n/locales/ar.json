@@ -72,6 +72,8 @@
   "categoryPage.assetBreakdown": "تفصيل الأصول",
   "categoryPage.usingLastData": "استخدام آخر البيانات المتاحة",
   "categoryPage.recentHistory": "السجل الأخير",
+  "categoryPage.recentSignals": "الإشارات الأخيرة",
+  "categoryPage.noHistory": "لا توجد إشارات تاريخية متاحة حتى الآن.",
   "categoryPage.viewFullHistory": "عرض السجل الكامل",
   "categoryPage.learnMore": "اعرف المزيد",
 
@@ -107,7 +109,28 @@
   "common.back": "رجوع",
   "common.previous": "السابق",
   "common.next": "التالي",
+  "common.current": "الحالي",
+  "common.at": "في",
   "common.loading": "جاري التحميل...",
   "common.error": "حدث خطأ ما",
-  "common.retry": "حاول مرة أخرى"
+  "common.retry": "حاول مرة أخرى",
+
+  "signalPage.title": "إشارة {category}",
+  "signalPage.recentSignals": "إشارات {category} الأخيرة",
+  "signalPage.backTo": "العودة إلى إشارات {category}",
+  "signalPage.howWeCalculate": "كيف نحسب الإشارات",
+  "signalPage.whatDoesMean": "ماذا يعني {bias}؟",
+
+  "signalDetail.macro": "كلي:",
+  "signalDetail.latestPrices": "أحدث الأسعار",
+  "signalDetail.keyLevels": "المستويات الرئيسية",
+  "signalDetail.bullishTriggers": "المحفزات الصاعدة",
+  "signalDetail.riskFactors": "عوامل المخاطر",
+  "signalDetail.noTriggers": "لم يتم تحديد محفزات صاعدة اليوم",
+  "signalDetail.noRisks": "لم يتم تحديد عوامل مخاطر اليوم",
+  "signalDetail.macroFallback": "البيانات الكلية غير متاحة - استخدام البديل",
+  "signalDetail.macroStale": "قد تكون البيانات الكلية قديمة (مخزنة مؤقتاً)",
+  "signalDetail.missingAssets": "أصول مفقودة: {assets}",
+  "signalDetail.staleAssets": "بيانات قديمة: {assets}",
+  "signalDetail.outlierValues": "تم اكتشاف قيم شاذة: {outliers}"
 }

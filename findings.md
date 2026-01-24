@@ -1,5 +1,260 @@
 # Findings & Decisions
 
+## P0/P1 Bug Analysis (2026-01-23)
+
+### P0.1: RSS/MCP Schema Mismatch
+**Files:** `src/pages/rss.xml.ts:64`, `mcp-server/src/index.ts:183`
+**Issue:** Queries `signals.summary` and `signals.created_at` but schema only has:
+- `generated_at` (not `created_at`)
+- No `summary` column - it's in `output_json` as `output_json.summary`
+
+**Fix:** Derive from existing columns:
+```sql
+-- Instead of: SELECT summary, created_at
+SELECT output_json, generated_at FROM signals
+-- Then: JSON.parse(output_json).summary
+```
+
+### P0.2: Confluence Fallback Logic
+**File:** `src/pages/api/v1/signals.ts:187`
+**Issue:**
+```typescript
+const bullish = signals.filter(s => s === "bullish" || s === "confirms").length;
+```
+"Volume: confirms" means volume confirms the trend direction, not that it's bullish.
+If trend is bearish and volume confirms, counting "confirms" as bullish is wrong.
+
+**Fix:** Only count actual directional signals:
+```typescript
+const bullish = signals.filter(s => s === "bullish").length;
+const bearish = signals.filter(s => s === "bearish").length;
+// "confirms" and "diverges" are confirmations, not directions
+```
+
+### P0.3: Cache Key Redaction
+**File:** `worker/src/cache/ttl.ts:36`
+**Issue:** Only strips `apikey=`, but FRED uses `api_key=`:
+```typescript
+const sanitizedUrl = url.replace(/apikey=[^&]+/, "apikey=REDACTED");
+```
+
+**Fix:** Add pattern for all API key formats:
+```typescript
+const sanitizedUrl = url
+  .replace(/apikey=[^&]+/gi, "apikey=REDACTED")
+  .replace(/api_key=[^&]+/gi, "api_key=REDACTED");
+```
+
+### P0.4: Risk Heuristics String Parsing
+**File:** `worker/src/signals/bias.ts:441,446`
+**Issue:**
+```typescript
+const highFunding = assetSignals.some(s => parseFloat(s.secondaryInd) > 0.05);
+const highRSI = assetSignals.filter(s => parseFloat(s.secondaryInd) > 65).length;
+```
+But `secondaryInd` can be "F&G:45" or "YC:normal" - parseFloat returns NaN.
+
+**Fix:** Extract numeric part or handle string formats:
+```typescript
+// For crypto with F&G format
+const match = s.secondaryInd.match(/F&G:(\d+)/);
+const fearGreed = match ? parseInt(match[1]) : null;
+
+// For stocks with RSI (plain number)
+const rsi = /^\d+(\.\d+)?$/.test(s.secondaryInd) ? parseFloat(s.secondaryInd) : null;
+```
+
+### P1.1: Track Endpoint Rate Limiting
+**File:** `src/pages/api/track.ts`
+**Issue:** Unauthenticated POST writes to D1. Could be abused for:
+- Spam (fill up analytics_events table)
+- Cost blowup (D1 writes aren't free at scale)
+
+**Fix options:**
+1. Cloudflare rate limiting rule in dashboard (simplest)
+2. In-code rate limiting with CF's Rate Limiting API
+3. Payload size cap (already implicit from JSON parsing, but explicit limit safer)
+
+### P1.2: Edge Caching Strategy
+**Goal:** Reduce D1 load, improve TTFB for SSR pages.
+
+| Page Type | TTL | Rationale |
+|-----------|-----|-----------|
+| `/[category]` (latest) | 5 min | Updates 3x/day, fresh data important |
+| `/[category]/[date]/[time]` | 1 week | Historical, never changes |
+| `/performance` | 1 hour | Accuracy updates daily at 01:00 UTC |
+| `/api/v1/signals` | 5 min | Already has Cache-Control |
+
+**Implementation:** Astro middleware or `_headers` file for Cloudflare Pages.
+
+---
+
+## Pre-i18n Issues to Address (2026-01-23)
+
+### Caching Reality Check
+**Issue:** `public/_headers` doesn't apply to SSR routes on Cloudflare Pages.
+- Production shows `cf-cache-status: DYNAMIC` on `/` and `/crypto`
+- `_headers` only works for static assets, not Worker/SSR responses
+
+**Fix options:**
+1. Set `Cache-Control` directly in Astro page responses (per-route)
+2. Use Cloudflare Cache Rules in dashboard (edge-level)
+3. Use Cache API in Astro middleware for SSR pages
+
+### SEO Hardcoding
+**Issue:** Hardcoded `https://everinvests.com` in multiple places instead of `SITE_URL`:
+- JSON-LD structured data
+- Breadcrumb schemas
+- Embed widget URLs
+
+**Action:** Audit and centralize all URL generation through `SITE_URL` or `absoluteUrl()`.
+
+### Locale-Hostile Formatting
+**Issue:** Hardcoded `en-US` locale throughout:
+```typescript
+// Scattered in components/pages:
+toLocaleDateString("en-US", ...)
+toLocaleTimeString("en-US", ...)
+```
+
+**Action:** Create centralized formatting functions that accept locale parameter.
+
+### Linking Strategy
+**Issue:** Absolute root paths like `href="/crypto"` will break with `/{lang}/crypto` routing.
+
+**Action:** Create `l(path)` localized link builder before i18n implementation.
+
+---
+
+## i18n Implementation (2026-01-24)
+
+### Scope Decision
+**Option A: UI-only translation** - Signal summaries stay English (separate project later)
+
+### Platform Layer (Implemented)
+Created `src/i18n/index.ts` with:
+
+```typescript
+// Core types
+export const locales = ["en", "es", "zh", "ar", "pt"] as const;
+export type Locale = (typeof locales)[number];
+export const defaultLocale: Locale = "en";
+
+// Translation functions
+export function t(key: string, locale: Locale, params?: Record<string, string | number>): string;
+export function useTranslations(locale: Locale): (key: string, params?) => string;
+
+// Routing utilities
+export function l(path: string, locale: Locale): string;  // "/crypto" + "es" → "/es/crypto"
+export function getLocaleFromUrl(url: URL): Locale;       // Extract locale from pathname
+
+// SEO/RTL support
+export function getDirection(locale: Locale): "ltr" | "rtl";
+export function getAlternateUrls(pathname: string, baseUrl: string): Array<{ locale, url }>;
+```
+
+### SEO Implementation (Complete)
+- `<html lang={locale} dir={dir}>` - Dynamic in BaseLayout
+- `<link rel="canonical" href={canonicalUrl}>` - Per-page
+- `<link rel="alternate" hreflang="...">` - All 5 locales + x-default
+- `<meta property="og:locale">` - For social sharing
+
+### Astro i18n Config
+```javascript
+// astro.config.mjs
+i18n: {
+  defaultLocale: "en",
+  locales: ["en", "es", "zh", "ar", "pt"],
+  routing: { prefixDefaultLocale: false },  // /crypto not /en/crypto
+  fallback: { es: "en", zh: "en", ar: "en", pt: "en" }
+}
+```
+
+### Translation File Structure
+```
+src/i18n/
+├── index.ts           # Core module
+└── locales/
+    ├── en.json        # English (base, ~80 keys)
+    ├── es.json        # Spanish
+    ├── zh.json        # Chinese Simplified
+    ├── ar.json        # Arabic (RTL)
+    └── pt.json        # Portuguese
+```
+
+### Key Translation Keys
+```json
+{
+  "site.name": "EverInvests",
+  "site.description": "Free daily market signals...",
+  "nav.home": "Home",
+  "nav.crypto": "Crypto",
+  "signal.bullish": "Bullish",
+  "signal.bearish": "Bearish",
+  "home.hero.title": "We ran money.",
+  "home.hero.titleHighlight": "Now we share our edge.",
+  "footer.copyright": "© {year} EverInvests. All rights reserved."
+}
+```
+
+### RTL Strategy (For Arabic)
+- `getDirection("ar")` returns `"rtl"`
+- BaseLayout sets `<html dir={dir}>`
+- Tailwind RTL utilities available if needed
+- OG images: English-only for now (font complexity)
+
+---
+
+## i18n Research (2026-01-23)
+
+### Codebase Analysis
+- **24 pages** need translation (core, category, educational, blog)
+- **22 components** have hardcoded strings (~150-200 unique)
+- **No existing i18n infrastructure** found
+
+### High-Priority Components for Translation
+| Component | Strings | Notes |
+|-----------|---------|-------|
+| Header.astro | 7 | Navigation labels |
+| Footer.astro | 15+ | Links, disclaimers |
+| MacroBar.astro | 30+ | Complex, many tooltips |
+| SignalCard.astro | 8 | Category labels |
+| TelegramCTA.astro | 6+ | Conversion-critical |
+| VIPCTA.astro | 12+ | Marketing copy |
+| TierComparison.astro | 20+ | Feature descriptions |
+
+### Technical Decisions
+| Decision | Rationale |
+|----------|-----------|
+| astro-i18n | Native Astro 5 integration, SSR-compatible |
+| URL routing (/[lang]/) | SEO-friendly, standard practice |
+| JSON translation files | Simple, tooling support |
+| Generate signals in target language | Better quality than post-translation |
+
+### Recommended File Structure
+```
+src/
+├── i18n/
+│   ├── en.json, es.json, zh.json, hi.json, ar.json
+│   ├── fr.json, bn.json, pt.json, ru.json, ja.json
+│   ├── de.json, ko.json, vi.json, it.json, tr.json, pl.json
+├── pages/
+│   └── [lang]/
+│       ├── index.astro
+│       └── ...
+└── lib/
+    └── i18n.ts
+```
+
+### Challenges Identified
+1. **RTL support** - Arabic requires CSS direction changes
+2. **OG fonts** - CJK, Arabic, Cyrillic need Satori config
+3. **LLM signals** - Need multi-language prompt engineering
+4. **Legal disclaimers** - May need per-jurisdiction review
+5. **Maintenance** - 24 pages × 15 languages = 360 variants
+
+---
+
 ## Growth Optimization Research (2026-01-23)
 
 ### Current State Analysis

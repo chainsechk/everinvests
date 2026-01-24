@@ -1,5 +1,148 @@
 # Progress Log
 
+## Session: 2026-01-23 (P0/P1 Bug Fixes)
+
+### Task: P0/P1 Bug Fixes
+- **Status:** complete
+- **Started:** 2026-01-23
+
+#### Actions Taken
+- **P0.1:** Fixed RSS/MCP schema mismatch - changed queries to use `output_json` and `generated_at` instead of non-existent `summary` and `created_at` columns
+- **P0.2:** Fixed confluence fallback logic - "confirms" no longer counted as "bullish"; only actual directional signals counted
+- **P0.3:** Fixed cache key redaction - added patterns for `api_key=`, `key=`, `token=` in addition to `apikey=`
+- **P0.4:** Fixed risk heuristics parsing - properly handles "F&G:xx" and plain numeric formats for secondaryInd
+- **P1.1:** Added rate limiting to /api/track - 30 req/min per IP using CF Cache API + 2KB payload limit
+- **P1.2:** Added edge caching via `public/_headers` - short TTL for latest, long TTL for historical
+
+#### Files Modified
+- `src/pages/rss.xml.ts` - Schema fix
+- `mcp-server/src/index.ts` - Schema fix
+- `src/pages/api/v1/signals.ts` - Confluence logic fix
+- `worker/src/cache/ttl.ts` - Cache key redaction
+- `worker/src/signals/bias.ts` - Risk heuristics parsing
+- `src/pages/api/track.ts` - Rate limiting + payload cap
+- `public/_headers` - Edge caching rules (created)
+
+#### Test Results
+- All 87 tests pass
+
+---
+
+## Session: 2026-01-24 (i18n Signal Detail Pages)
+
+### Task: Signal Detail Pages i18n Migration
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Added ~20 new translation keys for signal detail pages to all 5 locale files:
+  - Signal page title, recent signals, back to category
+  - How we calculate signals, what does X mean
+  - SignalDetail component: macro, bullish triggers, risk factors
+  - Quality flag messages (macro fallback, stale, missing assets, outliers)
+  - HistoryMini: recent signals, no history message
+- Updated `src/pages/[category]/[date]/[time].astro` with full i18n support
+- Updated `src/components/SignalDetail.astro` with locale prop and translations
+- Updated `src/components/HistoryMini.astro` with locale prop and translations
+
+#### Files Modified
+- `src/i18n/locales/*.json` (all 5 locales) - Added signal detail keys
+- `src/pages/[category]/[date]/[time].astro` - Full i18n migration
+- `src/components/SignalDetail.astro` - i18n migration
+- `src/components/HistoryMini.astro` - i18n migration
+
+#### Build Status
+- Build successful
+
+---
+
+## Session: 2026-01-24 (i18n Category Pages)
+
+### Task: Category Pages i18n Migration
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Added ~25 new translation keys for category pages to all 5 locale files:
+  - Category titles, subtitles, SEO descriptions
+  - "No Signal Yet" messages
+  - "Asset Breakdown", "Learn More" sections
+  - Learn page link titles and descriptions
+- Updated `src/pages/crypto/index.astro` with translations
+- Updated `src/pages/forex/index.astro` with translations
+- Updated `src/pages/stocks/index.astro` with translations
+- All pages now accept `locale` prop and pass to child components
+
+#### Files Modified
+- `src/i18n/locales/*.json` (all 5 locales) - Added category page keys
+- `src/pages/crypto/index.astro` - i18n migration
+- `src/pages/forex/index.astro` - i18n migration
+- `src/pages/stocks/index.astro` - i18n migration
+
+#### Build Status
+- All tests pass, build successful
+
+---
+
+## Session: 2026-01-24 (i18n Implementation)
+
+### Task: i18n Infrastructure
+- **Status:** complete (infrastructure deployed)
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Created `src/i18n/index.ts` with translation module:
+  - `t(key, locale, params)` - translation lookup with interpolation
+  - `useTranslations(locale)` - bound translation function
+  - `l(path, locale)` - localized link builder
+  - `getLocaleFromUrl(url)` - extract locale from pathname
+  - `getDirection(locale)` - RTL detection for Arabic
+  - `getAlternateUrls()` - generate hreflang URLs for SEO
+- Created translation files for 5 locales (~80 keys each):
+  - `src/i18n/locales/en.json` (English - base)
+  - `src/i18n/locales/es.json` (Spanish)
+  - `src/i18n/locales/zh.json` (Chinese Simplified)
+  - `src/i18n/locales/ar.json` (Arabic)
+  - `src/i18n/locales/pt.json` (Portuguese)
+- Configured Astro i18n in `astro.config.mjs`:
+  - `prefixDefaultLocale: false` (English at root)
+  - Fallback to English for all locales
+- Updated `src/lib/i18n.ts` to re-export from new i18n module
+- Updated `BaseLayout.astro`:
+  - Dynamic `lang` and `dir` attributes
+  - hreflang alternate links for SEO
+  - `og:locale` meta tag
+- Updated `Header.astro` with locale prop and translated nav
+- Updated `Footer.astro` with locale prop and translated links
+- Migrated homepage (`src/pages/index.astro`) as proof of concept
+
+#### Commit
+`32c7ad0` - feat: i18n infrastructure with 5-locale support
+
+#### Next Steps
+1. Migrate category pages (crypto, forex, stocks)
+2. Migrate signal detail pages
+3. Add language switcher component
+4. Create localized page routes ([locale]/...)
+5. Test RTL layout for Arabic
+
+---
+
+## Session: 2026-01-23 (i18n Planning)
+
+### Task: i18n Planning
+- **Status:** complete (superseded by implementation)
+- **Started:** 2026-01-23
+
+#### Actions Taken
+- Explored codebase to understand i18n scope
+- Identified 24 pages and 22 components needing translation
+- Estimated ~250 unique strings, 3,500-5,000 words per language
+- Selected initial 5 target languages (expanded from 15 to be incremental)
+- Documented technical approach (Astro built-in i18n, URL routing, JSON files)
+
+---
+
 ## Session: 2026-01-23 (Growth Optimization)
 
 ### Task: Growth Optimization for User Acquisition

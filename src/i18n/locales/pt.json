@@ -72,6 +72,8 @@
   "categoryPage.assetBreakdown": "Detalhamento de Ativos",
   "categoryPage.usingLastData": "Usando últimos dados disponíveis",
   "categoryPage.recentHistory": "Histórico Recente",
+  "categoryPage.recentSignals": "Sinais Recentes",
+  "categoryPage.noHistory": "Nenhum sinal histórico disponível ainda.",
   "categoryPage.viewFullHistory": "Ver histórico completo",
   "categoryPage.learnMore": "Saiba Mais",
 
@@ -107,7 +109,28 @@
   "common.back": "Voltar",
   "common.previous": "Anterior",
   "common.next": "Próximo",
+  "common.current": "Atual",
+  "common.at": "às",
   "common.loading": "Carregando...",
   "common.error": "Algo deu errado",
-  "common.retry": "Tentar novamente"
+  "common.retry": "Tentar novamente",
+
+  "signalPage.title": "Sinal de {category}",
+  "signalPage.recentSignals": "Sinais Recentes de {category}",
+  "signalPage.backTo": "Voltar para Sinais de {category}",
+  "signalPage.howWeCalculate": "Como calculamos os sinais",
+  "signalPage.whatDoesMean": "O que significa {bias}?",
+
+  "signalDetail.macro": "Macro:",
+  "signalDetail.latestPrices": "Preços Atuais",
+  "signalDetail.keyLevels": "Níveis-Chave",
+  "signalDetail.bullishTriggers": "Gatilhos de Alta",
+  "signalDetail.riskFactors": "Fatores de Risco",
+  "signalDetail.noTriggers": "Nenhum gatilho de alta identificado hoje",
+  "signalDetail.noRisks": "Nenhum fator de risco identificado hoje",
+  "signalDetail.macroFallback": "Dados macro indisponíveis - usando fallback",
+  "signalDetail.macroStale": "Dados macro podem estar desatualizados (cache)",
+  "signalDetail.missingAssets": "Ativos faltando: {assets}",
+  "signalDetail.staleAssets": "Dados desatualizados: {assets}",
+  "signalDetail.outlierValues": "Valores atípicos detectados: {outliers}"
 }

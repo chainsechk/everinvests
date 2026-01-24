@@ -72,6 +72,8 @@
   "categoryPage.assetBreakdown": "资产明细",
   "categoryPage.usingLastData": "使用上次可用数据",
   "categoryPage.recentHistory": "近期历史",
+  "categoryPage.recentSignals": "近期信号",
+  "categoryPage.noHistory": "暂无历史信号。",
   "categoryPage.viewFullHistory": "查看完整历史",
   "categoryPage.learnMore": "了解更多",
 
@@ -107,7 +109,28 @@
   "common.back": "返回",
   "common.previous": "上一个",
   "common.next": "下一个",
+  "common.current": "当前",
+  "common.at": "",
   "common.loading": "加载中...",
   "common.error": "出错了",
-  "common.retry": "重试"
+  "common.retry": "重试",
+
+  "signalPage.title": "{category}信号",
+  "signalPage.recentSignals": "近期{category}信号",
+  "signalPage.backTo": "返回{category}信号",
+  "signalPage.howWeCalculate": "信号计算方法",
+  "signalPage.whatDoesMean": "{bias}是什么意思？",
+
+  "signalDetail.macro": "宏观：",
+  "signalDetail.latestPrices": "最新价格",
+  "signalDetail.keyLevels": "关键价位",
+  "signalDetail.bullishTriggers": "看涨信号",
+  "signalDetail.riskFactors": "风险因素",
+  "signalDetail.noTriggers": "今日无看涨信号",
+  "signalDetail.noRisks": "今日无风险因素",
+  "signalDetail.macroFallback": "宏观数据不可用 - 使用备用数据",
+  "signalDetail.macroStale": "宏观数据可能过时（缓存）",
+  "signalDetail.missingAssets": "缺失资产：{assets}",
+  "signalDetail.staleAssets": "过时数据：{assets}",
+  "signalDetail.outlierValues": "检测到异常值：{outliers}"
 }
