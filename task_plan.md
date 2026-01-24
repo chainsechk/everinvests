@@ -62,10 +62,10 @@
 | i18n-6 | Learn/educational pages | `complete` |
 | i18n-7 | Language switcher component | `complete` |
 | i18n-8 | Localized page routes ([locale]/...) | `complete` |
-| i18n-9 | Additional languages (expand from 5 to 15) | `pending` |
+| i18n-9 | Additional languages (expand from 5 to 15) | `complete` |
 | i18n-10 | RTL testing + CJK/Cyrillic OG fonts | `pending` |
 
-### Current Languages (5 - Phase 1)
+### Current Languages (15 - Phase 2 Complete)
 | Priority | Language | Code | Script | Status |
 |----------|----------|------|--------|--------|
 | 1 | English | en | Latin | Base (default) |
@@ -73,6 +73,16 @@
 | 3 | Chinese | zh | Simplified Han | Translation complete |
 | 4 | Arabic | ar | Arabic (RTL) | Translation complete |
 | 5 | Portuguese | pt | Latin | Translation complete |
+| 6 | French | fr | Latin | Translation complete |
+| 7 | German | de | Latin | Translation complete |
+| 8 | Japanese | ja | Kanji/Kana | Translation complete |
+| 9 | Korean | ko | Hangul | Translation complete |
+| 10 | Russian | ru | Cyrillic | Translation complete |
+| 11 | Hindi | hi | Devanagari | Translation complete |
+| 12 | Indonesian | id | Latin | Translation complete |
+| 13 | Turkish | tr | Latin | Translation complete |
+| 14 | Vietnamese | vi | Latin (diacritics) | Translation complete |
+| 15 | Italian | it | Latin | Translation complete |
 
 ### Files Created/Modified (2026-01-24)
 - `src/i18n/index.ts` - Translation module (t, l, useTranslations, etc.)

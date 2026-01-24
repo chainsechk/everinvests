@@ -6,9 +6,19 @@ import es from "./locales/es.json";
 import zh from "./locales/zh.json";
 import ar from "./locales/ar.json";
 import pt from "./locales/pt.json";
+import fr from "./locales/fr.json";
+import de from "./locales/de.json";
+import ja from "./locales/ja.json";
+import ko from "./locales/ko.json";
+import ru from "./locales/ru.json";
+import hi from "./locales/hi.json";
+import id from "./locales/id.json";
+import tr from "./locales/tr.json";
+import vi from "./locales/vi.json";
+import it from "./locales/it.json";
 
 // Supported locales (must match astro.config.mjs)
-export const locales = ["en", "es", "zh", "ar", "pt"] as const;
+export const locales = ["en", "es", "zh", "ar", "pt", "fr", "de", "ja", "ko", "ru", "hi", "id", "tr", "vi", "it"] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
 
@@ -22,6 +32,16 @@ const translations: Record<Locale, Record<string, string>> = {
   zh,
   ar,
   pt,
+  fr,
+  de,
+  ja,
+  ko,
+  ru,
+  hi,
+  id,
+  tr,
+  vi,
+  it,
 };
 
 // Language display names (in their native language)
@@ -31,6 +51,16 @@ export const localeNames: Record<Locale, string> = {
   zh: "中文",
   ar: "العربية",
   pt: "Português",
+  fr: "Français",
+  de: "Deutsch",
+  ja: "日本語",
+  ko: "한국어",
+  ru: "Русский",
+  hi: "हिन्दी",
+  id: "Bahasa Indonesia",
+  tr: "Türkçe",
+  vi: "Tiếng Việt",
+  it: "Italiano",
 };
 
 /**

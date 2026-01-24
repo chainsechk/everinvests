@@ -28,6 +28,39 @@
 
 ---
 
+## Session: 2026-01-24 (i18n 15-Language Expansion)
+
+### Task: Expand from 5 to 15 Languages
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Created 10 new locale translation files (~78 keys each):
+  - `fr.json` - French
+  - `de.json` - German
+  - `ja.json` - Japanese
+  - `ko.json` - Korean
+  - `ru.json` - Russian (Cyrillic)
+  - `hi.json` - Hindi (Devanagari)
+  - `id.json` - Indonesian
+  - `tr.json` - Turkish
+  - `vi.json` - Vietnamese
+  - `it.json` - Italian
+- Updated `src/i18n/index.ts` with new locale imports, arrays, and names
+- Updated `astro.config.mjs` with 15 locales and fallback settings
+
+#### Files Created
+- 10 new locale JSON files under `src/i18n/locales/`
+
+#### Files Modified
+- `src/i18n/index.ts` - Added 10 new locale imports and configs
+- `astro.config.mjs` - Expanded locales array and fallbacks
+
+#### Build Status
+- Build successful
+
+---
+
 ## Session: 2026-01-24 (i18n Localized Routes)
 
 ### Task: Localized Page Routes
@@ -56,6 +89,10 @@
 
 #### Build Status
 - Build successful
+
+#### Deployment
+- Deployed to production: https://5ca0cc32.everinvests.pages.dev
+- Commits: `81570dd` (language switcher), `4441b27` (localized routes)
 
 ---
 

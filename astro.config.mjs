@@ -13,7 +13,7 @@ export default defineConfig({
   integrations: [tailwind()],
   i18n: {
     defaultLocale: "en",
-    locales: ["en", "es", "zh", "ar", "pt"],
+    locales: ["en", "es", "zh", "ar", "pt", "fr", "de", "ja", "ko", "ru", "hi", "id", "tr", "vi", "it"],
     routing: {
       prefixDefaultLocale: false, // /crypto not /en/crypto
     },
@@ -22,6 +22,16 @@ export default defineConfig({
       zh: "en",
       ar: "en",
       pt: "en",
+      fr: "en",
+      de: "en",
+      ja: "en",
+      ko: "en",
+      ru: "en",
+      hi: "en",
+      id: "en",
+      tr: "en",
+      vi: "en",
+      it: "en",
     },
   },
 });
