@@ -6,6 +6,10 @@ import Footer from "../../components/Footer.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import BiasIndicator from "../../components/BiasIndicator.astro";
 import { absoluteUrl } from "../../lib/site";
+import { getLocaleFromUrl, useTranslations, l } from "../../i18n";
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 const terms = [
   {
@@ -117,48 +121,49 @@ const breadcrumbLd = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-    { "@type": "ListItem", position: 2, name: "Learn", item: absoluteUrl("/learn") },
-    { "@type": "ListItem", position: 3, name: "Glossary", item: absoluteUrl("/learn/glossary") }
+    { "@type": "ListItem", position: 1, name: t("nav.home"), item: absoluteUrl("/") },
+    { "@type": "ListItem", position: 2, name: t("nav.learn"), item: absoluteUrl("/learn") },
+    { "@type": "ListItem", position: 3, name: t("learnPage.glossary"), item: absoluteUrl("/learn/glossary") }
   ]
 };
 ---
 
 <BaseLayout
-  title="Trading Glossary - Key Terms Explained"
-  description="Understand the key terms used in EverInvests signals: bias, confluence, RSI, Fear & Greed, macro context, and more."
+  title={t("learn.glossary.title")}
+  description={t("learn.glossary.description")}
   jsonLd={[jsonLd, breadcrumbLd]}
+  locale={locale}
 >
-  <Header slot="header" />
+  <Header slot="header" locale={locale} />
 
   <article class="max-w-3xl mx-auto space-y-10">
     <!-- Header -->
     <header class="text-center py-8" data-animate>
       <nav class="text-sm text-txt-muted mb-4">
-        <a href="/" class="hover:text-txt-secondary">Home</a>
+        <a href={l("/", locale)} class="hover:text-txt-secondary">{t("nav.home")}</a>
         <span class="mx-2">/</span>
-        <a href="/learn" class="hover:text-txt-secondary">Learn</a>
+        <a href={l("/learn", locale)} class="hover:text-txt-secondary">{t("nav.learn")}</a>
         <span class="mx-2">/</span>
-        <span class="text-txt-primary">Glossary</span>
+        <span class="text-txt-primary">{t("learnPage.glossary")}</span>
       </nav>
       <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">
-        Trading Glossary
+        {t("learn.glossary.title")}
       </h1>
       <p class="text-lg text-txt-secondary max-w-xl mx-auto">
-        Key terms and concepts used in our signals. Click any term for the full explanation.
+        {t("learn.glossary.description")}
       </p>
     </header>
 
     <!-- Quick Jump -->
     <section class="card" data-animate>
-      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">Jump to Term</h2>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">{t("learnPage.jumpToTerm")}</h2>
       <div class="flex flex-wrap gap-2">
-        {terms.map(t => (
+        {terms.map(term => (
           <a
-            href={`#${t.id}`}
+            href={`#${term.id}`}
             class="px-3 py-1.5 text-sm bg-void-200 hover:bg-void-300 text-txt-secondary hover:text-txt-primary rounded-full transition-colors"
           >
-            {t.term}
+            {term.term}
           </a>
         ))}
       </div>
@@ -166,22 +171,22 @@ const breadcrumbLd = {
 
     <!-- Terms List -->
     <section class="space-y-6" data-animate>
-      {terms.map(t => (
-        <div id={t.id} class="card scroll-mt-24">
+      {terms.map(term => (
+        <div id={term.id} class="card scroll-mt-24">
           <h3 class="font-display font-bold text-xl text-txt-primary mb-2">
-            {t.term}
+            {term.term}
           </h3>
           <p class="text-txt-secondary mb-4">
-            {t.definition}
+            {term.definition}
           </p>
-          {t.related && t.related.length > 0 && (
+          {term.related && term.related.length > 0 && (
             <div class="flex flex-wrap gap-2">
-              {t.related.map(link => (
+              {term.related.map(link => (
                 <a
-                  href={link}
+                  href={l(link, locale)}
                   class="text-sm text-cyber hover:underline"
                 >
-                  See in action →
+                  {t("learnPage.seeInAction")} →
                 </a>
               ))}
             </div>
@@ -192,22 +197,22 @@ const breadcrumbLd = {
 
     <!-- Example: Live Bias -->
     <section class="card border-cyber/20" data-animate>
-      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Example: Bias in Action</h2>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.biasExample")}</h2>
       <p class="text-txt-secondary mb-4">
-        Here's what each bias type looks like on our signal pages:
+        {t("learnPage.biasExampleDesc")}
       </p>
       <div class="flex flex-wrap gap-4">
         <div class="flex items-center gap-2">
           <BiasIndicator bias="Bullish" size="md" />
-          <span class="text-sm text-txt-muted">Likely to rise</span>
+          <span class="text-sm text-txt-muted">{t("learnPage.likelyToRise")}</span>
         </div>
         <div class="flex items-center gap-2">
           <BiasIndicator bias="Neutral" size="md" />
-          <span class="text-sm text-txt-muted">No clear direction</span>
+          <span class="text-sm text-txt-muted">{t("learnPage.noClearDirection")}</span>
         </div>
         <div class="flex items-center gap-2">
           <BiasIndicator bias="Bearish" size="md" />
-          <span class="text-sm text-txt-muted">Likely to fall</span>
+          <span class="text-sm text-txt-muted">{t("learnPage.likelyToFall")}</span>
         </div>
       </div>
     </section>
@@ -215,40 +220,40 @@ const breadcrumbLd = {
     <!-- CTA: See Signals -->
     <section class="text-center space-y-4" data-animate>
       <p class="text-txt-secondary">
-        Now that you know the terms, see them in action:
+        {t("learnPage.seeSignals")}
       </p>
       <div class="flex flex-wrap justify-center gap-3">
-        <a href="/crypto" class="btn-primary inline-flex items-center gap-2">
-          Crypto Signals
+        <a href={l("/crypto", locale)} class="btn-primary inline-flex items-center gap-2">
+          {t("category.crypto.title")}
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
           </svg>
         </a>
-        <a href="/forex" class="btn-ghost">Forex</a>
-        <a href="/stocks" class="btn-ghost">Stocks</a>
+        <a href={l("/forex", locale)} class="btn-ghost">{t("nav.forex")}</a>
+        <a href={l("/stocks", locale)} class="btn-ghost">{t("nav.stocks")}</a>
       </div>
     </section>
 
     <!-- Telegram CTA -->
-    <TelegramCTA variant="full" />
+    <TelegramCTA variant="full" locale={locale} />
 
     <!-- Related Guides -->
     <section class="pt-8 border-t border-divider" data-animate>
-      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">Related Guides</h3>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
       <div class="grid gap-4 sm:grid-cols-2">
-        <a href="/guides/bullish-vs-bearish" class="card hover:border-cyber/40 transition-colors">
-          <div class="font-medium text-txt-primary mb-1">Bullish vs Bearish Explained</div>
-          <div class="text-sm text-txt-muted">Deep dive into what each bias means.</div>
+        <a href={l("/guides/bullish-vs-bearish", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.bullishBearish.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.bullishBearish.description")}</div>
         </a>
-        <a href="/learn/methodology" class="card hover:border-cyber/40 transition-colors">
-          <div class="font-medium text-txt-primary mb-1">How We Calculate Signals</div>
-          <div class="text-sm text-txt-muted">The 3-indicator confluence model.</div>
+        <a href={l("/learn/methodology", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.methodology.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.methodology.description")}</div>
         </a>
-        <a href="/guides/fear-and-greed" class="card hover:border-cyber/40 transition-colors">
-          <div class="font-medium text-txt-primary mb-1">Fear & Greed Index</div>
-          <div class="text-sm text-txt-muted">How we use sentiment as a contrarian signal.</div>
+        <a href={l("/guides/fear-and-greed", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.fearGreed.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.fearGreed.description")}</div>
         </a>
-        <a href="/guides/how-to-use-signals" class="card hover:border-cyber/40 transition-colors">
+        <a href={l("/guides/how-to-use-signals", locale)} class="card hover:border-cyber/40 transition-colors">
           <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
           <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
         </a>
@@ -256,5 +261,5 @@ const breadcrumbLd = {
     </section>
   </article>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 </BaseLayout>

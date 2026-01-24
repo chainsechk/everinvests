@@ -28,6 +28,42 @@
 
 ---
 
+## Session: 2026-01-24 (i18n Learn Pages)
+
+### Task: Learn & Guide Pages i18n Migration
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Added ~15 new translation keys for learn pages to all 5 locale files:
+  - Learn page title, subtitle, SEO description
+  - Section headers: methodology, glossary, guides
+  - Jump to term, see in action, related guides
+  - Bias example text (likely to rise/fall/no direction)
+- Updated learn pages with i18n support:
+  - `src/pages/learn/index.astro` - Main learn hub
+  - `src/pages/learn/glossary.astro` - Trading terms
+  - `src/pages/learn/methodology.astro` - Signal calculation
+- Updated guide pages with i18n support:
+  - `src/pages/guides/bullish-vs-bearish.astro`
+  - `src/pages/guides/fear-and-greed.astro`
+  - `src/pages/guides/how-to-use-signals.astro`
+- UI-only translation approach: UI strings translated, educational content kept in English
+
+#### Files Modified
+- `src/i18n/locales/*.json` (all 5 locales) - Added learn page keys
+- `src/pages/learn/index.astro` - i18n migration
+- `src/pages/learn/glossary.astro` - i18n migration
+- `src/pages/learn/methodology.astro` - i18n migration
+- `src/pages/guides/bullish-vs-bearish.astro` - i18n migration
+- `src/pages/guides/fear-and-greed.astro` - i18n migration
+- `src/pages/guides/how-to-use-signals.astro` - i18n migration
+
+#### Build Status
+- Build successful
+
+---
+
 ## Session: 2026-01-24 (i18n Signal Detail Pages)
 
 ### Task: Signal Detail Pages i18n Migration

@@ -5,6 +5,10 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import TelegramCTA from "../../components/TelegramCTA.astro";
 import ScaleBar from "../../components/ScaleBar.astro";
+import { getLocaleFromUrl, useTranslations, l } from "../../i18n";
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -16,11 +20,12 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title="Fear & Greed Index Explained"
-  description="How we use the Fear & Greed Index as a contrarian indicator for crypto markets. Be greedy when others are fearful."
+  title={t("learn.fearGreed.title")}
+  description={t("learn.fearGreed.description")}
   jsonLd={jsonLd}
+  locale={locale}
 >
-  <Header slot="header" />
+  <Header slot="header" locale={locale} />
 
   <article class="max-w-3xl mx-auto space-y-10">
     <!-- Header -->
@@ -269,8 +274,8 @@ const jsonLd = {
       <p class="text-txt-secondary mb-4">
         The live Fear & Greed reading is displayed in the macro bar on our crypto page.
       </p>
-      <a href="/crypto" class="btn-primary inline-flex items-center gap-2">
-        View Crypto Signals
+      <a href={l("/crypto", locale)} class="btn-primary inline-flex items-center gap-2">
+        {t("category.crypto.title")}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
         </svg>
@@ -278,23 +283,23 @@ const jsonLd = {
     </section>
 
     <!-- Telegram CTA -->
-    <TelegramCTA variant="full" />
+    <TelegramCTA variant="full" locale={locale} />
 
     <!-- Related Guides -->
     <section class="pt-8 border-t border-divider" data-animate>
-      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">Related Guides</h3>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
       <div class="grid gap-4 sm:grid-cols-2">
-        <a href="/guides/how-to-use-signals" class="card hover:border-cyber/40 transition-colors">
+        <a href={l("/guides/how-to-use-signals", locale)} class="card hover:border-cyber/40 transition-colors">
           <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
           <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
         </a>
-        <a href="/guides/bullish-vs-bearish" class="card hover:border-cyber/40 transition-colors">
-          <div class="font-medium text-txt-primary mb-1">What Does Bullish vs Bearish Mean?</div>
-          <div class="text-sm text-txt-muted">Understand what the bias tells you about timing.</div>
+        <a href={l("/guides/bullish-vs-bearish", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.bullishBearish.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.bullishBearish.description")}</div>
         </a>
       </div>
     </section>
   </article>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 </BaseLayout>
