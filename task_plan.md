@@ -60,7 +60,7 @@
 | i18n-4 | Category pages migration (crypto, forex, stocks) | `complete` |
 | i18n-5 | Signal detail pages + components | `complete` |
 | i18n-6 | Learn/educational pages | `complete` |
-| i18n-7 | Language switcher component | `pending` |
+| i18n-7 | Language switcher component | `complete` |
 | i18n-8 | Localized page routes ([locale]/...) | `pending` |
 | i18n-9 | Additional languages (expand from 5 to 15) | `pending` |
 | i18n-10 | RTL testing + CJK/Cyrillic OG fonts | `pending` |

@@ -1,6 +1,7 @@
 ---
 // src/components/Header.astro
 import ThemeToggle from "./ThemeToggle.astro";
+import LanguageSwitcher from "./LanguageSwitcher.astro";
 import { getLocaleFromUrl, useTranslations, l, type Locale, defaultLocale } from "../i18n";
 
 interface Props {
@@ -66,8 +67,9 @@ function isActive(href: string): boolean {
         ))}
       </ul>
 
-      <!-- Right side: Theme toggle + CTA -->
+      <!-- Right side: Language + Theme toggle + CTA -->
       <div class="hidden sm:flex items-center gap-3">
+        <LanguageSwitcher locale={locale} />
         <ThemeToggle />
         <a
           href="https://t.me/everinvests"
@@ -84,6 +86,7 @@ function isActive(href: string): boolean {
 
       <!-- Mobile Menu Button -->
       <div class="flex sm:hidden items-center gap-2">
+        <LanguageSwitcher locale={locale} compact />
         <ThemeToggle />
         <button
           id="mobile-menu-btn"

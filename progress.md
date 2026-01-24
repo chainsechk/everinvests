@@ -28,6 +28,35 @@
 
 ---
 
+## Session: 2026-01-24 (i18n Language Switcher)
+
+### Task: Language Switcher Component
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Created `src/components/LanguageSwitcher.astro` dropdown component
+  - Globe icon with current locale name
+  - Dropdown with all 5 locales (en, es, zh, ar, pt)
+  - Navigates to same page in selected locale
+  - Tracks language_change events to analytics
+  - RTL support for Arabic
+  - Compact mode for mobile (hides text)
+- Added LanguageSwitcher to Header.astro
+  - Desktop: Next to ThemeToggle
+  - Mobile: In header toolbar with compact mode
+- Added translation key `nav.selectLanguage` to all 5 locales
+
+#### Files Modified
+- `src/components/LanguageSwitcher.astro` - New component
+- `src/components/Header.astro` - Import and render switcher
+- `src/i18n/locales/*.json` (all 5) - Added selectLanguage key
+
+#### Build Status
+- Build successful
+
+---
+
 ## Session: 2026-01-24 (i18n Learn Pages)
 
 ### Task: Learn & Guide Pages i18n Migration
