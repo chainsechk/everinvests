@@ -28,6 +28,38 @@
 
 ---
 
+## Session: 2026-01-24 (i18n RTL + Multi-Script OG Fonts)
+
+### Task: RTL Support + CJK/Cyrillic/Arabic OG Font Support
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Updated `src/lib/og.ts` with multi-script font support:
+  - Added Noto Sans JP for Japanese
+  - Added Noto Sans SC for Simplified Chinese
+  - Added Noto Sans KR for Korean
+  - Added Noto Sans Arabic for Arabic
+  - Added Noto Sans Devanagari for Hindi
+  - Fonts loaded from Google Fonts CDN with caching
+  - Added `direction` option for RTL support in OG images
+- Added RTL CSS support to `src/styles/global.css`:
+  - Theme toggle positioning for RTL
+  - Table text alignment for RTL
+  - Button gap reversal for RTL
+  - Card gradient direction for RTL
+  - Ticker animation reversal for RTL
+  - Bias indicator gap reversal for RTL
+
+#### Files Modified
+- `src/lib/og.ts` - Multi-script font loading + RTL direction support
+- `src/styles/global.css` - RTL CSS rules
+
+#### Build Status
+- Build successful
+
+---
+
 ## Session: 2026-01-24 (i18n 15-Language Expansion)
 
 ### Task: Expand from 5 to 15 Languages

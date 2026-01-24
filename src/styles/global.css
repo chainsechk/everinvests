@@ -843,3 +843,60 @@
   display: inline-flex;
   gap: 32px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   RTL (Right-to-Left) Support
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Theme toggle RTL positioning */
+[dir="rtl"] .theme-toggle::before {
+  left: auto;
+  right: 2px;
+}
+
+[dir="rtl"] [data-theme="dark"] .theme-toggle::before {
+  transform: translateX(-28px);
+}
+
+[dir="rtl"] .theme-toggle-sun {
+  left: auto;
+  right: 6px;
+}
+
+[dir="rtl"] .theme-toggle-moon {
+  right: auto;
+  left: 6px;
+}
+
+/* Table text alignment for RTL */
+[dir="rtl"] .data-table th {
+  text-align: right;
+}
+
+[dir="rtl"] .data-table td {
+  text-align: right;
+}
+
+/* Button gap reversal for RTL */
+[dir="rtl"] .btn-primary,
+[dir="rtl"] .btn-telegram,
+[dir="rtl"] .btn-ghost {
+  flex-direction: row-reverse;
+}
+
+/* Card RTL adjustments */
+[dir="rtl"] .card::before {
+  background: linear-gradient(225deg, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+}
+
+/* Ticker animation RTL */
+[dir="rtl"] .animate-ticker {
+  animation-direction: reverse;
+}
+
+/* Bias indicators RTL */
+[dir="rtl"] .bias-bullish,
+[dir="rtl"] .bias-bearish,
+[dir="rtl"] .bias-neutral {
+  flex-direction: row-reverse;
+}

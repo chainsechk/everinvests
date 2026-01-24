@@ -20,11 +20,11 @@
 
 ---
 
-## Current Task: i18n Implementation (IN PROGRESS)
+## Current Task: i18n Implementation (COMPLETE)
 
-**Goal:** Add internationalization support starting with 5 core languages.
+**Goal:** Add internationalization support with 15 languages.
 
-**Status:** Infrastructure complete, page migration in progress
+**Status:** Complete - all phases implemented
 
 ### Scope Decision
 **UI-only translation** (signal summaries stay English for now - separate project)
@@ -63,7 +63,7 @@
 | i18n-7 | Language switcher component | `complete` |
 | i18n-8 | Localized page routes ([locale]/...) | `complete` |
 | i18n-9 | Additional languages (expand from 5 to 15) | `complete` |
-| i18n-10 | RTL testing + CJK/Cyrillic OG fonts | `pending` |
+| i18n-10 | RTL testing + CJK/Cyrillic OG fonts | `complete` |
 
 ### Current Languages (15 - Phase 2 Complete)
 | Priority | Language | Code | Script | Status |
