@@ -28,6 +28,37 @@
 
 ---
 
+## Session: 2026-01-24 (i18n Localized Routes)
+
+### Task: Localized Page Routes
+- **Status:** complete
+- **Started:** 2026-01-24
+
+#### Actions Taken
+- Created `[locale]` route structure under `src/pages/[locale]/`
+- Created localized pages:
+  - `[locale]/index.astro` - Homepage
+  - `[locale]/crypto/index.astro` - Crypto signals
+  - `[locale]/forex/index.astro` - Forex signals
+  - `[locale]/stocks/index.astro` - Stocks signals
+  - `[locale]/[category]/[date]/[time].astro` - Signal detail pages
+  - `[locale]/learn/index.astro` - Learn hub
+  - `[locale]/learn/glossary.astro` - Trading glossary
+  - `[locale]/learn/methodology.astro` - Signal methodology
+  - `[locale]/guides/how-to-use-signals.astro`
+  - `[locale]/guides/bullish-vs-bearish.astro`
+  - `[locale]/guides/fear-and-greed.astro`
+- All pages validate locale and redirect default locale to root
+- Routes like `/es/crypto`, `/zh/forex` now work
+
+#### Files Created
+- 11 new page files under `src/pages/[locale]/`
+
+#### Build Status
+- Build successful
+
+---
+
 ## Session: 2026-01-24 (i18n Language Switcher)
 
 ### Task: Language Switcher Component

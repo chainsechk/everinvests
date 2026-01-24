@@ -1,0 +1,183 @@
+---
+// src/pages/[locale]/learn/methodology.astro
+// Localized methodology page - redirects to root page with locale detection
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import BiasIndicator from "../../../components/BiasIndicator.astro";
+import { absoluteUrl } from "../../../lib/site";
+import { defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../../i18n";
+
+const { locale: localeParam } = Astro.params;
+
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/learn/methodology", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How EverInvests Calculates Market Signals",
+  description: "Our 3-indicator confluence model for generating directional bias signals.",
+  step: [
+    { "@type": "HowToStep", name: "Fetch Market Data", text: "We pull real-time data from Binance, CoinGecko, TwelveData, and Alpha Vantage." },
+    { "@type": "HowToStep", name: "Calculate Independent Indicators", text: "We compute three truly independent signals: Trend, Volume, and Strength." },
+    { "@type": "HowToStep", name: "Apply Confluence Logic", text: "2 of 3 indicators must agree on direction. Disagreement = Neutral signal." }
+  ]
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: t("nav.home"), item: absoluteUrl(l("/", locale)) },
+    { "@type": "ListItem", position: 2, name: t("nav.learn"), item: absoluteUrl(l("/learn", locale)) },
+    { "@type": "ListItem", position: 3, name: t("learnPage.methodology"), item: absoluteUrl(l("/learn/methodology", locale)) }
+  ]
+};
+---
+
+<BaseLayout title={t("learn.methodology.title")} description={t("learn.methodology.description")} jsonLd={[jsonLd, breadcrumbLd]} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <header class="text-center py-8" data-animate>
+      <nav class="text-sm text-txt-muted mb-4">
+        <a href={l("/", locale)} class="hover:text-txt-secondary">{t("nav.home")}</a>
+        <span class="mx-2">/</span>
+        <a href={l("/learn", locale)} class="hover:text-txt-secondary">{t("nav.learn")}</a>
+        <span class="mx-2">/</span>
+        <span class="text-txt-primary">{t("learnPage.methodology")}</span>
+      </nav>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">{t("learn.methodology.title")}</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">{t("learnPage.subtitle")}</p>
+    </header>
+
+    <!-- Core Principle (content in English) -->
+    <section class="card border-cyber/30" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">The Core Principle</h2>
+      <p class="text-txt-secondary mb-4">
+        Most technical indicators are highly correlated—when price moves up, RSI, MACD, and moving averages
+        all tend to agree. That's not real confirmation.
+      </p>
+      <p class="text-txt-secondary">
+        We use <strong class="text-txt-primary">three truly independent indicators</strong> that measure
+        different aspects of market behavior. Only when 2 of 3 agree do we generate a directional signal.
+      </p>
+    </section>
+
+    <!-- The Three Indicators -->
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">The Three Indicators</h2>
+
+      <div class="card">
+        <div class="flex items-start gap-3 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber font-bold">1</span>
+          <h3 class="font-display font-bold text-lg text-txt-primary">Trend (Price vs MA20)</h3>
+        </div>
+        <p class="text-txt-secondary mb-2">Measures whether price is above or below its 20-day moving average.</p>
+        <ul class="text-sm text-txt-muted space-y-1">
+          <li>• Price &gt; MA20 → Bullish</li>
+          <li>• Price &lt; MA20 → Bearish</li>
+          <li>• Price ≈ MA20 → Neutral</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="flex items-start gap-3 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber font-bold">2</span>
+          <h3 class="font-display font-bold text-lg text-txt-primary">Volume (Above/Below Average)</h3>
+        </div>
+        <p class="text-txt-secondary mb-2">Measures whether trading activity confirms the price move.</p>
+        <ul class="text-sm text-txt-muted space-y-1">
+          <li>• High volume + price up → Bullish</li>
+          <li>• High volume + price down → Bearish</li>
+          <li>• Low volume → Weak signal (Neutral)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="flex items-start gap-3 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyber/10 flex items-center justify-center text-cyber font-bold">3</span>
+          <h3 class="font-display font-bold text-lg text-txt-primary">Strength (RSI/Funding Rate)</h3>
+        </div>
+        <p class="text-txt-secondary mb-2">Measures whether momentum supports continuation.</p>
+        <ul class="text-sm text-txt-muted space-y-1">
+          <li>• <strong>Crypto:</strong> Funding rate (positive = bearish, negative = bullish)</li>
+          <li>• <strong>Forex/Stocks:</strong> RSI (overbought/oversold levels)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Confluence Logic -->
+    <section class="card border-cyber/20" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Confluence Logic</h2>
+      <div class="grid gap-4 sm:grid-cols-3 mb-4">
+        <div class="p-4 rounded-lg bg-bullish/5 border border-bullish/20 text-center">
+          <BiasIndicator bias="Bullish" size="md" />
+          <div class="text-sm text-txt-muted mt-2">2-3 indicators bullish</div>
+        </div>
+        <div class="p-4 rounded-lg bg-void-200 border border-divider text-center">
+          <BiasIndicator bias="Neutral" size="md" />
+          <div class="text-sm text-txt-muted mt-2">Indicators disagree</div>
+        </div>
+        <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20 text-center">
+          <BiasIndicator bias="Bearish" size="md" />
+          <div class="text-sm text-txt-muted mt-2">2-3 indicators bearish</div>
+        </div>
+      </div>
+      <p class="text-sm text-txt-muted">This ensures we only signal when there's genuine agreement across different market dimensions.</p>
+    </section>
+
+    <!-- Data Sources -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Data Sources</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="p-3 rounded-lg bg-void-200"><strong class="text-txt-primary">Binance</strong><span class="text-txt-muted"> — Crypto prices, funding rates</span></div>
+        <div class="p-3 rounded-lg bg-void-200"><strong class="text-txt-primary">CoinGecko</strong><span class="text-txt-muted"> — Fear & Greed Index</span></div>
+        <div class="p-3 rounded-lg bg-void-200"><strong class="text-txt-primary">TwelveData</strong><span class="text-txt-muted"> — Forex, stocks, RSI</span></div>
+        <div class="p-3 rounded-lg bg-void-200"><strong class="text-txt-primary">Alpha Vantage</strong><span class="text-txt-muted"> — Macro (DXY, VIX, yields)</span></div>
+      </div>
+    </section>
+
+    <!-- Limitations -->
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Limitations</h2>
+      <ul class="space-y-2 text-txt-secondary">
+        <li class="flex items-start gap-2"><span class="text-bearish">•</span><span><strong>Not timing:</strong> Signals show direction, not when to enter.</span></li>
+        <li class="flex items-start gap-2"><span class="text-bearish">•</span><span><strong>Not magnitude:</strong> We don't predict how far price will move.</span></li>
+        <li class="flex items-start gap-2"><span class="text-bearish">•</span><span><strong>Black swans:</strong> Unexpected events override technical analysis.</span></li>
+        <li class="flex items-start gap-2"><span class="text-bearish">•</span><span><strong>Past ≠ future:</strong> Historical accuracy doesn't guarantee future results.</span></li>
+      </ul>
+    </section>
+
+    <section class="text-center space-y-4" data-animate>
+      <a href={l("/performance", locale)} class="btn-primary inline-flex items-center gap-2">
+        {t("nav.performance")}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+    </section>
+
+    <TelegramCTA variant="full" locale={locale} />
+
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href={l("/learn/glossary", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.glossary.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.glossary.description")}</div>
+        </a>
+        <a href={l("/guides/how-to-use-signals", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>

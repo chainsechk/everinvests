@@ -1,0 +1,106 @@
+---
+// src/pages/[locale]/guides/bullish-vs-bearish.astro
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import BiasIndicator from "../../../components/BiasIndicator.astro";
+import { defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../../i18n";
+
+const { locale: localeParam } = Astro.params;
+
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/guides/bullish-vs-bearish", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "What Does Bullish vs Bearish Mean?",
+  description: "A practical guide to understanding market bias signals and how to use them for your investment decisions.",
+  author: { "@type": "Organization", name: "EverInvests" }
+};
+---
+
+<BaseLayout title={t("learn.bullishBearish.title")} description={t("learn.bullishBearish.description")} jsonLd={jsonLd} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">What Does Bullish vs Bearish Mean?</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">Not just definitions—what these signals mean for your actual decisions.</p>
+    </header>
+
+    <section class="space-y-6" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">The Three Bias Types</h2>
+
+      <div class="card border-bullish/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Bullish" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Bullish</h3>
+        </div>
+        <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> The asset is trending up, with volume and momentum confirming the move.</p>
+        <div class="p-4 rounded-lg bg-bullish/5 border border-bullish/20">
+          <div class="font-medium text-bullish mb-2">What to consider:</div>
+          <ul class="text-sm space-y-1"><li>• Look for entry points on pullbacks</li><li>• Add to existing positions if risk allows</li></ul>
+        </div>
+      </div>
+
+      <div class="card border-txt-muted/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Neutral" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Neutral</h3>
+        </div>
+        <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> Indicators disagree. The market is undecided—could go either way.</p>
+        <div class="p-4 rounded-lg bg-void-200/50 border border-divider">
+          <div class="font-medium text-txt-primary mb-2">What to consider:</div>
+          <ul class="text-sm space-y-1"><li>• Wait for clarity before taking new positions</li><li>• Focus on other assets with clearer signals</li></ul>
+        </div>
+      </div>
+
+      <div class="card border-bearish/30">
+        <div class="flex items-center gap-3 mb-4">
+          <BiasIndicator bias="Bearish" size="lg" />
+          <h3 class="font-display font-bold text-xl text-txt-primary">Bearish</h3>
+        </div>
+        <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> The asset is trending down, with volume and momentum confirming the decline.</p>
+        <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20">
+          <div class="font-medium text-bearish mb-2">What to consider:</div>
+          <ul class="text-sm space-y-1"><li>• Avoid new long positions</li><li>• Wait for reversal signals before buying dips</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="text-center space-y-4" data-animate>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href={l("/crypto", locale)} class="btn-primary inline-flex items-center gap-2">
+          {t("category.crypto.title")}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+        <a href={l("/forex", locale)} class="btn-secondary">{t("category.forex.title")}</a>
+        <a href={l("/stocks", locale)} class="btn-secondary">{t("category.stocks.title")}</a>
+      </div>
+    </section>
+
+    <TelegramCTA variant="full" locale={locale} />
+
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href={l("/guides/how-to-use-signals", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+        <a href={l("/guides/fear-and-greed", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.fearGreed.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.fearGreed.description")}</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>

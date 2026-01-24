@@ -1,0 +1,238 @@
+---
+// src/pages/[locale]/index.astro
+// Localized homepage wrapper
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import MacroBar from "../../components/MacroBar.astro";
+import SignalCard from "../../components/SignalCard.astro";
+import VIPCTA from "../../components/VIPCTA.astro";
+import { getLatestMacro, getLatestSignal, getAssetSignals } from "../../lib/db";
+import { locales, defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../i18n";
+
+// Validate locale param
+const { locale: localeParam } = Astro.params;
+
+// Redirect invalid locales or default locale to root
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const db = Astro.locals.runtime?.env?.DB;
+
+let macro = null;
+let cryptoSignal = null;
+let forexSignal = null;
+let stocksSignal = null;
+
+if (db) {
+  [macro, cryptoSignal, forexSignal, stocksSignal] = await Promise.all([
+    getLatestMacro(db),
+    getLatestSignal(db, "crypto"),
+    getLatestSignal(db, "forex"),
+    getLatestSignal(db, "stocks"),
+  ]);
+}
+
+function extractSummary(signal: any): string | null {
+  if (!signal?.output_json) return null;
+  try {
+    const output = JSON.parse(signal.output_json);
+    return output.summary || null;
+  } catch {
+    return null;
+  }
+}
+
+async function getAssetCount(signal: any): Promise<number> {
+  if (!signal || !db) return 0;
+  const assets = await getAssetSignals(db, signal.id);
+  return assets.length;
+}
+
+const cryptoAssetCount = await getAssetCount(cryptoSignal);
+const forexAssetCount = await getAssetCount(forexSignal);
+const stocksAssetCount = await getAssetCount(stocksSignal);
+
+async function getConfluence(signal: any): Promise<string | null> {
+  if (!signal || !db) return null;
+  const assets = await getAssetSignals(db, signal.id);
+  if (assets.length === 0) return null;
+  try {
+    const assetData = assets[0].data_json ? JSON.parse(assets[0].data_json) : null;
+    return assetData?.confluence || null;
+  } catch {
+    return null;
+  }
+}
+
+const cryptoConfluence = await getConfluence(cryptoSignal);
+const forexConfluence = await getConfluence(forexSignal);
+const stocksConfluence = await getConfluence(stocksSignal);
+
+function formatNextUpdate(): string {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const dayOfWeek = now.getUTCDay();
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+
+  const cryptoHours = [0, 8, 16];
+  const forexHours = [0, 8, 14];
+  const stocksHours = [17, 21];
+
+  const schedules = isWeekday
+    ? Array.from(new Set([...cryptoHours, ...forexHours, ...stocksHours])).sort((a, b) => a - b)
+    : cryptoHours;
+  const nextHour = schedules.find((h) => h > utcHour) ?? schedules[0];
+  return `${nextHour.toString().padStart(2, "0")}:00 UTC`;
+}
+
+function formatLastUpdate(): string {
+  const signals = [cryptoSignal, forexSignal, stocksSignal].filter(Boolean);
+  if (signals.length === 0) return "--:--";
+  const latest = signals.reduce((a, b) =>
+    new Date(a?.generated_at || 0) > new Date(b?.generated_at || 0) ? a : b
+  );
+  if (!latest?.time_slot) return "--:--";
+  return latest.time_slot + " UTC";
+}
+---
+
+<BaseLayout title={t("site.name")} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <div class="space-y-12">
+    <!-- Hero Section -->
+    <section class="text-center py-8 sm:py-12" data-animate>
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-subtle border border-divider text-xs text-txt-secondary mb-6">
+        <span class="pulse-dot"></span>
+        <span class="font-mono">{t("home.hero.badge")}</span>
+      </div>
+
+      <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-txt-primary mb-4 tracking-tight">
+        {t("home.hero.title")}
+        <span class="text-gradient">{t("home.hero.titleHighlight")}</span>
+      </h1>
+
+      <p class="text-lg text-txt-secondary max-w-2xl mx-auto mb-2">
+        {t("home.hero.subtitle")}
+        {t("home.hero.subtitleContinued")}
+      </p>
+      <p class="text-xs text-txt-muted mb-8">
+        <Fragment set:html={t("home.hero.disclaimer", { link: `<a href="${l("/performance", locale)}" class="underline hover:text-txt-secondary">${t("home.hero.disclaimerLink")}</a>` })} />
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="https://t.me/everinvests" target="_blank" rel="noopener" class="btn-telegram">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.228.166.331.014.103.03.318.017.492z"/>
+          </svg>
+          {t("home.hero.ctaPrimary")}
+        </a>
+        <a href={l("/about", locale)} class="btn-ghost">
+          {t("home.hero.ctaSecondary")}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Macro Context -->
+    <MacroBar
+      overall={macro?.overall}
+      dxyBias={macro?.dxy_bias}
+      vixLevel={macro?.vix_level}
+      yieldsBias={macro?.yields_bias}
+      dataJson={macro?.data_json}
+    />
+
+    <!-- Signal Cards Grid -->
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display font-bold text-xl text-txt-primary">{t("signal.todaysSignals")}</h2>
+        <div class="text-xs text-txt-muted font-mono">
+          {t("signal.updated")} {formatLastUpdate()}
+        </div>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-3">
+        <SignalCard
+          category="crypto"
+          bias={cryptoSignal?.bias}
+          summary={extractSummary(cryptoSignal)}
+          assetCount={cryptoAssetCount}
+          updatedAt={cryptoSignal?.generated_at}
+          confluence={cryptoConfluence}
+          locale={locale}
+        />
+        <SignalCard
+          category="forex"
+          bias={forexSignal?.bias}
+          summary={extractSummary(forexSignal)}
+          assetCount={forexAssetCount}
+          updatedAt={forexSignal?.generated_at}
+          confluence={forexConfluence}
+          locale={locale}
+        />
+        <SignalCard
+          category="stocks"
+          bias={stocksSignal?.bias}
+          summary={extractSummary(stocksSignal)}
+          assetCount={stocksAssetCount}
+          updatedAt={stocksSignal?.generated_at}
+          confluence={stocksConfluence}
+          locale={locale}
+        />
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="grid gap-6 sm:grid-cols-3" data-animate>
+      <a href={l("/performance", locale)} class="card-glass text-center py-6 block hover:border-cyber/30 transition-colors">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.trackRecord.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.trackRecord.description")}</p>
+      </a>
+
+      <div class="card-glass text-center py-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.tripleChecked.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.tripleChecked.description")}</p>
+      </div>
+
+      <div class="card-glass text-center py-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-txt-primary mb-2">{t("home.features.alwaysFree.title")}</h3>
+        <p class="text-sm text-txt-muted">{t("home.features.alwaysFree.description")}</p>
+      </div>
+    </section>
+
+    <!-- VIP CTA -->
+    <VIPCTA category="all" mode="waitlist" utmSource="homepage" />
+
+    <!-- Update Schedule -->
+    <div class="text-center text-sm text-txt-muted" data-animate>
+      <p class="font-mono">
+        {t("signal.nextUpdate")}: <span class="text-cyber">{formatNextUpdate()}</span>
+      </p>
+    </div>
+  </div>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>

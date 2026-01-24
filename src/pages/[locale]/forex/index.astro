@@ -1,0 +1,193 @@
+---
+// src/pages/[locale]/forex/index.astro
+// Localized forex signals page
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import MacroBar from "../../../components/MacroBar.astro";
+import SignalDetail from "../../../components/SignalDetail.astro";
+import AssetTable from "../../../components/AssetTable.astro";
+import HistoryMini from "../../../components/HistoryMini.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import VIPCTA from "../../../components/VIPCTA.astro";
+import ApexPreview from "../../../components/ApexPreview.astro";
+import NextUpdateCountdown from "../../../components/NextUpdateCountdown.astro";
+import { getLatestMacro, getLatestSignal, getLatestSignalWithAssets, getAssetSignals, getSignalHistory } from "../../../lib/db";
+import { absoluteUrl } from "../../../lib/site";
+import { defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../../i18n";
+
+const { locale: localeParam } = Astro.params;
+
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/forex", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const category = "forex" as const;
+const categoryTitle = t("category.forex.title");
+const categoryDescription = t("category.forex.seoDescription");
+
+const db = Astro.locals.runtime?.env?.DB;
+
+let macro = null;
+let signal = null;
+let assets: any[] = [];
+let history: any[] = [];
+let qualityFlags: any = null;
+let usingFallbackAssets = false;
+
+if (db) {
+  [macro, signal] = await Promise.all([
+    getLatestMacro(db),
+    getLatestSignal(db, category),
+  ]);
+
+  if (signal) {
+    [assets, history] = await Promise.all([
+      getAssetSignals(db, signal.id),
+      getSignalHistory(db, category, 7),
+    ]);
+
+    if (signal.output_json) {
+      try {
+        const output = JSON.parse(signal.output_json);
+        qualityFlags = output.quality_flags || null;
+      } catch {}
+    }
+
+    if (assets.length === 0) {
+      const fallbackSignal = await getLatestSignalWithAssets(db, category);
+      if (fallbackSignal && fallbackSignal.id !== signal.id) {
+        assets = await getAssetSignals(db, fallbackSignal.id);
+        usingFallbackAssets = true;
+      }
+    }
+  }
+}
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: t("nav.home"), item: absoluteUrl(l("/", locale)) },
+    { "@type": "ListItem", position: 2, name: categoryTitle, item: absoluteUrl(l("/forex", locale)) },
+  ],
+};
+
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "EverInvests Forex Signals",
+  description: "Free daily forex signals for major currency pairs with RSI and macro analysis",
+  provider: { "@type": "Organization", name: "EverInvests" },
+  serviceType: "Market Analysis",
+  areaServed: "Worldwide",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free daily forex signals" },
+};
+---
+
+<BaseLayout title={categoryTitle} description={categoryDescription} image="/og/signal/forex.png" jsonLd={[breadcrumbSchema, serviceSchema]} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <div class="space-y-8">
+    <nav class="flex items-center gap-2 text-sm" data-animate>
+      <a href={l("/", locale)} class="text-txt-muted hover:text-txt-primary transition-colors">{t("nav.home")}</a>
+      <svg class="w-4 h-4 text-txt-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-txt-primary font-medium">{categoryTitle}</span>
+    </nav>
+
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-animate>
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">$</span>
+          <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary">{categoryTitle}</h1>
+        </div>
+        <p class="text-txt-secondary">{t("category.forex.subtitle")}</p>
+      </div>
+      <TelegramCTA variant="compact" locale={locale} />
+    </div>
+
+    <NextUpdateCountdown category="forex" />
+
+    <MacroBar
+      overall={macro?.overall}
+      dxyBias={macro?.dxy_bias}
+      vixLevel={macro?.vix_level}
+      yieldsBias={macro?.yields_bias}
+      dataJson={macro?.data_json}
+    />
+
+    {signal ? (
+      <SignalDetail signal={signal} locale={locale} />
+    ) : (
+      <div class="card text-center py-16" data-animate>
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-void-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-txt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-display font-semibold text-lg text-txt-primary mb-2">{t("categoryPage.noSignal.title")}</h3>
+        <p class="text-txt-muted">{t("categoryPage.noSignal.description")}</p>
+      </div>
+    )}
+
+    {assets.length > 0 && (
+      <div class="card" data-animate>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display font-semibold text-lg text-txt-primary">{t("categoryPage.assetBreakdown")}</h2>
+          {usingFallbackAssets && (
+            <span class="text-xs text-txt-muted bg-subtle px-2 py-1 rounded">{t("categoryPage.usingLastData")}</span>
+          )}
+        </div>
+        <AssetTable assets={assets} category={category} qualityFlags={usingFallbackAssets ? null : qualityFlags} locale={locale} />
+      </div>
+    )}
+
+    <ApexPreview category="forex" />
+    <VIPCTA category="forex" mode="waitlist" utmSource="forex_page" />
+
+    <div class="card" data-animate>
+      <HistoryMini signals={history} category={category} locale={locale} />
+    </div>
+
+    <div class="card" data-animate>
+      <h2 class="font-display font-semibold text-lg text-txt-primary mb-4">{t("categoryPage.learnMore")}</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <a href={l("/guides/bullish-vs-bearish", locale)} class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">📊</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">{t("learn.bullishBearish.title")}</div>
+            <div class="text-xs text-txt-muted">{t("learn.bullishBearish.description")}</div>
+          </div>
+        </a>
+        <a href={l("/learn/glossary#dxy", locale)} class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">💵</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">{t("learn.fearGreed.title")}</div>
+            <div class="text-xs text-txt-muted">{t("learn.fearGreed.description")}</div>
+          </div>
+        </a>
+        <a href={l("/learn/methodology", locale)} class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">🔬</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">{t("learn.methodology.title")}</div>
+            <div class="text-xs text-txt-muted">{t("learn.methodology.description")}</div>
+          </div>
+        </a>
+        <a href={l("/learn/glossary", locale)} class="flex items-start gap-3 p-3 rounded-lg bg-void-200 hover:bg-void-300 transition-colors">
+          <span class="text-xl">📖</span>
+          <div>
+            <div class="font-medium text-txt-primary text-sm">{t("learn.glossary.title")}</div>
+            <div class="text-xs text-txt-muted">{t("learn.glossary.description")}</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>

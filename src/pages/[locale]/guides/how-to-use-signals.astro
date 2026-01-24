@@ -1,0 +1,126 @@
+---
+// src/pages/[locale]/guides/how-to-use-signals.astro
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import BiasIndicator from "../../../components/BiasIndicator.astro";
+import { defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../../i18n";
+
+const { locale: localeParam } = Astro.params;
+
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/guides/how-to-use-signals", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to Use EverInvests Signals",
+  description: "A 3-step workflow to interpret market signals and make informed decisions.",
+  step: [
+    { "@type": "HowToStep", position: 1, name: "Check Macro Context", text: "Look at the macro bar to see if market conditions favor risk-on or risk-off positioning." },
+    { "@type": "HowToStep", position: 2, name: "Check Category Bias", text: "See whether crypto, forex, or stocks are showing bullish, bearish, or neutral bias." },
+    { "@type": "HowToStep", position: 3, name: "Check Individual Assets", text: "Drill into specific assets to see their trend, volume, and strength indicators." }
+  ]
+};
+---
+
+<BaseLayout title="How to Use These Signals" description="A simple 3-step workflow to interpret EverInvests signals and make informed market decisions." jsonLd={jsonLd} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">How to Use These Signals</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">A 3-step workflow that takes 30 seconds. No guessing required.</p>
+    </header>
+
+    <section class="card" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-3">What you'll learn</h2>
+      <ul class="space-y-2 text-txt-secondary">
+        <li class="flex items-start gap-2"><span class="text-cyber mt-1">1.</span><span>How to read the macro context (risk-on vs risk-off)</span></li>
+        <li class="flex items-start gap-2"><span class="text-cyber mt-1">2.</span><span>What category bias tells you about timing</span></li>
+        <li class="flex items-start gap-2"><span class="text-cyber mt-1">3.</span><span>How to use individual asset signals for your watchlist</span></li>
+      </ul>
+    </section>
+
+    <section class="space-y-4" data-animate>
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-cyber/10 flex items-center justify-center text-cyber font-bold">1</span>
+        <h2 class="font-display font-bold text-xl text-txt-primary">Check the Macro Context First</h2>
+      </div>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">Before looking at any specific coin or stock, check the <strong class="text-txt-primary">macro bar</strong> at the top of the homepage. It tells you if the overall environment favors buyers or sellers.</p>
+        <div class="grid gap-4 sm:grid-cols-3 mb-4">
+          <div class="p-4 rounded-lg border border-bullish/30 bg-bullish/5"><div class="text-bullish font-medium mb-1">Risk-On</div><div class="text-sm text-txt-muted">Markets favor growth. Good for crypto, stocks.</div></div>
+          <div class="p-4 rounded-lg border border-mixed/30 bg-mixed/5"><div class="text-mixed font-medium mb-1">Mixed</div><div class="text-sm text-txt-muted">No clear direction. Be selective.</div></div>
+          <div class="p-4 rounded-lg border border-bearish/30 bg-bearish/5"><div class="text-bearish font-medium mb-1">Risk-Off</div><div class="text-sm text-txt-muted">Defensive mode. Cash or safe havens.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4" data-animate>
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-cyber/10 flex items-center justify-center text-cyber font-bold">2</span>
+        <h2 class="font-display font-bold text-xl text-txt-primary">Check Category Bias</h2>
+      </div>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">Each category (Crypto, Forex, Stocks) has an overall <strong class="text-txt-primary">bias</strong> based on the majority of assets within it:</p>
+        <div class="flex flex-wrap gap-3 mb-4">
+          <BiasIndicator bias="Bullish" size="md" />
+          <BiasIndicator bias="Neutral" size="md" />
+          <BiasIndicator bias="Bearish" size="md" />
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4" data-animate>
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-cyber/10 flex items-center justify-center text-cyber font-bold">3</span>
+        <h2 class="font-display font-bold text-xl text-txt-primary">Drill Into Individual Assets</h2>
+      </div>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">Each asset shows three independent indicators that must <strong class="text-txt-primary">agree</strong> for a strong signal:</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-divider"><th class="text-left py-2 text-txt-muted font-medium">Indicator</th><th class="text-left py-2 text-txt-muted font-medium">What it measures</th></tr></thead>
+            <tbody class="text-txt-secondary">
+              <tr class="border-b border-subtle"><td class="py-2 font-medium text-txt-primary">Trend</td><td class="py-2">Price vs 20-day average</td></tr>
+              <tr class="border-b border-subtle"><td class="py-2 font-medium text-txt-primary">Volume</td><td class="py-2">Trading activity vs average</td></tr>
+              <tr><td class="py-2 font-medium text-txt-primary">Strength</td><td class="py-2">RSI or Funding Rate</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-txt-muted mt-4"><strong>Takeaway:</strong> When 2 of 3 indicators agree, you have a signal. When all 3 agree, you have conviction.</p>
+      </div>
+    </section>
+
+    <section class="text-center space-y-4" data-animate>
+      <a href={l("/", locale)} class="btn-primary inline-flex items-center gap-2">
+        {t("signal.todaysSignals")}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+    </section>
+
+    <TelegramCTA variant="full" locale={locale} />
+
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href={l("/guides/bullish-vs-bearish", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.bullishBearish.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.bullishBearish.description")}</div>
+        </a>
+        <a href={l("/guides/fear-and-greed", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.fearGreed.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.fearGreed.description")}</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>

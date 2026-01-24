@@ -1,0 +1,117 @@
+---
+// src/pages/[locale]/guides/fear-and-greed.astro
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import TelegramCTA from "../../../components/TelegramCTA.astro";
+import ScaleBar from "../../../components/ScaleBar.astro";
+import { defaultLocale, isValidLocale, useTranslations, l, type Locale } from "../../../i18n";
+
+const { locale: localeParam } = Astro.params;
+
+if (!localeParam || !isValidLocale(localeParam) || localeParam === defaultLocale) {
+  return Astro.redirect("/guides/fear-and-greed", 301);
+}
+
+const locale = localeParam as Locale;
+const t = useTranslations(locale);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Fear & Greed Index Explained",
+  description: "How EverInvests uses the Fear & Greed Index as a contrarian indicator for crypto markets.",
+  author: { "@type": "Organization", name: "EverInvests" }
+};
+---
+
+<BaseLayout title={t("learn.fearGreed.title")} description={t("learn.fearGreed.description")} jsonLd={jsonLd} locale={locale}>
+  <Header slot="header" locale={locale} />
+
+  <article class="max-w-3xl mx-auto space-y-10">
+    <header class="text-center py-8" data-animate>
+      <h1 class="font-display font-bold text-3xl sm:text-4xl text-txt-primary mb-4">Fear & Greed Index Explained</h1>
+      <p class="text-lg text-txt-secondary max-w-xl mx-auto">Be greedy when others are fearful. Here's how we use crowd sentiment.</p>
+    </header>
+
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">What Is the Fear & Greed Index?</h2>
+      <div class="card">
+        <p class="text-txt-secondary mb-4">The <strong class="text-txt-primary">Crypto Fear & Greed Index</strong> measures market sentiment on a scale of 0-100.</p>
+        <ul class="space-y-2 text-txt-secondary">
+          <li class="flex items-start gap-2"><span class="text-cyber">•</span><span><strong>Volatility</strong> — How much is the market swinging?</span></li>
+          <li class="flex items-start gap-2"><span class="text-cyber">•</span><span><strong>Volume</strong> — Are people buying or selling heavily?</span></li>
+          <li class="flex items-start gap-2"><span class="text-cyber">•</span><span><strong>Social media</strong> — What's the mood on Twitter/X?</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Reading the Scale</h2>
+      <div class="card space-y-6">
+        <div>
+          <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-bearish">Extreme Fear</span><span class="text-sm text-txt-muted">0-25</span></div>
+          <ScaleBar value={15} type="fear-greed" />
+          <p class="text-sm text-txt-muted mt-2">Investors are panicking. Historically, this is when patient buyers find opportunities.</p>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-txt-primary">Neutral</span><span class="text-sm text-txt-muted">46-55</span></div>
+          <ScaleBar value={50} type="fear-greed" />
+          <p class="text-sm text-txt-muted mt-2">Balanced sentiment. No strong contrarian signal either way.</p>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-bullish">Extreme Greed</span><span class="text-sm text-txt-muted">76-100</span></div>
+          <ScaleBar value={85} type="fear-greed" />
+          <p class="text-sm text-txt-muted mt-2">Euphoria. Everyone is bullish. Historically, corrections follow.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4" data-animate>
+      <h2 class="font-display font-bold text-2xl text-txt-primary">Why We Use It as a Contrarian Signal</h2>
+      <div class="card">
+        <div class="p-4 rounded-lg bg-cyber/10 border border-cyber/30 mb-4">
+          <blockquote class="text-txt-primary font-medium italic">"Be fearful when others are greedy, and greedy when others are fearful."</blockquote>
+          <div class="text-sm text-txt-muted mt-2">— Warren Buffett</div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="p-4 rounded-lg border border-bullish/30 bg-bullish/5">
+            <div class="font-medium text-bullish mb-2">Extreme Fear (≤20)</div>
+            <div class="text-sm text-txt-muted">Crowds are capitulating → <strong class="text-bullish">Contrarian bullish</strong></div>
+          </div>
+          <div class="p-4 rounded-lg border border-bearish/30 bg-bearish/5">
+            <div class="font-medium text-bearish mb-2">Extreme Greed (≥80)</div>
+            <div class="text-sm text-txt-muted">Crowds are euphoric → <strong class="text-bearish">Contrarian bearish</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card border-cyber/20" data-animate>
+      <h2 class="font-display font-bold text-lg text-txt-primary mb-4">See Current Fear & Greed</h2>
+      <p class="text-txt-secondary mb-4">The live Fear & Greed reading is displayed in the macro bar on our crypto page.</p>
+      <a href={l("/crypto", locale)} class="btn-primary inline-flex items-center gap-2">
+        {t("category.crypto.title")}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+    </section>
+
+    <TelegramCTA variant="full" locale={locale} />
+
+    <section class="pt-8 border-t border-divider" data-animate>
+      <h3 class="font-display font-bold text-lg text-txt-primary mb-4">{t("learnPage.relatedGuides")}</h3>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <a href={l("/guides/how-to-use-signals", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">How to Use These Signals</div>
+          <div class="text-sm text-txt-muted">The 3-step workflow: Macro → Category → Asset.</div>
+        </a>
+        <a href={l("/guides/bullish-vs-bearish", locale)} class="card hover:border-cyber/40 transition-colors">
+          <div class="font-medium text-txt-primary mb-1">{t("learn.bullishBearish.title")}</div>
+          <div class="text-sm text-txt-muted">{t("learn.bullishBearish.description")}</div>
+        </a>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>
