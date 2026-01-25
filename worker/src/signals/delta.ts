@@ -151,3 +151,45 @@ export function formatDeltaSummary(delta: SignalDelta): string {
   return parts.join(". ");
 }
 
+/**
+ * Calculate importance score for a signal delta.
+ * Higher score = more important/noteworthy signal.
+ *
+ * Scoring:
+ * - Bias changed (Bullish↔Bearish↔Neutral): +50
+ * - Many assets changed bias (>3): +20
+ * - Big price mover (>5%): +30 each for gainer/loser
+ * - First signal (no previous): +100 (always send first signal)
+ *
+ * Threshold recommendation: 30 (send if score >= 30)
+ */
+export function calculateImportanceScore(delta: SignalDelta | null | undefined): number {
+  // No delta data - first signal or missing, always send
+  if (!delta || delta.previousBias === null) {
+    return 100;
+  }
+
+  let score = 0;
+
+  // Major event: overall bias changed
+  if (delta.biasChanged) {
+    score += 50;
+  }
+
+  // Broad market movement: many assets changed
+  if (delta.changedAssets > 3) {
+    score += 20;
+  }
+
+  // Significant price action
+  const { biggest_gainer, biggest_loser } = delta.priceMovers;
+  if (biggest_gainer && Math.abs(biggest_gainer.delta) > 5) {
+    score += 30;
+  }
+  if (biggest_loser && Math.abs(biggest_loser.delta) > 5) {
+    score += 30;
+  }
+
+  return score;
+}
+
