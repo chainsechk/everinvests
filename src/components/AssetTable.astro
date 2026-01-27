@@ -3,7 +3,7 @@
 import BiasIndicator from "./BiasIndicator.astro";
 import InfoTip from "./InfoTip.astro";
 import ScaleBar from "./ScaleBar.astro";
-import { formatNumber, DEFAULT_LOCALE } from "../lib/i18n";
+import { formatNumber, type Locale } from "../lib/i18n";
 
 interface Asset {
   id: number;
@@ -44,9 +44,10 @@ interface Props {
   assets: Asset[];
   category: "crypto" | "forex" | "stocks";
   qualityFlags?: QualityFlags | null;
+  locale?: Locale;
 }
 
-const { assets, category, qualityFlags } = Astro.props;
+const { assets, category, qualityFlags, locale = "en" } = Astro.props;
 
 // Human-readable labels with tooltips for each category
 const secondaryConfig: Record<string, { label: string; tooltip: string }> = {
@@ -93,8 +94,8 @@ function getAssetStatus(ticker: string): { isStale: boolean; outliers: OutlierIn
 function formatPrice(price: number | null, cat: string): string {
   if (price === null) return "--";
   if (cat === "forex") return price.toFixed(4);
-  if (price > 1000) return formatNumber(price, DEFAULT_LOCALE, { maximumFractionDigits: 0 });
-  return formatNumber(price, DEFAULT_LOCALE, { maximumFractionDigits: 2 });
+  if (price > 1000) return formatNumber(price, locale, { maximumFractionDigits: 0 });
+  return formatNumber(price, locale, { maximumFractionDigits: 2 });
 }
 
 // Extract numeric value from secondary indicator (for scale bar)
@@ -291,7 +292,7 @@ function getAssetUrl(ticker: string, cat: string): string {
               })()}
             </td>
             <td>
-              <BiasIndicator bias={asset.bias} size="sm" />
+              <BiasIndicator bias={asset.bias} size="sm" locale={locale} />
             </td>
           </tr>
         );

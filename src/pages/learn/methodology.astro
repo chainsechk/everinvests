@@ -211,15 +211,15 @@ const breadcrumbLd = {
         </p>
         <div class="space-y-3">
           <div class="flex items-center gap-4 p-3 rounded-lg bg-bullish/10 border border-bullish/20">
-            <BiasIndicator bias="Bullish" size="md" />
+            <BiasIndicator bias="Bullish" size="md" locale={locale} />
             <span class="text-txt-secondary">2 or 3 indicators bullish</span>
           </div>
           <div class="flex items-center gap-4 p-3 rounded-lg bg-void-200 border border-divider">
-            <BiasIndicator bias="Neutral" size="md" />
+            <BiasIndicator bias="Neutral" size="md" locale={locale} />
             <span class="text-txt-secondary">No majority (mixed signals)</span>
           </div>
           <div class="flex items-center gap-4 p-3 rounded-lg bg-bearish/10 border border-bearish/20">
-            <BiasIndicator bias="Bearish" size="md" />
+            <BiasIndicator bias="Bearish" size="md" locale={locale} />
             <span class="text-txt-secondary">2 or 3 indicators bearish</span>
           </div>
         </div>

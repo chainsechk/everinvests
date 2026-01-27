@@ -5,7 +5,9 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import HistoryList from "../../components/HistoryList.astro";
 import { getSignalHistory } from "../../lib/db";
+import { getLocaleFromUrl } from "../../lib/i18n";
 
+const locale = getLocaleFromUrl(Astro.url);
 const category = "crypto" as const;
 const categoryTitle = "Crypto";
 
@@ -44,7 +46,7 @@ if (db) {
     </div>
 
     <!-- Signal List -->
-    <HistoryList signals={signals} category={category} />
+    <HistoryList signals={signals} category={category} locale={locale} />
   </div>
 
   <Footer slot="footer" />

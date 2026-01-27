@@ -1,6 +1,6 @@
 ---
 // src/components/SignalCard.astro
-import { formatTime as formatTimeI18n, getLocaleFromUrl, useTranslations, l, type Locale } from "../lib/i18n";
+import { formatTime as formatTimeI18n, getLocaleFromUrl, useTranslations, translateBias, l, type Locale } from "../lib/i18n";
 
 interface Props {
   category: "crypto" | "forex" | "stocks";
@@ -101,7 +101,7 @@ const categoryDisplayName = t(`category.${category}`);
         <span class="text-xs text-txt-muted">{t(config.assetsKey)}</span>
       </div>
       <span class:list={[getBiasClass(bias)]}>
-        {bias || t("signalCard.noSignal")}
+        {translateBias(bias, t)}
         <span class="text-lg">{getBiasIcon(bias)}</span>
       </span>
     </div>

@@ -9,8 +9,9 @@ import TelegramCTA from "../../components/TelegramCTA.astro";
 import { getAssetHistory, getDistinctTickers, getLatestSignal, getAssetSignals } from "../../lib/db";
 import type { Category } from "../../lib/db";
 import { absoluteUrl } from "../../lib/site";
-import { formatDateShort, formatPrice as formatPriceI18n, DEFAULT_LOCALE } from "../../lib/i18n";
+import { formatDateShort, formatPrice as formatPriceI18n, getLocaleFromUrl } from "../../lib/i18n";
 
+const locale = getLocaleFromUrl(Astro.url);
 const category: Category = "stocks";
 const { ticker } = Astro.params;
 
@@ -44,7 +45,7 @@ if (latestSignal) {
 
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
-  return formatPriceI18n(price, DEFAULT_LOCALE);
+  return formatPriceI18n(price, locale);
 }
 
 const pageTitle = `${normalizedTicker} Stock Signals`;
@@ -107,7 +108,7 @@ const financialProductSchema = {
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">Bias</div>
-            <BiasIndicator bias={currentAsset.bias} size="md" />
+            <BiasIndicator bias={currentAsset.bias} size="md" locale={locale} />
           </div>
           <div>
             <div class="text-xs text-txt-muted uppercase tracking-wide mb-1">Price</div>
@@ -156,7 +157,7 @@ const financialProductSchema = {
                   </td>
                   <td class="py-2 px-3 text-txt-secondary font-mono text-xs">{row.time_slot}</td>
                   <td class="py-2 px-3">
-                    <BiasIndicator bias={row.bias} size="sm" />
+                    <BiasIndicator bias={row.bias} size="sm" locale={locale} />
                   </td>
                   <td class="py-2 px-3 text-right font-mono text-txt-primary">{formatPrice(row.price)}</td>
                   <td class="py-2 px-3 text-center">

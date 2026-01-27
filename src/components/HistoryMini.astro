@@ -42,7 +42,7 @@ const t = useTranslations(locale);
           <div class="text-xs text-txt-muted font-mono">
             {formatDateShort(signal.date, locale)} <span class="text-txt-muted/60">{signal.time_slot}</span>
           </div>
-          <BiasIndicator bias={signal.bias} size="sm" />
+          <BiasIndicator bias={signal.bias} size="sm" locale={locale} />
         </a>
       ))}
     </div>

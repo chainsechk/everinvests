@@ -203,15 +203,15 @@ const breadcrumbLd = {
       </p>
       <div class="flex flex-wrap gap-4">
         <div class="flex items-center gap-2">
-          <BiasIndicator bias="Bullish" size="md" />
+          <BiasIndicator bias="Bullish" size="md" locale={locale} />
           <span class="text-sm text-txt-muted">{t("learnPage.likelyToRise")}</span>
         </div>
         <div class="flex items-center gap-2">
-          <BiasIndicator bias="Neutral" size="md" />
+          <BiasIndicator bias="Neutral" size="md" locale={locale} />
           <span class="text-sm text-txt-muted">{t("learnPage.noClearDirection")}</span>
         </div>
         <div class="flex items-center gap-2">
-          <BiasIndicator bias="Bearish" size="md" />
+          <BiasIndicator bias="Bearish" size="md" locale={locale} />
           <span class="text-sm text-txt-muted">{t("learnPage.likelyToFall")}</span>
         </div>
       </div>

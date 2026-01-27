@@ -201,3 +201,18 @@ function localeToIntl(locale: Locale): string {
   };
   return mapping[locale] || locale;
 }
+
+/**
+ * Translate bias value from database to localized string
+ * Maps "Bullish", "Bearish", "Neutral" (and variations) to translation keys
+ */
+export function translateBias(
+  bias: string | null,
+  t: (key: string) => string
+): string {
+  if (!bias) return t("signal.noSignal");
+  const lower = bias.toLowerCase();
+  if (lower.includes("bullish")) return t("signal.bullish");
+  if (lower.includes("bearish")) return t("signal.bearish");
+  return t("signal.neutral");
+}

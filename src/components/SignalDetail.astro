@@ -50,7 +50,7 @@ function getMacroColor(macro: string | null): string {
   <!-- Header -->
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div class="flex items-center gap-4">
-      <BiasIndicator bias={signal.bias} size="lg" />
+      <BiasIndicator bias={signal.bias} size="lg" locale={locale} />
       {signal.macro_overall && (
         <div class="flex items-center gap-2 text-sm">
           <span class="text-txt-muted">{t("signalDetail.macro")}</span>

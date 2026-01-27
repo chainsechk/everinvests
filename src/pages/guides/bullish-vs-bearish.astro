@@ -64,7 +64,7 @@ const jsonLd = {
       <!-- Bullish -->
       <div class="card border-bullish/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Bullish" size="lg" />
+          <BiasIndicator bias="Bullish" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Bullish</h3>
         </div>
         <div class="space-y-3 text-txt-secondary">
@@ -88,7 +88,7 @@ const jsonLd = {
       <!-- Neutral -->
       <div class="card border-txt-muted/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Neutral" size="lg" />
+          <BiasIndicator bias="Neutral" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Neutral</h3>
         </div>
         <div class="space-y-3 text-txt-secondary">
@@ -112,7 +112,7 @@ const jsonLd = {
       <!-- Bearish -->
       <div class="card border-bearish/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Bearish" size="lg" />
+          <BiasIndicator bias="Bearish" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Bearish</h3>
         </div>
         <div class="space-y-3 text-txt-secondary">
@@ -143,15 +143,15 @@ const jsonLd = {
         </p>
         <div class="space-y-4">
           <div class="flex items-center gap-4">
-            <BiasIndicator bias="Strong Bullish" size="md" />
+            <BiasIndicator bias="Strong Bullish" size="md" locale={locale} />
             <span class="text-txt-secondary">All 3 indicators agree, with high volume. Highest conviction.</span>
           </div>
           <div class="flex items-center gap-4">
-            <BiasIndicator bias="Bullish" size="md" />
+            <BiasIndicator bias="Bullish" size="md" locale={locale} />
             <span class="text-txt-secondary">2 of 3 indicators agree. Standard signal.</span>
           </div>
           <div class="flex items-center gap-4">
-            <BiasIndicator bias="Weak Bullish" size="md" />
+            <BiasIndicator bias="Weak Bullish" size="md" locale={locale} />
             <span class="text-txt-secondary">Direction is up, but volume is low. Proceed with caution.</span>
           </div>
         </div>
@@ -199,17 +199,17 @@ const jsonLd = {
           </thead>
           <tbody class="text-txt-secondary">
             <tr class="border-b border-subtle">
-              <td class="py-3"><BiasIndicator bias="Bullish" size="sm" /></td>
+              <td class="py-3"><BiasIndicator bias="Bullish" size="sm" locale={locale} /></td>
               <td class="py-3">Trend up, confirmed</td>
               <td class="py-3">Look for entries</td>
             </tr>
             <tr class="border-b border-subtle">
-              <td class="py-3"><BiasIndicator bias="Neutral" size="sm" /></td>
+              <td class="py-3"><BiasIndicator bias="Neutral" size="sm" locale={locale} /></td>
               <td class="py-3">Mixed signals</td>
               <td class="py-3">Wait for clarity</td>
             </tr>
             <tr>
-              <td class="py-3"><BiasIndicator bias="Bearish" size="sm" /></td>
+              <td class="py-3"><BiasIndicator bias="Bearish" size="sm" locale={locale} /></td>
               <td class="py-3">Trend down, confirmed</td>
               <td class="py-3">Avoid new longs</td>
             </tr>

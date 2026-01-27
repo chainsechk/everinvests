@@ -39,7 +39,7 @@ const jsonLd = {
 
       <div class="card border-bullish/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Bullish" size="lg" />
+          <BiasIndicator bias="Bullish" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Bullish</h3>
         </div>
         <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> The asset is trending up, with volume and momentum confirming the move.</p>
@@ -51,7 +51,7 @@ const jsonLd = {
 
       <div class="card border-txt-muted/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Neutral" size="lg" />
+          <BiasIndicator bias="Neutral" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Neutral</h3>
         </div>
         <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> Indicators disagree. The market is undecided—could go either way.</p>
@@ -63,7 +63,7 @@ const jsonLd = {
 
       <div class="card border-bearish/30">
         <div class="flex items-center gap-3 mb-4">
-          <BiasIndicator bias="Bearish" size="lg" />
+          <BiasIndicator bias="Bearish" size="lg" locale={locale} />
           <h3 class="font-display font-bold text-xl text-txt-primary">Bearish</h3>
         </div>
         <p class="text-txt-secondary mb-2"><strong class="text-txt-primary">What it means:</strong> The asset is trending down, with volume and momentum confirming the decline.</p>

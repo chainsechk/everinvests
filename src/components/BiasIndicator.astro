@@ -1,21 +1,26 @@
 ---
 // src/components/BiasIndicator.astro
+import { useTranslations, translateBias, type Locale } from "../lib/i18n";
+
 interface Props {
   bias: string | null;
   size?: "sm" | "md" | "lg";
+  locale?: Locale;
 }
 
-const { bias, size = "md" } = Astro.props;
+const { bias, size = "md", locale = "en" } = Astro.props;
+const t = useTranslations(locale);
 
 function getBiasInfo(bias: string | null) {
-  if (!bias) return { class: "bias-neutral", label: "Unknown", icon: "—" };
+  if (!bias) return { class: "bias-neutral", icon: "—" };
   const lower = bias.toLowerCase();
-  if (lower.includes("bullish")) return { class: "bias-bullish", label: bias, icon: "↗" };
-  if (lower.includes("bearish")) return { class: "bias-bearish", label: bias, icon: "↘" };
-  return { class: "bias-neutral", label: bias, icon: "→" };
+  if (lower.includes("bullish")) return { class: "bias-bullish", icon: "↗" };
+  if (lower.includes("bearish")) return { class: "bias-bearish", icon: "↘" };
+  return { class: "bias-neutral", icon: "→" };
 }
 
-const { class: biasClass, label, icon } = getBiasInfo(bias);
+const { class: biasClass, icon } = getBiasInfo(bias);
+const label = translateBias(bias, t);
 
 const sizeClasses = {
   sm: "text-xs px-2 py-1",

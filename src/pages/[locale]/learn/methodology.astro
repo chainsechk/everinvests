@@ -118,15 +118,15 @@ const breadcrumbLd = {
       <h2 class="font-display font-bold text-lg text-txt-primary mb-4">Confluence Logic</h2>
       <div class="grid gap-4 sm:grid-cols-3 mb-4">
         <div class="p-4 rounded-lg bg-bullish/5 border border-bullish/20 text-center">
-          <BiasIndicator bias="Bullish" size="md" />
+          <BiasIndicator bias="Bullish" size="md" locale={locale} />
           <div class="text-sm text-txt-muted mt-2">2-3 indicators bullish</div>
         </div>
         <div class="p-4 rounded-lg bg-void-200 border border-divider text-center">
-          <BiasIndicator bias="Neutral" size="md" />
+          <BiasIndicator bias="Neutral" size="md" locale={locale} />
           <div class="text-sm text-txt-muted mt-2">Indicators disagree</div>
         </div>
         <div class="p-4 rounded-lg bg-bearish/5 border border-bearish/20 text-center">
-          <BiasIndicator bias="Bearish" size="md" />
+          <BiasIndicator bias="Bearish" size="md" locale={locale} />
           <div class="text-sm text-txt-muted mt-2">2-3 indicators bearish</div>
         </div>
       </div>

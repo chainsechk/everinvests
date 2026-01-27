@@ -228,6 +228,7 @@ const articleSchema = {
       date={date}
       timeSlot={time}
       relatedSignals={relatedSignals}
+      locale={locale}
     />
 
     <!-- Navigation: Previous / Next -->
@@ -244,7 +245,7 @@ const articleSchema = {
             <div class="text-xs text-txt-muted uppercase tracking-wide">{t("common.previous")}</div>
             <div class="flex items-center gap-2">
               <span class="text-txt-primary font-medium">{formatDateShort(prevSignal.date, locale)} {prevSignal.time_slot}</span>
-              <BiasIndicator bias={prevSignal.bias} size="sm" />
+              <BiasIndicator bias={prevSignal.bias} size="sm" locale={locale} />
             </div>
           </div>
         </a>
@@ -260,7 +261,7 @@ const articleSchema = {
           <div>
             <div class="text-xs text-txt-muted uppercase tracking-wide">{t("common.next")}</div>
             <div class="flex items-center justify-end gap-2">
-              <BiasIndicator bias={nextSignal.bias} size="sm" />
+              <BiasIndicator bias={nextSignal.bias} size="sm" locale={locale} />
               <span class="text-txt-primary font-medium">{formatDateShort(nextSignal.date, locale)} {nextSignal.time_slot}</span>
             </div>
           </div>
@@ -292,7 +293,7 @@ const articleSchema = {
               ]}
             >
               <div class="flex items-center gap-3">
-                <BiasIndicator bias={s.bias} size="sm" />
+                <BiasIndicator bias={s.bias} size="sm" locale={locale} />
                 <span class="text-txt-secondary text-sm">
                   {formatDateShort(s.date, locale)} {t("common.at")} {s.time_slot}
                 </span>

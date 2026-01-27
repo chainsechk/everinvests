@@ -2,7 +2,7 @@
 // src/components/HistoryList.astro
 import BiasIndicator from "./BiasIndicator.astro";
 import DeltaBadge from "./DeltaBadge.astro";
-import { formatDateFull, DEFAULT_LOCALE } from "../lib/i18n";
+import { formatDateFull, type Locale } from "../lib/i18n";
 
 interface Signal {
   id: number;
@@ -16,9 +16,10 @@ interface Signal {
 interface Props {
   signals: Signal[];
   category: "crypto" | "forex" | "stocks";
+  locale?: Locale;
 }
 
-const { signals, category } = Astro.props;
+const { signals, category, locale = "en" } = Astro.props;
 
 function extractSummary(outputJson: string | null): string | null {
   if (!outputJson) return null;
@@ -59,7 +60,7 @@ function getMacroColor(macro: string | null): string {
     >
       <div class="flex flex-wrap items-start justify-between gap-4 mb-3">
         <div>
-          <div class="font-display font-medium text-txt-primary">{formatDateFull(signal.date, DEFAULT_LOCALE)}</div>
+          <div class="font-display font-medium text-txt-primary">{formatDateFull(signal.date, locale)}</div>
           <div class="text-sm text-txt-muted font-mono">{signal.time_slot} UTC</div>
         </div>
         <div class="flex items-center gap-3">
@@ -68,7 +69,7 @@ function getMacroColor(macro: string | null): string {
               {signal.macro_overall}
             </span>
           )}
-          <BiasIndicator bias={signal.bias} size="md" />
+          <BiasIndicator bias={signal.bias} size="md" locale={locale} />
         </div>
       </div>
       {extractSummary(signal.output_json) && (

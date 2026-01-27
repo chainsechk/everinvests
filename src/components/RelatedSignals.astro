@@ -3,6 +3,7 @@
 // Shows signals from other categories at the same time slot
 import BiasIndicator from "./BiasIndicator.astro";
 import type { Category } from "../lib/db";
+import type { Locale } from "../lib/i18n";
 
 interface RelatedSignal {
   category: Category;
@@ -16,9 +17,10 @@ interface Props {
   date: string;
   timeSlot: string;
   relatedSignals: RelatedSignal[];
+  locale?: Locale;
 }
 
-const { currentCategory, date, timeSlot, relatedSignals } = Astro.props;
+const { currentCategory, date, timeSlot, relatedSignals, locale = "en" } = Astro.props;
 
 const categoryMeta: Record<Category, { title: string; icon: string }> = {
   crypto: { title: "Crypto", icon: "₿" },
@@ -47,7 +49,7 @@ const otherSignals = relatedSignals.filter(s => s.category !== currentCategory);
               <div class="font-medium text-txt-primary">{meta.title}</div>
               <div class="text-xs text-txt-muted">{signal.date} {signal.time_slot}</div>
             </div>
-            <BiasIndicator bias={signal.bias} size="sm" />
+            <BiasIndicator bias={signal.bias} size="sm" locale={locale} />
           </a>
         );
       })}
