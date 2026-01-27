@@ -1,6 +1,6 @@
 ---
 // src/components/SignalCard.astro
-import { formatTime as formatTimeI18n, DEFAULT_LOCALE } from "../lib/i18n";
+import { formatTime as formatTimeI18n, getLocaleFromUrl, useTranslations, l, type Locale } from "../lib/i18n";
 
 interface Props {
   category: "crypto" | "forex" | "stocks";
@@ -13,40 +13,43 @@ interface Props {
 
 const { category, bias, summary, assetCount, updatedAt, confluence } = Astro.props;
 
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 // Calculate confidence from confluence string
-function getConfidenceBadge(confluence: string | null): { label: string; color: string } | null {
+function getConfidenceBadge(confluence: string | null): { labelKey: string; color: string } | null {
   if (!confluence) return null;
   const lower = confluence.toLowerCase();
   if (lower.includes("3/3")) {
-    return { label: "High confidence", color: "text-bullish" };
+    return { labelKey: "signalCard.highConfidence", color: "text-bullish" };
   }
   if (lower.includes("2/3")) {
-    return { label: "Moderate", color: "text-cyber" };
+    return { labelKey: "signalCard.moderate", color: "text-cyber" };
   }
   if (lower === "mixed") {
-    return { label: "Mixed signals", color: "text-mixed" };
+    return { labelKey: "signalCard.mixedSignals", color: "text-mixed" };
   }
   return null;
 }
 
 const confidenceBadge = getConfidenceBadge(confluence);
 
-const categoryConfig: Record<string, { label: string; assets: string; icon: string; gradient: string }> = {
+const categoryConfig: Record<string, { labelKey: string; assetsKey: string; icon: string; gradient: string }> = {
   crypto: {
-    label: "CRYPTO",
-    assets: "BTC, ETH",
+    labelKey: "signalCard.crypto",
+    assetsKey: "signalCard.cryptoAssets",
     icon: "₿",
     gradient: "from-amber-500/20 to-amber-600/5",
   },
   forex: {
-    label: "FOREX",
-    assets: "4 Major Pairs",
+    labelKey: "signalCard.forex",
+    assetsKey: "signalCard.forexAssets",
     icon: "$",
     gradient: "from-emerald-500/20 to-emerald-600/5",
   },
   stocks: {
-    label: "STOCKS",
-    assets: "25 Tickers",
+    labelKey: "signalCard.stocks",
+    assetsKey: "signalCard.stocksAssets",
     icon: "◊",
     gradient: "from-violet-500/20 to-violet-600/5",
   },
@@ -73,14 +76,17 @@ function getBiasIcon(bias: string | null): string {
 function formatTime(isoString: string | null): string {
   if (!isoString) return "--:--";
   try {
-    return formatTimeI18n(isoString, DEFAULT_LOCALE, { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+    return formatTimeI18n(isoString, locale, { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
   } catch {
     return "--:--";
   }
 }
+
+// Translate category name for the awaiting message
+const categoryDisplayName = t(`category.${category}`);
 ---
 
-<a href={`/${category}`} class="signal-card group block" data-animate>
+<a href={l(`/${category}`, locale)} class="signal-card group block" data-animate>
   <!-- Gradient overlay for category identity -->
   <div class:list={["absolute inset-0 bg-gradient-to-br rounded-xl opacity-50 group-hover:opacity-70 transition-opacity", config.gradient]}></div>
 
@@ -90,19 +96,19 @@ function formatTime(isoString: string | null): string {
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="font-mono text-2xl opacity-40">{config.icon}</span>
-          <span class="font-mono text-xs text-txt-muted uppercase tracking-widest">{config.label}</span>
+          <span class="font-mono text-xs text-txt-muted uppercase tracking-widest">{t(config.labelKey)}</span>
         </div>
-        <span class="text-xs text-txt-muted">{config.assets}</span>
+        <span class="text-xs text-txt-muted">{t(config.assetsKey)}</span>
       </div>
       <span class:list={[getBiasClass(bias)]}>
-        {bias || "No signal"}
+        {bias || t("signalCard.noSignal")}
         <span class="text-lg">{getBiasIcon(bias)}</span>
       </span>
     </div>
 
     <!-- Summary -->
     <p class="text-sm text-txt-secondary leading-relaxed flex-grow line-clamp-3 mb-4">
-      {summary || `Awaiting next ${category} signal update...`}
+      {summary || t("signalCard.awaiting", { category: categoryDisplayName })}
     </p>
 
     <!-- Footer -->
@@ -116,12 +122,12 @@ function formatTime(isoString: string | null): string {
         </div>
         {confidenceBadge && (
           <span class:list={["text-[10px] font-medium", confidenceBadge.color]}>
-            {confidenceBadge.label}
+            {t(confidenceBadge.labelKey)}
           </span>
         )}
       </div>
       <span class="flex items-center gap-1.5 text-sm font-display font-medium text-cyber group-hover:gap-2.5 transition-all">
-        View details
+        {t("signalCard.viewDetails")}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>

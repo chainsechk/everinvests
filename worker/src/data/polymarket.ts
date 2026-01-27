@@ -229,8 +229,9 @@ export async function fetchPolymarketData(): Promise<PolymarketData> {
       return sum + (50 - Math.abs(p - 50));
     }, 0) / allProbabilities.length;
 
-    // Top 3 markets by volume
+    // Top 3 markets by volume (excluding geopolitical to avoid local/regional markets)
     const topMarkets: PolymarketTopMarket[] = categorized
+      .filter(m => m.category !== 'geopolitical')
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 3)
       .map(m => ({

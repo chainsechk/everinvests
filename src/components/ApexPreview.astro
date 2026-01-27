@@ -1,6 +1,7 @@
 ---
 // src/components/ApexPreview.astro
 // Blurred teaser preview of VIP features to encourage upgrades
+import { getLocaleFromUrl, useTranslations } from "../lib/i18n";
 
 interface Props {
   category?: string;
@@ -8,7 +9,10 @@ interface Props {
 
 const { category = "crypto" } = Astro.props;
 
-// Sample VIP-only data (blurred/teaser)
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+// Sample VIP-only data (blurred/teaser) - these stay in English as they're blurred placeholder text
 const whaleAlerts = [
   { type: "options", icon: "🐋", text: "Large call volume detected on SPY..." },
   { type: "onchain", icon: "⛓️", text: "2,500 BTC moved to exchange cold..." },
@@ -31,17 +35,17 @@ const directives = [
   <div class="flex items-center justify-between mb-4">
     <h3 class="font-display font-semibold text-lg text-txt-primary flex items-center gap-2">
       <span class="text-vip">🔒</span>
-      VIP Intelligence Preview
+      {t("preview.title")}
     </h3>
-    <span class="text-xs px-2 py-1 rounded-full bg-vip/10 text-vip font-medium">VIP Only</span>
+    <span class="text-xs px-2 py-1 rounded-full bg-vip/10 text-vip font-medium">{t("preview.vipOnly")}</span>
   </div>
 
   <div class="space-y-4">
     <!-- Whale Alerts (blurred) -->
     <div class="relative">
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-sm font-medium text-txt-secondary">Whale Alerts</span>
-        <span class="text-xs text-txt-muted">(Real-time)</span>
+        <span class="text-sm font-medium text-txt-secondary">{t("preview.whaleAlerts")}</span>
+        <span class="text-xs text-txt-muted">({t("preview.realTime")})</span>
       </div>
       <div class="space-y-2 blur-[6px] select-none pointer-events-none" aria-hidden="true">
         {whaleAlerts.map((alert) => (
@@ -53,7 +57,7 @@ const directives = [
       </div>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-          <span class="text-sm text-txt-secondary">Upgrade to see whale movements</span>
+          <span class="text-sm text-txt-secondary">{t("preview.upgradeWhale")}</span>
         </div>
       </div>
     </div>
@@ -61,8 +65,8 @@ const directives = [
     <!-- AI Debate Room (blurred) -->
     <div class="relative">
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-sm font-medium text-txt-secondary">AI Debate Room</span>
-        <span class="text-xs text-txt-muted">(Bull vs Bear)</span>
+        <span class="text-sm font-medium text-txt-secondary">{t("preview.aiDebateRoom")}</span>
+        <span class="text-xs text-txt-muted">({t("preview.bullVsBear")})</span>
       </div>
       <div class="blur-[6px] select-none pointer-events-none space-y-2" aria-hidden="true">
         <div class="flex gap-3 p-3 rounded bg-bullish/10">
@@ -80,7 +84,7 @@ const directives = [
       </div>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-          <span class="text-sm text-txt-secondary">See the full AI debate</span>
+          <span class="text-sm text-txt-secondary">{t("preview.seeDebate")}</span>
         </div>
       </div>
     </div>
@@ -88,8 +92,8 @@ const directives = [
     <!-- Action Directives (blurred) -->
     <div class="relative">
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-sm font-medium text-txt-secondary">Action Directives</span>
-        <span class="text-xs text-txt-muted">(Team consensus)</span>
+        <span class="text-sm font-medium text-txt-secondary">{t("preview.actionDirectives")}</span>
+        <span class="text-xs text-txt-muted">({t("preview.teamConsensus")})</span>
       </div>
       <div class="blur-[6px] select-none pointer-events-none" aria-hidden="true">
         <div class="grid gap-2">
@@ -108,7 +112,7 @@ const directives = [
       </div>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-          <span class="text-sm text-txt-secondary">Get specific action guidance</span>
+          <span class="text-sm text-txt-secondary">{t("preview.getGuidance")}</span>
         </div>
       </div>
     </div>
@@ -117,7 +121,7 @@ const directives = [
   <!-- CTA -->
   <div class="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
     <div class="text-sm text-txt-muted">
-      <strong class="text-txt-primary">VIP members</strong> get whale alerts, AI debates, and action directives in real-time.
+      {t("preview.vipMembersGet")}
     </div>
     <a
       href="https://t.me/everinvests"
@@ -125,7 +129,7 @@ const directives = [
       rel="noopener"
       class="btn-vip inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all"
     >
-      Unlock Full Access
+      {t("preview.unlockAccess")}
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
       </svg>

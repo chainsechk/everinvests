@@ -1,6 +1,7 @@
 ---
 // src/components/TierComparison.astro
 // Side-by-side comparison of Free vs VIP features
+import { getLocaleFromUrl, useTranslations } from "../lib/i18n";
 
 interface Props {
   category?: string;
@@ -9,64 +10,67 @@ interface Props {
 
 const { category = "crypto", utmSource = "comparison" } = Astro.props;
 
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 const features = [
   {
-    name: "Daily Signals",
-    free: { value: "3 per category", included: true },
-    vip: { value: "3 per category", included: true },
+    nameKey: "comparison.dailySignals",
+    free: { valueKey: "comparison.dailySignalsValue", included: true },
+    vip: { valueKey: "comparison.dailySignalsValue", included: true },
   },
   {
-    name: "Asset Coverage",
-    free: { value: "BTC, ETH + 5 forex + 5 stocks", included: true },
-    vip: { value: "25+ assets", included: true },
+    nameKey: "comparison.assetCoverage",
+    free: { valueKey: "comparison.assetCoverageFree", included: true },
+    vip: { valueKey: "comparison.assetCoverageVip", included: true },
   },
   {
-    name: "Macro Context",
-    free: { value: "Full macro bar", included: true },
-    vip: { value: "Full macro bar", included: true },
+    nameKey: "comparison.macroContext",
+    free: { valueKey: "comparison.macroContextValue", included: true },
+    vip: { valueKey: "comparison.macroContextValue", included: true },
   },
   {
-    name: "Regime Detection",
-    free: { value: "Event alerts only", included: true },
-    vip: { value: "Full 4-phase regime", included: true },
+    nameKey: "comparison.regimeDetection",
+    free: { valueKey: "comparison.regimeDetectionFree", included: true },
+    vip: { valueKey: "comparison.regimeDetectionVip", included: true },
   },
   {
-    name: "Signal Reasoning",
-    free: { value: "Basic summary", included: true },
-    vip: { value: "Full reasoning + confidence", included: true },
+    nameKey: "comparison.signalReasoning",
+    free: { valueKey: "comparison.signalReasoningFree", included: true },
+    vip: { valueKey: "comparison.signalReasoningVip", included: true },
   },
   {
-    name: "Whale Alerts",
-    free: { value: "Not included", included: false },
-    vip: { value: "Real-time options flow & on-chain", included: true },
+    nameKey: "comparison.whaleAlerts",
+    free: { valueKey: "comparison.notIncluded", included: false },
+    vip: { valueKey: "comparison.whaleAlertsVip", included: true },
   },
   {
-    name: "AI Debate Room",
-    free: { value: "Not included", included: false },
-    vip: { value: "Bull vs Bear AI analysis", included: true },
+    nameKey: "comparison.aiDebateRoom",
+    free: { valueKey: "comparison.notIncluded", included: false },
+    vip: { valueKey: "comparison.aiDebateRoomVip", included: true },
   },
   {
-    name: "Action Directives",
-    free: { value: "Not included", included: false },
-    vip: { value: "Specific entry/exit guidance", included: true },
+    nameKey: "comparison.actionDirectives",
+    free: { valueKey: "comparison.notIncluded", included: false },
+    vip: { valueKey: "comparison.actionDirectivesVip", included: true },
   },
   {
-    name: "Private Telegram",
-    free: { value: "Public channel", included: true },
-    vip: { value: "Private group + team access", included: true },
+    nameKey: "comparison.privateTelegram",
+    free: { valueKey: "comparison.privateTelegramFree", included: true },
+    vip: { valueKey: "comparison.privateTelegramVip", included: true },
   },
   {
-    name: "Mobile Alerts",
-    free: { value: "Telegram notifications", included: true },
-    vip: { value: "Priority alerts + custom triggers", included: true },
+    nameKey: "comparison.mobileAlerts",
+    free: { valueKey: "comparison.mobileAlertsFree", included: true },
+    vip: { valueKey: "comparison.mobileAlertsVip", included: true },
   },
 ];
 ---
 
 <div class="card" data-animate>
   <div class="text-center mb-6">
-    <h3 class="font-display font-bold text-xl text-txt-primary mb-2">Free vs VIP Comparison</h3>
-    <p class="text-sm text-txt-muted">Everything in Free, plus premium intelligence</p>
+    <h3 class="font-display font-bold text-xl text-txt-primary mb-2">{t("comparison.title")}</h3>
+    <p class="text-sm text-txt-muted">{t("comparison.subtitle")}</p>
   </div>
 
   <!-- Desktop Table -->
@@ -74,17 +78,17 @@ const features = [
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-border">
-          <th class="text-left py-3 px-4 text-txt-muted font-medium">Feature</th>
+          <th class="text-left py-3 px-4 text-txt-muted font-medium">{t("comparison.feature")}</th>
           <th class="text-center py-3 px-4 w-1/3">
             <div class="inline-flex flex-col items-center">
-              <span class="text-txt-primary font-semibold">Free</span>
-              <span class="text-xs text-txt-muted mt-1">$0/mo</span>
+              <span class="text-txt-primary font-semibold">{t("comparison.free")}</span>
+              <span class="text-xs text-txt-muted mt-1">{t("comparison.perMonth")}</span>
             </div>
           </th>
           <th class="text-center py-3 px-4 w-1/3 bg-vip/5 rounded-t-lg">
             <div class="inline-flex flex-col items-center">
-              <span class="text-vip font-bold">VIP</span>
-              <span class="text-xs text-txt-muted mt-1">Coming soon</span>
+              <span class="text-vip font-bold">{t("comparison.vip")}</span>
+              <span class="text-xs text-txt-muted mt-1">{t("comparison.comingSoon")}</span>
             </div>
           </th>
         </tr>
@@ -92,14 +96,14 @@ const features = [
       <tbody>
         {features.map((feature, i) => (
           <tr class:list={["border-b border-subtle", i % 2 === 0 ? "bg-bg-secondary/30" : ""]}>
-            <td class="py-3 px-4 text-txt-secondary">{feature.name}</td>
+            <td class="py-3 px-4 text-txt-secondary">{t(feature.nameKey)}</td>
             <td class="text-center py-3 px-4">
               {feature.free.included ? (
                 <span class="inline-flex items-center gap-1">
                   <svg class="w-4 h-4 text-bullish" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span class="text-txt-muted">{feature.free.value}</span>
+                  <span class="text-txt-muted">{t(feature.free.valueKey)}</span>
                 </span>
               ) : (
                 <span class="text-txt-muted/50">—</span>
@@ -111,7 +115,7 @@ const features = [
                   <svg class="w-4 h-4 text-vip" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span class="text-txt-primary">{feature.vip.value}</span>
+                  <span class="text-txt-primary">{t(feature.vip.valueKey)}</span>
                 </span>
               ) : (
                 <span class="text-txt-muted/50">—</span>
@@ -127,24 +131,24 @@ const features = [
   <div class="md:hidden space-y-4">
     <div class="grid grid-cols-2 gap-4 mb-4">
       <div class="text-center p-3 rounded-lg bg-surface">
-        <div class="font-semibold text-txt-primary">Free</div>
-        <div class="text-xs text-txt-muted">$0/mo</div>
+        <div class="font-semibold text-txt-primary">{t("comparison.free")}</div>
+        <div class="text-xs text-txt-muted">{t("comparison.perMonth")}</div>
       </div>
       <div class="text-center p-3 rounded-lg bg-vip/10 border border-vip/30">
-        <div class="font-bold text-vip">VIP</div>
-        <div class="text-xs text-txt-muted">Coming soon</div>
+        <div class="font-bold text-vip">{t("comparison.vip")}</div>
+        <div class="text-xs text-txt-muted">{t("comparison.comingSoon")}</div>
       </div>
     </div>
 
     {features.map((feature) => (
       <div class="border-b border-subtle pb-3">
-        <div class="font-medium text-txt-secondary text-sm mb-2">{feature.name}</div>
+        <div class="font-medium text-txt-secondary text-sm mb-2">{t(feature.nameKey)}</div>
         <div class="grid grid-cols-2 gap-4 text-xs">
           <div class={feature.free.included ? "text-txt-muted" : "text-txt-muted/50"}>
-            {feature.free.included ? `✓ ${feature.free.value}` : "—"}
+            {feature.free.included ? `✓ ${t(feature.free.valueKey)}` : "—"}
           </div>
           <div class={feature.vip.included ? "text-txt-primary" : "text-txt-muted/50"}>
-            {feature.vip.included ? `✓ ${feature.vip.value}` : "—"}
+            {feature.vip.included ? `✓ ${t(feature.vip.valueKey)}` : "—"}
           </div>
         </div>
       </div>
@@ -159,7 +163,7 @@ const features = [
       rel="noopener"
       class="btn-vip inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all"
     >
-      Join VIP Waitlist
+      {t("comparison.joinWaitlist")}
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
       </svg>

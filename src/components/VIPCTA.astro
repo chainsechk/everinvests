@@ -1,5 +1,7 @@
 ---
 // src/components/VIPCTA.astro
+import { getLocaleFromUrl, useTranslations } from "../lib/i18n";
+
 interface Props {
   category?: string;
   mode?: 'waitlist' | 'live';
@@ -8,18 +10,17 @@ interface Props {
 
 const { category = 'crypto', mode = 'waitlist', utmSource = 'website' } = Astro.props;
 
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 const config = {
   waitlist: {
-    title: "Don't just get signals. Get the reasoning.",
-    subtitle: "You've had the right call before—but did you understand why? VIP gives you the full context behind every trade, so you can make informed decisions:",
-    cta: 'Join VIP Waitlist',
+    ctaKey: 'vip.cta.waitlist',
     url: `https://t.me/everinvests`,
     subtext: null,
   },
   live: {
-    title: "Don't just get signals. Get the reasoning.",
-    subtitle: "You've had the right call before—but did you understand why? VIP gives you the full context behind every trade, so you can make informed decisions:",
-    cta: 'Join EverInvests VIP',
+    ctaKey: 'vip.cta.join',
     url: `https://t.me/EverInvestsVIPBot?start=${utmSource}_${category}`,
     subtext: null,
   },
@@ -28,12 +29,12 @@ const config = {
 const c = config[mode];
 
 const features = [
-  { name: 'Whale Alerts', desc: 'See when big money loads up—options flow & on-chain data in plain English' },
-  { name: 'AI Debate Room', desc: "Bull vs Bear AI agents argue every trade. If they can't agree, we don't trade." },
-  { name: 'Full Reasoning', desc: "Every signal explains WHY—so you understand it, not just follow it" },
-  { name: 'Private Telegram', desc: 'Real-time chat with serious traders. Ask questions, share setups, get gut checks.' },
-  { name: 'Mobile Alerts', desc: 'Telegram pings the moment consensus hits—no app to check' },
-  { name: 'Team Access', desc: "Market freaking out? We're in the chat with you." },
+  { nameKey: 'vip.feature.whaleAlerts', descKey: 'vip.feature.whaleAlertsDesc' },
+  { nameKey: 'vip.feature.aiDebate', descKey: 'vip.feature.aiDebateDesc' },
+  { nameKey: 'vip.feature.fullReasoning', descKey: 'vip.feature.fullReasoningDesc' },
+  { nameKey: 'vip.feature.privateTelegram', descKey: 'vip.feature.privateTelegramDesc' },
+  { nameKey: 'vip.feature.mobileAlerts', descKey: 'vip.feature.mobileAlertsDesc' },
+  { nameKey: 'vip.feature.teamAccess', descKey: 'vip.feature.teamAccessDesc' },
 ];
 ---
 
@@ -48,10 +49,10 @@ const features = [
     <div class="mb-6">
       <h3 class="font-display font-bold text-xl text-txt-primary mb-2 flex items-center gap-2">
         <span class="text-2xl">🚀</span>
-        {c.title}
+        {t("vip.title")}
       </h3>
       <p class="text-sm text-txt-secondary">
-        {c.subtitle}
+        {t("vip.subtitle")}
       </p>
     </div>
 
@@ -61,8 +62,8 @@ const features = [
         <li class="flex items-start gap-2 text-sm">
           <span class="text-vip mt-0.5 flex-shrink-0">✓</span>
           <span>
-            <strong class="text-txt-primary">{f.name}</strong>
-            <span class="text-txt-muted"> — {f.desc}</span>
+            <strong class="text-txt-primary">{t(f.nameKey)}</strong>
+            <span class="text-txt-muted"> — {t(f.descKey)}</span>
           </span>
         </li>
       ))}
@@ -78,7 +79,7 @@ const features = [
         data-analytics="vip_cta_click"
         data-category={category}
       >
-        {c.cta}
+        {t(c.ctaKey)}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
