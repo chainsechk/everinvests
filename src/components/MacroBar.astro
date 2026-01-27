@@ -2,6 +2,10 @@
 // src/components/MacroBar.astro
 import InfoTip from "./InfoTip.astro";
 import ScaleBar from "./ScaleBar.astro";
+import { getLocaleFromUrl, useTranslations } from "../lib/i18n";
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 interface Props {
   overall: string | null;
@@ -109,12 +113,12 @@ function getRegimeColor(classification: string | undefined): string {
   }
 }
 
-function getRegimeLabel(classification: string | undefined): string {
+function getRegimeLabelKey(classification: string | undefined): string {
   switch (classification) {
-    case "crisis": return "Crisis";
-    case "stressed": return "Stressed";
-    case "event": return "Event";
-    default: return "Normal";
+    case "crisis": return "regime.crisis";
+    case "stressed": return "regime.stressed";
+    case "event": return "regime.event";
+    default: return "regime.normal";
   }
 }
 
@@ -128,51 +132,54 @@ function getRegimeIcon(classification: string | undefined): string {
 }
 
 // Phase 2: Fear & Greed regime helpers
-function getFearGreedRegimeLabel(regime: string | undefined): string {
+function getFearGreedRegimeLabelKey(regime: string | undefined): string {
   switch (regime) {
-    case "extreme_fear": return "Extreme Fear";
-    case "fear": return "Fear";
-    case "extreme_greed": return "Extreme Greed";
-    case "greed": return "Greed";
-    default: return "Neutral";
+    case "extreme_fear": return "status.extremeFear";
+    case "fear": return "status.fear";
+    case "extreme_greed": return "status.extremeGreed";
+    case "greed": return "status.greed";
+    default: return "status.neutral";
   }
 }
 
-function getContrarianSignal(phase2: RegimeClassification["phase2_fearGreed"]): { label: string; color: string } | null {
+function getContrarianSignal(phase2: RegimeClassification["phase2_fearGreed"]): { labelKey: string; color: string } | null {
   if (!phase2?.contrarian) return null;
   if (phase2.regime === "extreme_fear") {
-    return { label: "Contrarian Bullish", color: "text-bullish" };
+    return { labelKey: "alert.contrarianBullish", color: "text-bullish" };
   }
   if (phase2.regime === "extreme_greed") {
-    return { label: "Contrarian Bearish", color: "text-bearish" };
+    return { labelKey: "alert.contrarianBearish", color: "text-bearish" };
   }
   return null;
 }
 
 // Phase 3: VIX regime helpers
-function getVixRegimeAlert(phase3: RegimeClassification["phase3_vix"]): { label: string; description: string; color: string; icon: string } | null {
+function getVixRegimeAlert(phase3: RegimeClassification["phase3_vix"]): { labelKey: string; descriptionKey: string; color: string; icon: string; vixValue: number } | null {
   if (!phase3) return null;
   switch (phase3.regime) {
     case "crisis":
       return {
-        label: "VIX Crisis",
-        description: `VIX at ${phase3.vixValue.toFixed(1)} - defensive positioning recommended`,
+        labelKey: "alert.vixCrisis",
+        descriptionKey: "alert.defensivePositioning",
         color: "text-bearish",
-        icon: "⚠"
+        icon: "⚠",
+        vixValue: phase3.vixValue
       };
     case "stressed":
       return {
-        label: "Elevated Volatility",
-        description: `VIX at ${phase3.vixValue.toFixed(1)} - exercise caution`,
+        labelKey: "alert.elevatedVolatility",
+        descriptionKey: "alert.exerciseCaution",
         color: "text-mixed",
-        icon: "△"
+        icon: "△",
+        vixValue: phase3.vixValue
       };
     case "apathy":
       return {
-        label: "VIX Complacency Warning",
-        description: `VIX at ${phase3.vixValue.toFixed(1)} - unusually low, potential reversal ahead`,
+        labelKey: "alert.vixComplacency",
+        descriptionKey: "alert.potentialReversal",
         color: "text-mixed",
-        icon: "◇"
+        icon: "◇",
+        vixValue: phase3.vixValue
       };
     default:
       return null; // normal/complacent - no alert needed
@@ -180,20 +187,24 @@ function getVixRegimeAlert(phase3: RegimeClassification["phase3_vix"]): { label:
 }
 
 // Phase 4: GDELT geopolitical regime helpers
-function getGdeltRegimeAlert(phase4: RegimeClassification["phase4_gdelt"]): { label: string; description: string; color: string; icon: string } | null {
+function getGdeltRegimeAlert(phase4: RegimeClassification["phase4_gdelt"]): { labelKey: string; score: number; topThreats: string[]; trend: string; color: string; icon: string } | null {
   if (!phase4) return null;
   switch (phase4.regime) {
     case "critical":
       return {
-        label: "Geopolitical Crisis",
-        description: `Tension score ${phase4.score} - ${phase4.topThreats.slice(0, 2).join(", ") || "major events"}`,
+        labelKey: "alert.geopoliticalCrisis",
+        score: phase4.score,
+        topThreats: phase4.topThreats,
+        trend: phase4.trend,
         color: "text-bearish",
         icon: "⚠"
       };
     case "high":
       return {
-        label: "High Geopolitical Risk",
-        description: `Tension score ${phase4.score}${phase4.trend === "rising" ? " (rising)" : ""}`,
+        labelKey: "alert.highGeopoliticalRisk",
+        score: phase4.score,
+        topThreats: phase4.topThreats,
+        trend: phase4.trend,
         color: "text-mixed",
         icon: "△"
       };
@@ -201,8 +212,10 @@ function getGdeltRegimeAlert(phase4: RegimeClassification["phase4_gdelt"]): { la
       // Only show if trend is rising
       if (phase4.trend === "rising") {
         return {
-          label: "Rising Geopolitical Tension",
-          description: `Tension score ${phase4.score} - monitoring ${phase4.topThreats[0] || "developments"}`,
+          labelKey: "alert.risingTension",
+          score: phase4.score,
+          topThreats: phase4.topThreats,
+          trend: phase4.trend,
           color: "text-mixed",
           icon: "◇"
         };
@@ -229,37 +242,37 @@ function getOverallGlow(value: string | null): string {
   return "";
 }
 
-function formatDxy(bias: string | null): { label: string; icon: string } {
-  if (!bias) return { label: "--", icon: "~" };
+function formatDxy(bias: string | null): { labelKey: string | null; icon: string } {
+  if (!bias) return { labelKey: null, icon: "~" };
   const lower = bias.toLowerCase();
-  if (lower === "bullish" || lower === "above") return { label: "Strong", icon: "^" };
-  if (lower === "bearish" || lower === "below") return { label: "Weak", icon: "v" };
-  return { label: "Neutral", icon: "~" };
+  if (lower === "bullish" || lower === "above") return { labelKey: "status.strong", icon: "^" };
+  if (lower === "bearish" || lower === "below") return { labelKey: "status.weak", icon: "v" };
+  return { labelKey: "status.neutral", icon: "~" };
 }
 
-function formatVix(level: string | null): { label: string; color: string } {
-  if (!level) return { label: "--", color: "text-txt-muted" };
+function formatVix(level: string | null): { labelKey: string | null; color: string } {
+  if (!level) return { labelKey: null, color: "text-txt-muted" };
   const lower = level.toLowerCase();
-  if (lower === "risk_on" || lower === "low") return { label: "Low", color: "text-bullish" };
-  if (lower === "risk_off" || lower === "high") return { label: "High", color: "text-bearish" };
-  return { label: "Moderate", color: "text-mixed" };
+  if (lower === "risk_on" || lower === "low") return { labelKey: "status.low", color: "text-bullish" };
+  if (lower === "risk_off" || lower === "high") return { labelKey: "status.high", color: "text-bearish" };
+  return { labelKey: "status.moderate", color: "text-mixed" };
 }
 
-function formatYields(bias: string | null): { label: string; icon: string } {
-  if (!bias) return { label: "--", icon: "~" };
-  if (bias === "falling") return { label: "Falling", icon: "v" };
-  if (bias === "rising") return { label: "Rising", icon: "^" };
-  return { label: "Stable", icon: "~" };
+function formatYields(bias: string | null): { labelKey: string | null; icon: string } {
+  if (!bias) return { labelKey: null, icon: "~" };
+  if (bias === "falling") return { labelKey: "status.falling", icon: "v" };
+  if (bias === "rising") return { labelKey: "status.rising", icon: "^" };
+  return { labelKey: "status.stable", icon: "~" };
 }
 
-function formatFearGreed(value: number | undefined): { label: string; color: string } {
-  if (value === undefined) return { label: "--", color: "text-txt-muted" };
+function formatFearGreed(value: number | undefined): { value: number | undefined; labelKey: string | null; color: string } {
+  if (value === undefined) return { value: undefined, labelKey: null, color: "text-txt-muted" };
   // More descriptive labels that explain what the number means
-  if (value <= 25) return { label: `${value} (Extreme Fear)`, color: "text-bearish" };
-  if (value <= 45) return { label: `${value} (Fear)`, color: "text-mixed" };
-  if (value <= 55) return { label: `${value} (Neutral)`, color: "text-txt-primary" };
-  if (value <= 75) return { label: `${value} (Greed)`, color: "text-mixed" };
-  return { label: `${value} (Extreme Greed)`, color: "text-bullish" };
+  if (value <= 25) return { value, labelKey: "status.extremeFear", color: "text-bearish" };
+  if (value <= 45) return { value, labelKey: "status.fear", color: "text-mixed" };
+  if (value <= 55) return { value, labelKey: "status.neutral", color: "text-txt-primary" };
+  if (value <= 75) return { value, labelKey: "status.greed", color: "text-mixed" };
+  return { value, labelKey: "status.extremeGreed", color: "text-bullish" };
 }
 
 function formatSpread(value: number | undefined): { label: string; color: string } {
@@ -271,8 +284,8 @@ function formatSpread(value: number | undefined): { label: string; color: string
 }
 
 // Live News Monitor helpers
-function formatTimeAgo(isoString: string | undefined): string {
-  if (!isoString) return "Initializing...";
+function formatTimeAgo(isoString: string | undefined): { key: string; n?: number } {
+  if (!isoString) return { key: "status.initializing" };
   try {
     const date = new Date(isoString);
     const now = new Date();
@@ -281,28 +294,30 @@ function formatTimeAgo(isoString: string | undefined): string {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "Yesterday";
-    return `${diffDays}d ago`;
+    if (diffMins < 1) return { key: "time.justNow" };
+    if (diffMins < 60) return { key: "time.minutesAgo", n: diffMins };
+    if (diffHours < 24) return { key: "time.hoursAgo", n: diffHours };
+    if (diffDays === 1) return { key: "time.yesterday" };
+    return { key: "time.daysAgo", n: diffDays };
   } catch {
-    return "Unknown";
+    return { key: "time.unknown" };
   }
 }
 
 function getMonitorStatus(gdelt: RegimeClassification["phase4_gdelt"]): {
   dot: string;
   dotColor: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  score?: number;
+  topThreats?: string[];
+  trend?: string;
+  isRising?: boolean;
 } {
   if (!gdelt) {
     return {
       dot: "○",
       dotColor: "text-txt-muted",
-      label: "Initializing",
-      description: "Setting up geopolitical monitoring..."
+      labelKey: "status.initializing"
     };
   }
 
@@ -311,31 +326,31 @@ function getMonitorStatus(gdelt: RegimeClassification["phase4_gdelt"]): {
       return {
         dot: "●",
         dotColor: "text-bearish",
-        label: "Crisis Detected",
-        description: `Score ${gdelt.score} - ${gdelt.topThreats.slice(0, 2).join(", ") || "major events"}`
+        labelKey: "status.crisisDetected",
+        score: gdelt.score,
+        topThreats: gdelt.topThreats
       };
     case "high":
       return {
         dot: "●",
         dotColor: "text-mixed",
-        label: "High Risk",
-        description: `Score ${gdelt.score}${gdelt.trend === "rising" ? " ↑" : ""}`
+        labelKey: "status.highRisk",
+        score: gdelt.score,
+        isRising: gdelt.trend === "rising"
       };
     case "elevated":
       return {
         dot: "●",
         dotColor: "text-accent",
-        label: "Elevated Activity",
-        description: gdelt.trend === "rising"
-          ? `Score ${gdelt.score} - activity rising`
-          : `Score ${gdelt.score} - monitoring`
+        labelKey: "status.elevatedActivity",
+        score: gdelt.score,
+        isRising: gdelt.trend === "rising"
       };
     default:
       return {
         dot: "●",
         dotColor: "text-bullish",
-        label: "All Clear",
-        description: "No major geopolitical events detected"
+        labelKey: "status.allClear"
       };
   }
 }
@@ -354,13 +369,13 @@ function getPolymarketRegimeColor(regime: string | undefined): string {
   }
 }
 
-function getPolymarketRegimeLabel(regime: string | undefined): string {
+function getPolymarketRegimeLabelKey(regime: string | undefined): string | null {
   switch (regime) {
-    case "pessimistic": return "Pessimistic";
-    case "uncertain": return "Uncertain";
-    case "cautious": return "Cautious";
-    case "optimistic": return "Optimistic";
-    default: return "--";
+    case "pessimistic": return "regime.pessimistic";
+    case "uncertain": return "regime.uncertain";
+    case "cautious": return "regime.cautious";
+    case "optimistic": return "regime.optimistic";
+    default: return null;
   }
 }
 
@@ -403,13 +418,13 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       overall?.toLowerCase().includes("risk-off") ? "pulse-dot-bearish" : "pulse-dot-mixed"
     ]}></span>
     <span class="font-mono text-sm text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
-      Market
+      {t("macro.market")}
       <InfoTip
         text={overall?.toLowerCase().includes("risk-on")
-          ? "Risk-On: Markets favor growth assets (stocks, crypto). Generally a good environment for higher-risk investments."
+          ? t("tooltip.riskOn")
           : overall?.toLowerCase().includes("risk-off")
-          ? "Risk-Off: Investors prefer safety (bonds, gold, cash). Caution advised for risky assets."
-          : "Mixed signals from the market. Consider smaller positions or wait for clearer direction."}
+          ? t("tooltip.riskOff")
+          : t("tooltip.mixed")}
         position="top"
       />
     </span>
@@ -417,7 +432,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       "font-display font-bold text-xl tracking-tight",
       getOverallColor(overall)
     ]}>
-      {overall || "Loading..."}
+      {overall || t("status.loading")}
     </span>
   </div>
   <div class="text-center mb-5">
@@ -425,7 +440,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       href={overall?.toLowerCase().includes("risk-on") ? "/learn/glossary#risk-on" : overall?.toLowerCase().includes("risk-off") ? "/learn/glossary#risk-off" : "/learn/glossary#macro-context"}
       class="text-xs text-txt-muted hover:text-cyber transition-colors"
     >
-      What does this mean? →
+      {t("macro.whatDoesMean")}
     </a>
   </div>
 
@@ -434,33 +449,33 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
     <!-- Row 1 -->
     <div class="macro-chip">
       <span class="macro-chip-label">
-        USD
-        <InfoTip text="US Dollar strength. Strong dollar typically hurts crypto and commodities. Weak dollar often means risk-on." position="top" />
+        {t("macro.usd")}
+        <InfoTip text={t("tooltip.usd")} position="top" />
       </span>
-      <span class="macro-chip-value">{dxy.label}</span>
+      <span class="macro-chip-value">{dxy.labelKey ? t(dxy.labelKey) : "--"}</span>
     </div>
 
     <div class="macro-chip">
       <span class="macro-chip-label">
-        Volatility
-        <InfoTip text="Market fear gauge (VIX). Low = calm markets. High = fearful, prices may swing wildly." position="top" />
+        {t("macro.volatility")}
+        <InfoTip text={t("tooltip.volatility")} position="top" />
       </span>
-      <span class:list={["macro-chip-value", vix.color]}>{vix.label}</span>
+      <span class:list={["macro-chip-value", vix.color]}>{vix.labelKey ? t(vix.labelKey) : "--"}</span>
     </div>
 
     <div class="macro-chip">
       <span class="macro-chip-label">
-        10Y Rate
-        <InfoTip text="US Treasury yields. Rising rates compete with stocks. Falling rates are bullish for risk assets." position="top" />
+        {t("macro.10yRate")}
+        <InfoTip text={t("tooltip.10yRate")} position="top" />
       </span>
-      <span class="macro-chip-value">{yields.label}</span>
+      <span class="macro-chip-value">{yields.labelKey ? t(yields.labelKey) : "--"}</span>
     </div>
 
     <!-- Row 2 -->
     <div class="macro-chip">
       <span class="macro-chip-label">
-        Sentiment
-        <InfoTip text="Fear & Greed Index (0-100). Low = buying opportunity. High = overheated." position="top" />
+        {t("macro.sentiment")}
+        <InfoTip text={t("tooltip.sentiment")} position="top" />
       </span>
       <span class="macro-chip-value">
         {expanded.fearGreed !== undefined ? expanded.fearGreed : "--"}
@@ -469,8 +484,8 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 
     <div class="macro-chip">
       <span class="macro-chip-label">
-        Spread
-        <InfoTip text="10Y minus 2Y Treasury yield. Negative (inverted) warns of recession." position="top" />
+        {t("macro.spread")}
+        <InfoTip text={t("tooltip.spread")} position="top" />
       </span>
       <span class:list={["macro-chip-value", expanded.yieldSpread !== undefined ? spread.color : ""]}>
         {expanded.yieldSpread !== undefined ? spread.label : "--"}
@@ -479,11 +494,11 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
 
     <div class="macro-chip">
       <span class="macro-chip-label">
-        Regime
-        <InfoTip text={expanded.regime?.summary || "Market regime based on events, sentiment, volatility."} position="top" />
+        {t("macro.regime")}
+        <InfoTip text={expanded.regime?.summary || t("tooltip.regime")} position="top" />
       </span>
       <span class:list={["macro-chip-value", expanded.regime ? getRegimeColor(expanded.regime.classification) : ""]}>
-        {expanded.regime ? getRegimeLabel(expanded.regime.classification) : "--"}
+        {expanded.regime ? t(getRegimeLabelKey(expanded.regime.classification)) : "--"}
       </span>
     </div>
   </div>
@@ -494,10 +509,10 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
       <div class="flex items-center gap-2 text-base">
         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-sm font-bold">!</span>
         <span class="text-accent font-medium">
-          Active Event: {expanded.regime.phase1_event.events.map(e => e.name).join(", ")}
+          {t("alert.activeEvent")} {expanded.regime.phase1_event.events.map(e => e.name).join(", ")}
         </span>
         <span class="text-txt-muted text-sm">
-          (signals dampened {Math.round((1 - expanded.regime.signalDampening) * 100)}%)
+          {t("alert.signalsDampened", { percent: Math.round((1 - expanded.regime.signalDampening) * 100) })}
         </span>
       </div>
     </div>
@@ -514,18 +529,18 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           {expanded.regime.phase2_fearGreed.regime === "extreme_fear" ? "↑" : "↓"}
         </span>
         <span class:list={["font-medium inline-flex items-center gap-1", getContrarianSignal(expanded.regime.phase2_fearGreed)?.color]}>
-          {getContrarianSignal(expanded.regime.phase2_fearGreed)?.label}
+          {t(getContrarianSignal(expanded.regime.phase2_fearGreed)?.labelKey || "")}
           <InfoTip
             text={expanded.regime.phase2_fearGreed.regime === "extreme_fear"
-              ? "Contrarian signal: When fear is extreme, markets often overreact. Historically, buying during extreme fear has led to better returns."
-              : "Contrarian signal: When greed is extreme, markets may be overheated. Historically, this precedes pullbacks."}
+              ? t("tooltip.contrarianFear")
+              : t("tooltip.contrarianGreed")}
             position="top"
           />
         </span>
         <span class="text-txt-muted text-sm inline-flex items-center gap-1">
-          Fear & Greed at {expanded.regime.phase2_fearGreed.value}
+          {t("alert.fearGreedAt", { value: expanded.regime.phase2_fearGreed.value })}
           <InfoTip
-            text="The Fear & Greed Index measures market sentiment from 0 (extreme fear) to 100 (extreme greed). Values below 25 or above 75 often signal turning points."
+            text={t("tooltip.fearGreedIndex")}
             position="top"
           />
         </span>
@@ -534,32 +549,53 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
   )}
 
   {/* Phase 3: VIX Regime Alert - show when VIX at crisis/stressed/apathy */}
-  {expanded.regime?.phase3_vix && getVixRegimeAlert(expanded.regime.phase3_vix) && (
-    <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
-      <div class="flex items-center gap-2 text-base">
-        <span class:list={[
-          "inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold",
-          expanded.regime.phase3_vix.regime === "crisis" ? "bg-bearish/20 text-bearish" : "bg-mixed/20 text-mixed"
-        ]}>
-          {getVixRegimeAlert(expanded.regime.phase3_vix)?.icon}
-        </span>
-        <span class:list={["font-medium", getVixRegimeAlert(expanded.regime.phase3_vix)?.color]}>
-          {getVixRegimeAlert(expanded.regime.phase3_vix)?.label}
-        </span>
-        <span class="text-txt-muted text-sm">
-          {getVixRegimeAlert(expanded.regime.phase3_vix)?.description}
-        </span>
+  {expanded.regime?.phase3_vix && getVixRegimeAlert(expanded.regime.phase3_vix) && (() => {
+    const vixAlert = getVixRegimeAlert(expanded.regime.phase3_vix);
+    return (
+      <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
+        <div class="flex items-center gap-2 text-base">
+          <span class:list={[
+            "inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold",
+            expanded.regime.phase3_vix.regime === "crisis" ? "bg-bearish/20 text-bearish" : "bg-mixed/20 text-mixed"
+          ]}>
+            {vixAlert?.icon}
+          </span>
+          <span class:list={["font-medium", vixAlert?.color]}>
+            {t(vixAlert?.labelKey || "")}
+          </span>
+          <span class="text-txt-muted text-sm">
+            {t("alert.vixAt", { value: vixAlert?.vixValue?.toFixed(1) || "" })} {t(vixAlert?.descriptionKey || "")}
+          </span>
+        </div>
       </div>
-    </div>
-  )}
+    );
+  })()}
 
   {/* Live News Monitor - Always visible real-time geopolitical monitoring */}
   {(() => {
     const gdelt = expanded.regime?.phase4_gdelt;
     const status = getMonitorStatus(gdelt);
-    const timeAgo = formatTimeAgo(gdelt?.lastUpdated);
+    const timeAgoData = formatTimeAgo(gdelt?.lastUpdated);
+    const timeAgoStr = timeAgoData.n !== undefined ? t(timeAgoData.key, { n: timeAgoData.n }) : t(timeAgoData.key);
     const isElevated = gdelt && gdelt.regime !== "calm";
     const hasHeadlines = gdelt?.topHeadlines && gdelt.topHeadlines.length > 0;
+
+    // Build description based on status
+    let statusDescription = "";
+    if (status.labelKey === "status.initializing") {
+      statusDescription = t("tooltip.geopoliticalSetup");
+    } else if (status.labelKey === "status.allClear") {
+      statusDescription = t("tooltip.noGeopoliticalEvents");
+    } else if (status.score !== undefined) {
+      const scoreText = t("alert.tensionScore", { score: status.score });
+      if (status.topThreats && status.topThreats.length > 0) {
+        statusDescription = `${scoreText} - ${status.topThreats.slice(0, 2).join(", ")}`;
+      } else if (status.isRising) {
+        statusDescription = `${scoreText} ↑`;
+      } else {
+        statusDescription = scoreText;
+      }
+    }
 
     return (
       <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
@@ -568,18 +604,18 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           <div class="flex items-center gap-2">
             <span class="text-sm">📡</span>
             <span class="font-mono text-xs text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
-              Live News Monitor
+              {t("macro.liveNews")}
               <InfoTip
-                text="Real-time geopolitical monitoring via GDELT. Scans global news every 6 hours for events that could impact markets: tariffs, sanctions, military conflicts, political crises."
+                text={t("tooltip.liveNews")}
                 position="top"
               />
             </span>
           </div>
           <span class="text-xs text-txt-muted flex items-center gap-1">
             {gdelt?.spikeRatio && gdelt.spikeRatio >= 1.5 ? (
-              <span class="text-mixed font-medium">{gdelt.spikeRatio.toFixed(1)}x spike</span>
+              <span class="text-mixed font-medium">{t("alert.spike", { ratio: gdelt.spikeRatio.toFixed(1) })}</span>
             ) : (
-              <span>Updated {timeAgo}</span>
+              <span>{t("time.updated", { time: timeAgoStr })}</span>
             )}
           </span>
         </div>
@@ -587,14 +623,14 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {/* Status row */}
         <div class="flex items-center gap-2 text-base">
           <span class:list={["text-lg", status.dotColor]}>{status.dot}</span>
-          <span class:list={["font-medium", status.dotColor]}>{status.label}</span>
-          <span class="text-txt-muted text-sm">{status.description}</span>
+          <span class:list={["font-medium", status.dotColor]}>{t(status.labelKey)}</span>
+          <span class="text-txt-muted text-sm">{statusDescription}</span>
         </div>
 
         {/* Headlines when elevated+ */}
         {isElevated && hasHeadlines && (
           <div class="mt-3 pl-6 space-y-1">
-            <span class="text-txt-muted text-xs uppercase tracking-wider">Top Stories:</span>
+            <span class="text-txt-muted text-xs uppercase tracking-wider">{t("macro.topStories")}</span>
             <ul class="text-sm space-y-1">
               {gdelt.topHeadlines.slice(0, 3).map((headline) => (
                 <li class="truncate">
@@ -616,7 +652,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {/* Monitored keywords when calm */}
         {!isElevated && gdelt && (
           <div class="mt-2 text-xs text-txt-muted">
-            Watching: {MONITORED_KEYWORDS.join(", ")}...
+            {t("macro.watching")} {MONITORED_KEYWORDS.join(", ")}...
           </div>
         )}
       </div>
@@ -627,7 +663,8 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
   {(() => {
     const polymarket = expanded.regime?.phase5_polymarket;
     const hasData = polymarket && polymarket.topMarkets && polymarket.topMarkets.length > 0;
-    const timeAgo = formatTimeAgo(polymarket?.lastUpdated);
+    const timeAgoData = formatTimeAgo(polymarket?.lastUpdated);
+    const timeAgoStr = timeAgoData.n !== undefined ? t(timeAgoData.key, { n: timeAgoData.n }) : t(timeAgoData.key);
 
     return (
       <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
@@ -636,15 +673,15 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
           <div class="flex items-center gap-2">
             <span class="text-sm">🔮</span>
             <span class="font-mono text-xs text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
-              Prediction Markets
+              {t("macro.predictionMarkets")}
               <InfoTip
-                text="Real-money prediction markets from Polymarket. Shows what traders are betting on for crypto prices, Fed policy, and economic outcomes. High recession odds or bearish crypto sentiment can dampen signals."
+                text={t("tooltip.predictionMarkets")}
                 position="top"
               />
             </span>
           </div>
           <span class="text-xs text-txt-muted">
-            {polymarket ? `Updated ${timeAgo}` : "Initializing..."}
+            {polymarket ? t("time.updated", { time: timeAgoStr }) : t("status.initializing") + "..."}
           </span>
         </div>
 
@@ -652,21 +689,21 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {polymarket && (
           <div class="grid grid-cols-3 gap-3 mb-3">
             <div class="text-center">
-              <div class="text-xs text-txt-muted mb-1">Crypto</div>
+              <div class="text-xs text-txt-muted mb-1">{t("macro.crypto")}</div>
               <div class:list={["text-sm font-medium", getSentimentColor(polymarket.cryptoBullish)]}>
-                {formatProbability(polymarket.cryptoBullish)} bullish
+                {formatProbability(polymarket.cryptoBullish)} {t("macro.bullish")}
               </div>
             </div>
             <div class="text-center">
-              <div class="text-xs text-txt-muted mb-1">Fed</div>
+              <div class="text-xs text-txt-muted mb-1">{t("macro.fed")}</div>
               <div class:list={["text-sm font-medium", getSentimentColor(polymarket.fedDovish)]}>
-                {formatProbability(polymarket.fedDovish)} dovish
+                {formatProbability(polymarket.fedDovish)} {t("macro.dovish")}
               </div>
             </div>
             <div class="text-center">
-              <div class="text-xs text-txt-muted mb-1">Recession</div>
+              <div class="text-xs text-txt-muted mb-1">{t("macro.recession")}</div>
               <div class:list={["text-sm font-medium", getSentimentColor(polymarket.recessionOdds, true)]}>
-                {formatProbability(polymarket.recessionOdds)} odds
+                {formatProbability(polymarket.recessionOdds)} {t("macro.odds")}
               </div>
             </div>
           </div>
@@ -675,7 +712,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {/* Top markets list */}
         {hasData && (
           <div class="space-y-1">
-            <span class="text-txt-muted text-xs uppercase tracking-wider">Top Markets:</span>
+            <span class="text-txt-muted text-xs uppercase tracking-wider">{t("macro.topMarkets")}</span>
             <ul class="text-sm space-y-1">
               {polymarket.topMarkets.slice(0, 3).map((market) => (
                 <li class="flex items-center justify-between gap-2">
@@ -702,12 +739,12 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
               {polymarket.regime === "pessimistic" ? "⚠" : "△"}
             </span>
             <span class:list={["font-medium", getPolymarketRegimeColor(polymarket.regime)]}>
-              {getPolymarketRegimeLabel(polymarket.regime)}
+              {getPolymarketRegimeLabelKey(polymarket.regime) ? t(getPolymarketRegimeLabelKey(polymarket.regime)!) : "--"}
             </span>
             <span class="text-txt-muted">
-              {polymarket.regime === "pessimistic" ? "— high recession risk, signals dampened" :
-               polymarket.regime === "uncertain" ? "— markets show high uncertainty" :
-               "— mixed signals from prediction markets"}
+              {polymarket.regime === "pessimistic" ? t("alert.highRecessionRisk") :
+               polymarket.regime === "uncertain" ? t("alert.marketsHighUncertainty") :
+               t("alert.mixedSignals")}
             </span>
           </div>
         )}
@@ -715,7 +752,7 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {/* Fallback when no data */}
         {!polymarket && (
           <div class="text-sm text-txt-muted">
-            Loading prediction market data...
+            {t("status.loading")}
           </div>
         )}
       </div>
@@ -729,11 +766,11 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         <span class="font-mono text-sm inline-flex items-center gap-1">
           📅
           <InfoTip
-            text="Major economic events that can move markets. FOMC = Fed interest rate decisions. CPI = inflation data. NFP = jobs report. These events often cause volatility—consider reducing position sizes before them."
+            text={t("tooltip.upcomingEvents")}
             position="top"
           />
         </span>
-        <span>Upcoming: {expanded.regime.upcomingEvents.slice(0, 3).join(" | ")}</span>
+        <span>{t("macro.upcoming")} {expanded.regime.upcomingEvents.slice(0, 3).join(" | ")}</span>
       </div>
     </div>
   )}

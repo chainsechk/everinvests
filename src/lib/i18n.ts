@@ -188,6 +188,16 @@ function localeToIntl(locale: Locale): string {
     zh: "zh-CN",
     ar: "ar-SA",
     pt: "pt-BR",
+    fr: "fr-FR",
+    de: "de-DE",
+    ja: "ja-JP",
+    ko: "ko-KR",
+    ru: "ru-RU",
+    hi: "hi-IN",
+    id: "id-ID",
+    tr: "tr-TR",
+    vi: "vi-VN",
+    it: "it-IT",
   };
   return mapping[locale] || locale;
 }
