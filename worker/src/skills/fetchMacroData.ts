@@ -1,7 +1,7 @@
 import { fetchMacroData } from "../data";
 import { calculateMacroSignal } from "../signals";
 import type { MacroData, MacroSignal } from "../types";
-import { saveMacroSignal, getLatestGdeltScore } from "../storage/d1";
+import { saveMacroSignal, getLatestGdeltScore, getLatestPolymarketData } from "../storage/d1";
 import type { SharedState, SkillSpec } from "./types";
 
 export interface FetchMacroInput {
@@ -72,15 +72,30 @@ export const fetchMacroDataSkill: SkillSpec<FetchMacroInput, FetchMacroOutput> =
         macroFallback = true;
         fallbackReason = "Macro fetch returned invalid data";
       } else {
-        // Fetch GDELT data from database (Phase 4 Regime)
-        const gdeltData = await getLatestGdeltScore({ db: env.DB });
+        // Fetch external regime inputs from database (Phase 4-5)
+        const [gdeltData, polymarketData] = await Promise.all([
+          getLatestGdeltScore({ db: env.DB }),
+          getLatestPolymarketData({ db: env.DB }),
+        ]);
 
-        // Pass date, timeSlot, and GDELT for regime classification
+        const polymarketInput = polymarketData
+          ? {
+              cryptoBullish: polymarketData.cryptoBullish,
+              fedDovish: polymarketData.fedDovish,
+              recessionOdds: polymarketData.recessionOdds,
+              avgVolatility: polymarketData.avgVolatility,
+              topMarkets: polymarketData.topMarkets,
+              fetchedAt: polymarketData.fetchedAt,
+            }
+          : undefined;
+
+        // Pass date, timeSlot, and external regime inputs for classification
         macroSignal = calculateMacroSignal(
           macroData,
           input.date,
           input.timeSlot,
-          gdeltData ?? undefined
+          gdeltData ?? undefined,
+          polymarketInput
         );
       }
     }

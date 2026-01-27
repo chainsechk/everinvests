@@ -1,11 +1,12 @@
 /**
  * Regime Classification System
  *
- * 4-Phase regime detection for signal quality improvement:
+ * 5-Phase regime detection for signal quality improvement:
  * - Phase 1: Economic Calendar Events
  * - Phase 2: Fear & Greed Extreme Regime
  * - Phase 3: VIX Regime Thresholds
  * - Phase 4: GDELT Geopolitical Score
+ * - Phase 5: Polymarket Prediction Markets
  */
 
 import {
@@ -20,6 +21,9 @@ import type {
   FearGreedRegimeData,
   VixRegimeData,
   GdeltRegimeData,
+  PolymarketRegimeData,
+  PolymarketRegimeType,
+  PolymarketTopMarket,
   RegimeClassification,
 } from "../types";
 
@@ -195,6 +199,76 @@ export function classifyRegimePhase4(
 }
 
 // ============================================================================
+// PHASE 5: POLYMARKET PREDICTION MARKETS
+// ============================================================================
+
+export interface ClassifyPolymarketInput {
+  cryptoBullish: number;    // 0-100
+  fedDovish: number;        // 0-100
+  recessionOdds: number;    // 0-100
+  avgVolatility: number;    // 0-100
+  topMarkets: PolymarketTopMarket[];
+  fetchedAt: string;
+}
+
+/**
+ * Classify prediction market sentiment into regime impact
+ *
+ * Regimes:
+ * - optimistic: High crypto bullish + Fed dovish + low recession (1.0x)
+ * - cautious: Mixed signals (0.85x)
+ * - uncertain: High volatility/disagreement (0.7x)
+ * - pessimistic: High recession odds + bearish crypto (0.5x)
+ */
+export function classifyRegimePhase5(
+  input: ClassifyPolymarketInput | undefined
+): PolymarketRegimeData | undefined {
+  if (!input) return undefined;
+
+  const { cryptoBullish, fedDovish, recessionOdds, avgVolatility, topMarkets, fetchedAt } = input;
+
+  let regime: PolymarketRegimeType;
+  let signalDampening: number;
+
+  // High volatility (uncertainty) always dampens signals
+  if (avgVolatility >= 70) {
+    regime = "uncertain";
+    signalDampening = 0.7;
+  }
+  // Pessimistic: high recession + bearish crypto
+  else if (recessionOdds >= 60 && cryptoBullish <= 40) {
+    regime = "pessimistic";
+    signalDampening = 0.5;
+  }
+  // Optimistic: bullish crypto + dovish Fed + low recession
+  else if (cryptoBullish >= 65 && fedDovish >= 55 && recessionOdds <= 35) {
+    regime = "optimistic";
+    signalDampening = 1.0;
+  }
+  // Cautious: mixed or moderate signals
+  else if (recessionOdds >= 45 || cryptoBullish <= 45) {
+    regime = "cautious";
+    signalDampening = 0.85;
+  }
+  // Default to optimistic if mostly positive
+  else {
+    regime = "optimistic";
+    signalDampening = 1.0;
+  }
+
+  return {
+    regime,
+    signalDampening,
+    cryptoBullish,
+    fedDovish,
+    recessionOdds,
+    avgVolatility,
+    topMarkets,
+    lastUpdated: fetchedAt,
+  };
+}
+
+// ============================================================================
 // COMBINED REGIME CLASSIFICATION
 // ============================================================================
 
@@ -211,10 +285,12 @@ export interface ClassifyRegimeInput {
   // G5 Enhancement fields
   gdeltTopHeadlines?: Array<{ title: string; url: string }>;
   gdeltSpikeRatio?: number;
+  // Phase 5: Polymarket prediction market data
+  polymarket?: ClassifyPolymarketInput;
 }
 
 export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification {
-  const { date, timeSlot, fearGreed, vix, stressLevel, gdeltScore, gdeltTrend, gdeltTopThreats, gdeltTopHeadlines, gdeltSpikeRatio } = input;
+  const { date, timeSlot, fearGreed, vix, stressLevel, gdeltScore, gdeltTrend, gdeltTopThreats, gdeltTopHeadlines, gdeltSpikeRatio, polymarket } = input;
 
   // Phase 1: Economic Events
   const phase1 = classifyRegimePhase1(date, timeSlot);
@@ -228,6 +304,9 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   // Phase 4: GDELT Geopolitical (G5: now with headlines and spike ratio)
   const phase4 = classifyRegimePhase4(gdeltScore, gdeltTrend, gdeltTopThreats, gdeltTopHeadlines, gdeltSpikeRatio);
 
+  // Phase 5: Polymarket Prediction Markets
+  const phase5 = classifyRegimePhase5(polymarket);
+
   // Calculate combined dampening (use most restrictive)
   let signalDampening = 1.0;
   if (phase1?.active) {
@@ -238,6 +317,9 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   }
   if (phase4) {
     signalDampening = Math.min(signalDampening, phase4.signalDampening);
+  }
+  if (phase5) {
+    signalDampening = Math.min(signalDampening, phase5.signalDampening);
   }
 
   // Determine overall classification
@@ -299,7 +381,7 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
   const upcomingEvents = formatUpcomingEvents(date, 7);
 
   // Generate summary
-  const summary = generateRegimeSummary(classification, phase1, phase2, phase3, phase4);
+  const summary = generateRegimeSummary(classification, phase1, phase2, phase3, phase4, phase5);
 
   return {
     classification,
@@ -311,6 +393,7 @@ export function classifyRegime(input: ClassifyRegimeInput): RegimeClassification
     phase2_fearGreed: phase2,
     phase3_vix: phase3,
     phase4_gdelt: phase4,
+    phase5_polymarket: phase5,
     upcomingEvents,
     summary,
   };
@@ -321,7 +404,8 @@ function generateRegimeSummary(
   phase1: RegimeClassification["phase1_event"],
   phase2: FearGreedRegimeData | undefined,
   phase3: VixRegimeData | undefined,
-  phase4: GdeltRegimeData | undefined
+  phase4: GdeltRegimeData | undefined,
+  phase5: PolymarketRegimeData | undefined
 ): string {
   const parts: string[] = [];
 
@@ -357,6 +441,17 @@ function generateRegimeSummary(
   // Add rising geopolitical tension warning
   if (phase4?.trend === "rising" && phase4.regime !== "calm") {
     parts.push(`Geopolitical tension rising`);
+  }
+
+  // Add prediction market sentiment
+  if (phase5) {
+    if (phase5.regime === "pessimistic") {
+      parts.push(`Markets pricing recession (${phase5.recessionOdds}% odds)`);
+    } else if (phase5.regime === "uncertain") {
+      parts.push("Prediction markets show high uncertainty");
+    } else if (phase5.regime === "optimistic" && phase5.cryptoBullish >= 70) {
+      parts.push(`Crypto sentiment bullish (${phase5.cryptoBullish}%)`);
+    }
   }
 
   return parts.join(". ");

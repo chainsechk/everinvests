@@ -89,12 +89,12 @@ export interface MacroSignal {
   fearGreedSignal?: "extreme_fear" | "fear" | "neutral" | "greed" | "extreme_greed";
   contrarian?: "bullish" | "bearish" | null; // Override signal from sentiment extremes
   shockDetected?: boolean; // Tariff/policy shock detected
-  // Regime classification (Phase 1-4)
+  // Regime classification (Phase 1-5)
   regime?: RegimeClassification;
 }
 
 // ============================================================================
-// REGIME DETECTION TYPES (4-Phase System)
+// REGIME DETECTION TYPES (5-Phase System)
 // ============================================================================
 
 export type RegimeClassificationType =
@@ -158,6 +158,44 @@ export interface GdeltRegimeData {
   spikeRatio?: number;
 }
 
+// ============================================================================
+// POLYMARKET PREDICTION MARKET TYPES (Phase 5 Regime Detection)
+// ============================================================================
+
+export interface PolymarketTopMarket {
+  question: string;
+  probability: number;  // 0-100
+  category: "crypto" | "fed" | "economy" | "geopolitical";
+  volume: number;       // 24h volume in USD
+}
+
+export interface PolymarketData {
+  cryptoBullish: number;    // 0-100, aggregated crypto bullishness
+  fedDovish: number;        // 0-100, probability of Fed dovishness
+  recessionOdds: number;    // 0-100, recession probability
+  avgVolatility: number;    // 0-100, average uncertainty across markets
+  topMarkets: PolymarketTopMarket[];  // Top 3 markets by volume
+  marketsCount: number;     // Number of relevant markets found
+  fetchedAt: string;
+}
+
+export type PolymarketRegimeType =
+  | "optimistic"    // Crypto bullish + Fed dovish + low recession
+  | "cautious"      // Mixed signals
+  | "uncertain"     // High volatility/uncertainty
+  | "pessimistic";  // High recession + bearish crypto
+
+export interface PolymarketRegimeData {
+  regime: PolymarketRegimeType;
+  signalDampening: number;
+  cryptoBullish: number;
+  fedDovish: number;
+  recessionOdds: number;
+  avgVolatility: number;
+  topMarkets: PolymarketTopMarket[];
+  lastUpdated: string;
+}
+
 export interface RegimeClassification {
   // Overall regime state
   classification: RegimeClassificationType;
@@ -175,6 +213,7 @@ export interface RegimeClassification {
   phase2_fearGreed?: FearGreedRegimeData;
   phase3_vix?: VixRegimeData;
   phase4_gdelt?: GdeltRegimeData;
+  phase5_polymarket?: PolymarketRegimeData;
 
   // Display helpers
   upcomingEvents?: string[];

@@ -1,4 +1,4 @@
-import type { AssetSignal, Bias, Category, MacroSignal } from "../types";
+import type { AssetSignal, Bias, Category, MacroSignal, PolymarketData } from "../types";
 import { formatMacroForStorage } from "../signals";
 import type { BenchmarkData } from "../data/twelvedata";
 import type { GdeltResult } from "../data/gdelt";
@@ -82,7 +82,7 @@ export async function saveMacroSignal(args: {
       ...(typeof rawData === "object" && rawData !== null ? rawData : { raw: rawData }),
       fallback: isFallback,
       fallback_reason: fallbackReason ?? null,
-      // Include regime classification in data_json (Phase 1-4)
+      // Include regime classification in data_json (Phase 1-5)
       regime: signal?.regime ?? null,
     }),
   };
@@ -486,4 +486,78 @@ export async function getGdelt7DayAvgArticles(args: {
     .first<{ avg_articles: number | null }>();
 
   return row?.avg_articles ?? undefined;
+}
+
+// ============================================================
+// Polymarket Prediction Markets (Phase 5 Regime Detection)
+// ============================================================
+
+export async function savePolymarketData(args: {
+  db: D1Database;
+  date: string;
+  timeSlot: string;
+  data: PolymarketData;
+}): Promise<void> {
+  const { db, date, timeSlot, data } = args;
+
+  await db
+    .prepare(
+      `INSERT INTO prediction_markets (date, time_slot, crypto_bullish, fed_dovish, recession_odds, avg_volatility, top_markets, markets_count, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(date, time_slot) DO UPDATE SET
+         crypto_bullish = excluded.crypto_bullish,
+         fed_dovish = excluded.fed_dovish,
+         recession_odds = excluded.recession_odds,
+         avg_volatility = excluded.avg_volatility,
+         top_markets = excluded.top_markets,
+         markets_count = excluded.markets_count,
+         fetched_at = excluded.fetched_at`
+    )
+    .bind(
+      date,
+      timeSlot,
+      data.cryptoBullish,
+      data.fedDovish,
+      data.recessionOdds,
+      data.avgVolatility,
+      JSON.stringify(data.topMarkets),
+      data.marketsCount,
+      data.fetchedAt
+    )
+    .run();
+}
+
+export async function getLatestPolymarketData(args: {
+  db: D1Database;
+}): Promise<PolymarketData | null> {
+  const { db } = args;
+
+  const row = await db
+    .prepare(
+      `SELECT crypto_bullish, fed_dovish, recession_odds, avg_volatility, top_markets, markets_count, fetched_at
+       FROM prediction_markets
+       ORDER BY date DESC, time_slot DESC
+       LIMIT 1`
+    )
+    .first<{
+      crypto_bullish: number;
+      fed_dovish: number;
+      recession_odds: number;
+      avg_volatility: number;
+      top_markets: string;
+      markets_count: number;
+      fetched_at: string;
+    }>();
+
+  if (!row) return null;
+
+  return {
+    cryptoBullish: row.crypto_bullish,
+    fedDovish: row.fed_dovish,
+    recessionOdds: row.recession_odds,
+    avgVolatility: row.avg_volatility,
+    topMarkets: JSON.parse(row.top_markets),
+    marketsCount: row.markets_count,
+    fetchedAt: row.fetched_at,
+  };
 }

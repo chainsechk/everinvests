@@ -51,6 +51,21 @@ interface RegimeClassification {
     topHeadlines?: Array<{ title: string; url: string }>;
     spikeRatio?: number;
   };
+  phase5_polymarket?: {
+    regime: "optimistic" | "cautious" | "uncertain" | "pessimistic";
+    signalDampening: number;
+    cryptoBullish: number;
+    fedDovish: number;
+    recessionOdds: number;
+    avgVolatility: number;
+    topMarkets: Array<{
+      question: string;
+      probability: number;
+      category: "crypto" | "fed" | "economy" | "geopolitical";
+      volume: number;
+    }>;
+    lastUpdated: string;
+  };
   upcomingEvents?: string[];
   summary: string;
 }
@@ -328,6 +343,49 @@ function getMonitorStatus(gdelt: RegimeClassification["phase4_gdelt"]): {
 // Keywords we monitor (for display in calm state)
 const MONITORED_KEYWORDS = ["tariffs", "sanctions", "military", "crisis", "trade war"];
 
+// Phase 5: Polymarket prediction market helpers
+function getPolymarketRegimeColor(regime: string | undefined): string {
+  switch (regime) {
+    case "pessimistic": return "text-bearish";
+    case "uncertain": return "text-mixed";
+    case "cautious": return "text-mixed";
+    case "optimistic": return "text-bullish";
+    default: return "text-txt-muted";
+  }
+}
+
+function getPolymarketRegimeLabel(regime: string | undefined): string {
+  switch (regime) {
+    case "pessimistic": return "Pessimistic";
+    case "uncertain": return "Uncertain";
+    case "cautious": return "Cautious";
+    case "optimistic": return "Optimistic";
+    default: return "--";
+  }
+}
+
+function getSentimentColor(value: number, invertForNegative = false): string {
+  if (invertForNegative) {
+    // Higher = worse (recession odds)
+    if (value >= 60) return "text-bearish";
+    if (value >= 40) return "text-mixed";
+    return "text-bullish";
+  }
+  // Higher = better (crypto bullish, fed dovish)
+  if (value >= 65) return "text-bullish";
+  if (value >= 45) return "text-txt-primary";
+  return "text-bearish";
+}
+
+function formatProbability(value: number): string {
+  return `${value}%`;
+}
+
+function truncateQuestion(question: string, maxLength = 50): string {
+  if (question.length <= maxLength) return question;
+  return question.slice(0, maxLength) + "...";
+}
+
 const dxy = formatDxy(dxyBias);
 const vix = formatVix(vixLevel);
 const yields = formatYields(yieldsBias);
@@ -559,6 +617,105 @@ const hasExpanded = expanded.fearGreed !== undefined || expanded.yieldSpread !==
         {!isElevated && gdelt && (
           <div class="mt-2 text-xs text-txt-muted">
             Watching: {MONITORED_KEYWORDS.join(", ")}...
+          </div>
+        )}
+      </div>
+    );
+  })()}
+
+  {/* Phase 5: Prediction Markets - Always visible */}
+  {(() => {
+    const polymarket = expanded.regime?.phase5_polymarket;
+    const hasData = polymarket && polymarket.topMarkets && polymarket.topMarkets.length > 0;
+    const timeAgo = formatTimeAgo(polymarket?.lastUpdated);
+
+    return (
+      <div class="mt-4 pt-4 border-t" style="border-color: var(--border-divider);">
+        {/* Header row */}
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">🔮</span>
+            <span class="font-mono text-xs text-txt-muted uppercase tracking-wider inline-flex items-center gap-1">
+              Prediction Markets
+              <InfoTip
+                text="Real-money prediction markets from Polymarket. Shows what traders are betting on for crypto prices, Fed policy, and economic outcomes. High recession odds or bearish crypto sentiment can dampen signals."
+                position="top"
+              />
+            </span>
+          </div>
+          <span class="text-xs text-txt-muted">
+            {polymarket ? `Updated ${timeAgo}` : "Initializing..."}
+          </span>
+        </div>
+
+        {/* Sentiment metrics grid */}
+        {polymarket && (
+          <div class="grid grid-cols-3 gap-3 mb-3">
+            <div class="text-center">
+              <div class="text-xs text-txt-muted mb-1">Crypto</div>
+              <div class:list={["text-sm font-medium", getSentimentColor(polymarket.cryptoBullish)]}>
+                {formatProbability(polymarket.cryptoBullish)} bullish
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-txt-muted mb-1">Fed</div>
+              <div class:list={["text-sm font-medium", getSentimentColor(polymarket.fedDovish)]}>
+                {formatProbability(polymarket.fedDovish)} dovish
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-txt-muted mb-1">Recession</div>
+              <div class:list={["text-sm font-medium", getSentimentColor(polymarket.recessionOdds, true)]}>
+                {formatProbability(polymarket.recessionOdds)} odds
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top markets list */}
+        {hasData && (
+          <div class="space-y-1">
+            <span class="text-txt-muted text-xs uppercase tracking-wider">Top Markets:</span>
+            <ul class="text-sm space-y-1">
+              {polymarket.topMarkets.slice(0, 3).map((market) => (
+                <li class="flex items-center justify-between gap-2">
+                  <span class="text-txt-secondary truncate" title={market.question}>
+                    {truncateQuestion(market.question)}
+                  </span>
+                  <span class:list={[
+                    "font-medium whitespace-nowrap",
+                    market.probability >= 70 ? "text-bullish" :
+                    market.probability <= 30 ? "text-bearish" : "text-txt-primary"
+                  ]}>
+                    {market.probability}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Regime indicator when not optimistic */}
+        {polymarket && polymarket.regime !== "optimistic" && (
+          <div class="mt-2 flex items-center gap-2 text-xs">
+            <span class:list={[getPolymarketRegimeColor(polymarket.regime)]}>
+              {polymarket.regime === "pessimistic" ? "⚠" : "△"}
+            </span>
+            <span class:list={["font-medium", getPolymarketRegimeColor(polymarket.regime)]}>
+              {getPolymarketRegimeLabel(polymarket.regime)}
+            </span>
+            <span class="text-txt-muted">
+              {polymarket.regime === "pessimistic" ? "— high recession risk, signals dampened" :
+               polymarket.regime === "uncertain" ? "— markets show high uncertainty" :
+               "— mixed signals from prediction markets"}
+            </span>
+          </div>
+        )}
+
+        {/* Fallback when no data */}
+        {!polymarket && (
+          <div class="text-sm text-txt-muted">
+            Loading prediction market data...
           </div>
         )}
       </div>

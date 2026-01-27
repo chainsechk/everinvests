@@ -3,12 +3,13 @@ import type { Env } from "./env";
 import { getWorkflow } from "./workflows";
 import { createD1Recorder, runWorkflow } from "./pipeline";
 import { skillRegistry } from "./skills";
-import { logRun, saveBenchmarkData, saveGdeltScore, getPreviousGdeltScore, getGdelt7DayAvgArticles } from "./storage/d1";
+import { logRun, saveBenchmarkData, saveGdeltScore, getPreviousGdeltScore, getGdelt7DayAvgArticles, savePolymarketData } from "./storage/d1";
 import { checkSignalAccuracy } from "./accuracy";
 import { generateWeeklyBlogPosts } from "./blog";
 import { sendDailyDigest } from "./digest";
 import { fetchBenchmarkData } from "./data/twelvedata";
 import { fetchGdeltScore } from "./data/gdelt";
+import { fetchPolymarketData } from "./data/polymarket";
 
 // Schedule configuration (UTC hours)
 const SCHEDULE: Record<Category, { hours: number[]; weekdaysOnly: boolean }> = {
@@ -68,12 +69,19 @@ export default {
 
     // G5 Enhancement: Fetch GDELT every 6 hours (01:00, 07:00, 13:00, 19:00 UTC)
     // This catches midday breaking news instead of just daily at 01:00
-    const gdeltHours = [1, 7, 13, 19];
-    if (gdeltHours.includes(utcHour)) {
+    // Polymarket also fetches on the same schedule (Phase 5 regime detection)
+    const externalDataHours = [1, 7, 13, 19];
+    if (externalDataHours.includes(utcHour)) {
+      // Run GDELT and Polymarket fetches in parallel
       ctx.waitUntil(
-        runGdeltFetch(env).catch((err) =>
-          console.error("[GDELT] Fetch failed:", err)
-        )
+        Promise.all([
+          runGdeltFetch(env).catch((err) =>
+            console.error("[GDELT] Fetch failed:", err)
+          ),
+          runPolymarketFetch(env).catch((err) =>
+            console.error("[Polymarket] Fetch failed:", err)
+          ),
+        ])
       );
     }
 
@@ -125,6 +133,7 @@ export default {
       "/send-daily-digest",
       "/fetch-benchmarks",
       "/fetch-gdelt",
+      "/fetch-polymarket",
     ];
 
     if (adminRoutes.includes(url.pathname)) {
@@ -176,6 +185,11 @@ export default {
 
     if (url.pathname === "/fetch-gdelt") {
       const result = await runGdeltFetch(env);
+      return Response.json(result);
+    }
+
+    if (url.pathname === "/fetch-polymarket") {
+      const result = await runPolymarketFetch(env);
       return Response.json(result);
     }
 
@@ -233,6 +247,53 @@ async function runGdeltFetch(env: Env): Promise<{
       topThreats: [],
       spikeRatio: 1.0,
       headlines: 0,
+    };
+  }
+}
+
+// Fetch and store Polymarket prediction market data (Phase 5 Regime Detection)
+// Runs every 6 hours alongside GDELT (01:00, 07:00, 13:00, 19:00 UTC)
+async function runPolymarketFetch(env: Env): Promise<{
+  success: boolean;
+  cryptoBullish: number;
+  fedDovish: number;
+  recessionOdds: number;
+  marketsCount: number;
+}> {
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+  const utcHour = now.getUTCHours();
+  const timeSlot = `${utcHour.toString().padStart(2, "0")}:00`;
+
+  console.log(`[Polymarket] Fetching prediction market data for ${date} ${timeSlot}...`);
+
+  try {
+    const data = await fetchPolymarketData();
+
+    // Store in database
+    await savePolymarketData({ db: env.DB, date, timeSlot, data });
+
+    console.log(
+      `[Polymarket] Crypto: ${data.cryptoBullish}% bullish, Fed: ${data.fedDovish}% dovish, ` +
+      `Recession: ${data.recessionOdds}%, Markets: ${data.marketsCount}`
+    );
+
+    return {
+      success: true,
+      cryptoBullish: data.cryptoBullish,
+      fedDovish: data.fedDovish,
+      recessionOdds: data.recessionOdds,
+      marketsCount: data.marketsCount,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[Polymarket] Error: ${msg}`);
+    return {
+      success: false,
+      cryptoBullish: 50,
+      fedDovish: 50,
+      recessionOdds: 30,
+      marketsCount: 0,
     };
   }
 }

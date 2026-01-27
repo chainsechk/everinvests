@@ -1,9 +1,9 @@
 // Macro context calculation
 // DXY, VIX, 10Y yields → Risk-on / Risk-off / Mixed
 // Enhanced with: Fear & Greed contrarian, Yield curve, Shock detection
-// + 4-Phase Regime Detection (Event, F&G, VIX, GDELT)
+// + 5-Phase Regime Detection (Event, F&G, VIX, GDELT, Polymarket)
 
-import type { MacroData, MacroSignal, MacroOverall } from "../types";
+import type { MacroData, MacroSignal, MacroOverall, PolymarketTopMarket } from "../types";
 import { classifyRegime } from "./regime";
 
 // DXY (Dollar Index) analysis
@@ -164,11 +164,22 @@ interface GdeltInput {
   spikeRatio?: number;
 }
 
+// Polymarket result from database (Phase 5)
+interface PolymarketInput {
+  cryptoBullish: number;    // 0-100
+  fedDovish: number;        // 0-100
+  recessionOdds: number;    // 0-100
+  avgVolatility: number;    // 0-100
+  topMarkets: PolymarketTopMarket[];
+  fetchedAt: string;
+}
+
 export function calculateMacroSignal(
   data: MacroData,
   date?: string,
   timeSlot?: string,
-  gdeltData?: GdeltInput
+  gdeltData?: GdeltInput,
+  polymarketData?: PolymarketInput
 ): MacroSignal {
   const dxyBias = analyzeDXY(data.dxy, data.dxyMa20);
   const vixLevel = analyzeVIX(data.vix);
@@ -182,7 +193,7 @@ export function calculateMacroSignal(
   const overall = calculateOverall(dxyBias, vixLevel, yieldsBias, yieldCurve);
   const stressLevel = calculateStressLevel(vixLevel, yieldCurve, fearGreedSignal, shockDetected);
 
-  // Phase 1-4: Regime Classification (G5: now with headlines and spike ratio)
+  // Phase 1-5: Regime Classification (G5: now with headlines and spike ratio)
   const regime = date && timeSlot
     ? classifyRegime({
         date,
@@ -197,6 +208,8 @@ export function calculateMacroSignal(
         // G5 Enhancement fields
         gdeltTopHeadlines: gdeltData?.topHeadlines,
         gdeltSpikeRatio: gdeltData?.spikeRatio,
+        // Phase 5: Polymarket prediction market data
+        polymarket: polymarketData,
       })
     : undefined;
 
