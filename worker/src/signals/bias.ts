@@ -98,10 +98,8 @@ function calculateStrengthSignal(
     // F&G > 70 = greed = bearish (selling opportunity)
     const fearGreed = context?.fearGreed;
     if (fearGreed !== undefined) {
-      if (fearGreed < 30) return "bullish";   // Fear = buying opportunity
-      if (fearGreed > 70) return "bearish";   // Greed = selling opportunity
-      if (fearGreed < 45) return "bullish";   // Slight fear bias
-      if (fearGreed > 55) return "bearish";   // Slight greed bias
+      if (fearGreed < 35) return "bullish";   // Notable fear = buying opportunity
+      if (fearGreed > 65) return "bearish";   // Notable greed = selling opportunity
       return "neutral";
     }
     // Fallback to funding rate if F&G not available
